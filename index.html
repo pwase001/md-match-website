@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MD-Match — Collaborating Physician Network</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Nunito:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal-deep: #0b3535;
+    --teal: #1a6b6b;
+    --teal-light: #2a9090;
+    --teal-pale: #e8f5f5;
+    --gold: #c9a84c;
+    --gold-light: #e2c97e;
+    --white: #ffffff;
+    --off-white: #f8fbfb;
+    --text: #1a3333;
+    --muted: #4a6b6b;
+    --border: #d0e2e2;
+    --nav-h: 68px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Nunito', sans-serif; color: var(--text); background: var(--white); font-size: 15px; line-height: 1.7; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    height: var(--nav-h);
+    background: rgba(11,53,53,0.97);
+    backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2.5rem;
+    border-bottom: 1px solid rgba(201,168,76,0.2);
+  }
+  .nav-brand { display: flex; flex-direction: column; gap: 0; text-decoration: none; }
+  .nav-logo { font-family: 'Playfair Display', serif; font-size: 1.35rem; color: var(--white); letter-spacing: -0.01em; }
+  .nav-logo em { color: var(--gold); font-style: italic; }
+  .nav-sub { font-size: 9px; color: rgba(255,255,255,0.45); letter-spacing: 0.14em; text-transform: uppercase; }
+  .nav-links { display: flex; align-items: center; gap: 2rem; }
+  .nav-links a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--gold-light); }
+  .nav-links a.nav-btn { background: transparent; border: 1.5px solid rgba(201,168,76,0.6); color: var(--gold-light); padding: 0.42rem 1.1rem; border-radius: 4px; transition: all 0.2s; }
+  .nav-links a.nav-btn:hover { background: var(--gold); color: var(--teal-deep); border-color: var(--gold); }
+  .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; }
+  .hamburger span { display: block; width: 22px; height: 2px; background: var(--white); border-radius: 2px; }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    background: linear-gradient(150deg, var(--teal-deep) 0%, #0f4242 55%, #1a6060 100%);
+    display: flex; align-items: center; justify-content: center;
+    padding: calc(var(--nav-h) + 3rem) 2rem 4rem;
+    position: relative; overflow: hidden; text-align: center;
+  }
+  .hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(42,144,144,0.18) 0%, transparent 70%);
+  }
+  .hero-inner { position: relative; z-index: 1; max-width: 760px; }
+  .hero-eyebrow { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); font-weight: 700; margin-bottom: 1.4rem; display: flex; align-items: center; justify-content: center; gap: 0.7rem; }
+  .hero-eyebrow::before, .hero-eyebrow::after { content: ''; display: block; width: 32px; height: 1px; background: var(--gold); opacity: 0.6; }
+  .hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(2.2rem, 5vw, 3.6rem); color: var(--white); font-weight: 400; line-height: 1.2; margin-bottom: 1.4rem; }
+  .hero h1 em { color: var(--gold-light); font-style: italic; }
+  .hero-sub { font-size: 1.05rem; color: rgba(255,255,255,0.72); font-weight: 300; max-width: 540px; margin: 0 auto 2.8rem; line-height: 1.8; }
+  .hero-ctas { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+  .btn-outline { display: inline-block; background: transparent; color: var(--white); padding: 0.85rem 2rem; border-radius: 4px; font-weight: 700; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; text-decoration: none; border: 2px solid rgba(255,255,255,0.45); transition: all 0.2s; }
+  .btn-outline:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.7); }
+  .btn-gold { display: inline-block; background: var(--gold); color: var(--teal-deep); padding: 0.85rem 2rem; border-radius: 4px; font-weight: 800; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; text-decoration: none; transition: all 0.2s; border: 2px solid var(--gold); }
+  .btn-gold:hover { background: var(--gold-light); border-color: var(--gold-light); }
+
+  /* SECTIONS */
+  section { padding: 5.5rem 2rem; }
+  .section-inner { max-width: 1060px; margin: 0 auto; }
+  .section-label { font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--teal-light); font-weight: 700; margin-bottom: 0.7rem; display: flex; align-items: center; gap: 0.6rem; }
+  .section-label::before { content: ''; display: block; width: 24px; height: 1.5px; background: var(--teal-light); }
+  .section-title { font-family: 'Playfair Display', serif; font-size: clamp(2rem, 3.8vw, 2.9rem); color: var(--teal-deep); font-weight: 600; line-height: 1.2; margin-bottom: 1rem; }
+  .section-title em { color: var(--teal-light); font-style: italic; }
+  .section-intro { color: var(--text); font-weight: 500; max-width: 600px; font-size: 1.08rem; line-height: 1.85; margin-bottom: 3rem; }
+  .divider { width: 48px; height: 2px; background: var(--gold); margin: 1.2rem 0 1.6rem; }
+
+  /* GOALS */
+  #goals { background: var(--off-white); }
+  #goals .section-label { background: var(--teal); color: var(--gold); padding: 0.35rem 0.9rem; border-radius: 4px; display: inline-flex; font-size: 13px; font-weight: 800; letter-spacing: 0.2em; }
+  #goals .section-label::before { background: var(--gold); }
+
+  /* FOR NPs SECTION */
+  #for-nps { background: var(--white); }
+
+  /* FOR PHYSICIANS SECTION */
+  #for-physicians { background: var(--off-white); }
+  #for-physicians .section-label { background: var(--teal); color: var(--gold); padding: 0.35rem 0.9rem; border-radius: 4px; display: inline-flex; font-size: 13px; font-weight: 800; letter-spacing: 0.2em; }
+  #for-physicians .section-label::before { background: var(--gold); }
+  #for-physicians .section-title { font-size: clamp(2rem, 4vw, 3rem); color: var(--teal-deep); }
+  #for-physicians .section-intro { font-size: 1.08rem; max-width: 680px; }
+  #for-physicians .offer-item { border-bottom-color: var(--border); }
+  #for-physicians .offer-icon { background: var(--white); }
+  .physician-note { margin-top: 2rem; padding: 1.6rem 1.8rem; background: var(--teal-deep); border-radius: 8px; position: relative; overflow: hidden; }
+  .physician-note::before { content: '"'; position: absolute; top: -0.5rem; left: 1.2rem; font-family: 'Playfair Display', serif; font-size: 5rem; color: rgba(42,144,144,0.2); line-height: 1; }
+  .physician-note-text { font-family: 'Playfair Display', serif; font-size: 1rem; font-style: italic; color: rgba(255,255,255,0.8); line-height: 1.75; position: relative; z-index: 1; }
+  .physician-note-sig { margin-top: 0.9rem; font-size: 11.5px; color: var(--gold-light); font-weight: 700; letter-spacing: 0.06em; position: relative; z-index: 1; }
+
+  /* COLLABORATION DEMANDS */
+  #collab-demands { background: var(--teal-deep); position: relative; overflow: hidden; }
+  #collab-demands::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(42,144,144,0.12) 0%, transparent 65%); }
+  #collab-demands .section-label { color: var(--gold); font-size: 12px; letter-spacing: 0.22em; }
+  #collab-demands .section-label::before { background: var(--gold); width: 32px; height: 2px; }
+  #collab-demands .section-title { color: var(--white); font-size: clamp(2rem, 4vw, 3rem); }
+  #collab-demands .section-title em { color: #7dd4d4; }
+  #collab-demands .section-intro { color: rgba(255,255,255,0.65); font-size: 1.05rem; max-width: 720px; }
+  .demand-block { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 1.8rem 2rem; margin-bottom: 1.2rem; }
+  .demand-block:last-of-type { margin-bottom: 0; }
+  .demand-block-label { font-size: 10.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 1.1rem; display: flex; align-items: center; gap: 0.6rem; }
+  .demand-block-label.high { color: #f87171; }
+  .demand-block-label.high::before { content: ''; display: block; width: 8px; height: 8px; border-radius: 50%; background: #f87171; flex-shrink: 0; }
+  .demand-block-label.med { color: var(--gold-light); }
+  .demand-block-label.med::before { content: ''; display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--gold-light); flex-shrink: 0; }
+  .state-pills-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .state-chip { font-size: 12.5px; font-weight: 800; padding: 0.35rem 0.75rem; border-radius: 4px; letter-spacing: 0.05em; }
+  .state-chip.hot { background: rgba(248,113,113,0.15); border: 1.5px solid rgba(248,113,113,0.4); color: #f87171; }
+  .state-chip.normal { background: rgba(255,255,255,0.07); border: 1.5px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.8); }
+  .state-chip.noted { background: rgba(255,255,255,0.07); border: 1.5px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.8); position: relative; }
+  .demand-footnotes { margin-top: 1.6rem; display: flex; flex-direction: column; gap: 0.5rem; }
+  .demand-footnote { font-size: 12px; color: rgba(255,255,255,0.45); line-height: 1.65; }
+  .demand-footnote strong { color: rgba(255,255,255,0.7); }
+  #for-nps .section-label { background: var(--teal); color: var(--gold); padding: 0.35rem 0.9rem; border-radius: 4px; display: inline-flex; font-size: 13px; font-weight: 800; letter-spacing: 0.2em; }
+  #for-nps .section-label::before { background: var(--gold); }
+  #for-nps .section-title { font-size: clamp(2rem, 4vw, 3rem); color: var(--teal-deep); }
+  #for-nps .section-intro { font-size: 1.08rem; max-width: 680px; }
+  .offer-list { display: flex; flex-direction: column; gap: 0; margin-top: 0.5rem; }
+  .offer-item { display: flex; align-items: flex-start; gap: 1.4rem; padding: 1.4rem 0; border-bottom: 1px solid var(--border); }
+  .offer-item:last-child { border-bottom: none; }
+  .offer-icon { width: 40px; height: 40px; border-radius: 8px; background: var(--teal-pale); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; margin-top: 0.1rem; }
+  .offer-text-wrap { flex: 1; }
+  .offer-title { font-family: 'Playfair Display', serif; font-size: 1.2rem; color: var(--teal-deep); margin-bottom: 0.4rem; font-weight: 600; }
+  .offer-desc { font-size: 14.5px; color: var(--text); line-height: 1.85; font-weight: 400; }
+  .offer-tag { display: inline-block; margin-top: 0.5rem; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.25); padding: 0.2rem 0.6rem; border-radius: 100px; }
+
+
+  /* FOOTER */
+  footer { background: var(--teal-deep); padding: 3.5rem 2rem; }
+  .footer-inner { max-width: 1060px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr; gap: 3rem; }
+  .footer-brand-name { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--white); }
+  .footer-brand-name em { color: var(--gold); font-style: italic; }
+  .footer-brand-sub { font-size: 11px; color: rgba(255,255,255,0.4); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 0.2rem; margin-bottom: 1rem; }
+  .footer-desc { font-size: 13px; color: rgba(255,255,255,0.5); line-height: 1.75; max-width: 360px; }
+  .footer-col-title { font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); font-weight: 700; margin-bottom: 1rem; }
+  .footer-col a { display: block; font-size: 13px; color: rgba(255,255,255,0.55); text-decoration: none; margin-bottom: 0.5rem; transition: color 0.2s; }
+  .footer-col a:hover { color: var(--white); }
+  .footer-bottom { max-width: 1060px; margin: 2.5rem auto 0; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+  .footer-copy { font-size: 11.5px; color: rgba(255,255,255,0.35); }
+
+  /* MOBILE */
+  .mobile-menu { display: none; position: fixed; inset: 0; top: var(--nav-h); background: var(--teal-deep); z-index: 99; flex-direction: column; padding: 2rem; gap: 1rem; }
+  .mobile-menu.open { display: flex; }
+  .mobile-menu a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 1.1rem; font-weight: 600; padding: 0.7rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+
+  @media (max-width: 900px) {
+    .goals-grid { grid-template-columns: 1fr 1fr; }
+    .footer-inner { grid-template-columns: 1fr; gap: 2rem; }
+    .nav-links { display: none; }
+    .hamburger { display: flex; }
+  }
+  @media (max-width: 600px) {
+    nav { padding: 0 1.2rem; }
+    section { padding: 3.5rem 1.2rem; }
+    .goals-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-brand">
+    <span class="nav-logo">MD-<em>Match</em></span>
+    <span class="nav-sub">Collaborating Physician Network</span>
+  </a>
+  <div class="nav-links">
+    <a href="#goals">Our Goals</a>
+    <a href="#for-nps">For NPs &amp; PAs</a>
+    <a href="#for-physicians">For Physicians</a>
+    <a href="#collab-demands">State Demand</a>
+    <a href="psychiatry-match-np-pa-intake.html" target="_blank" class="nav-btn">NP / PA Application</a>
+    <a href="md-match-physician-intake.html" target="_blank" class="nav-btn">Physician Application</a>
+  </div>
+  <div class="hamburger" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#goals" onclick="closeMenu()">Our Goals</a>
+  <a href="#for-nps" onclick="closeMenu()">For NPs &amp; PAs</a>
+  <a href="#for-physicians" onclick="closeMenu()">For Physicians</a>
+  <a href="#collab-demands" onclick="closeMenu()">Collaboration Demands</a>
+  <a href="psychiatry-match-np-pa-intake.html" target="_blank" onclick="closeMenu()">NP / PA Application</a>
+  <a href="md-match-physician-intake.html" target="_blank" onclick="closeMenu()">Physician Application</a>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">Founded by an Actively Collaborating Psychiatrist</div>
+    <h1>Compliant Collaboration,<br>Built for <em>Both Sides</em></h1>
+    <p class="hero-sub">MD-Match connects NPs and PAs to collaborating physicians — with fair pricing, fair compensation, and a structured framework built for compliance in every state.</p>
+    <div class="hero-ctas">
+      <a href="psychiatry-match-np-pa-intake.html" target="_blank" class="btn-gold">NP / PA Application</a>
+      <a href="md-match-physician-intake.html" target="_blank" class="btn-outline">Physician Application</a>
+    </div>
+  </div>
+</section>
+
+<!-- GOALS -->
+<section id="goals">
+  <div class="section-inner">
+    <div class="section-label">Our Mission</div>
+    <h2 class="section-title">What MD-Match <em>Stands For</em></h2>
+    <div class="divider"></div>
+    <p class="section-intro">MD-Match was built by Dr. Philip Wasef, MD — an actively collaborating psychiatrist — to solve a problem he experienced firsthand: collaboration that works for everyone, not just one side of the table.</p>
+
+  </div>
+</section>
+
+<!-- FOR NPs & PAs -->
+<section id="for-nps">
+  <div class="section-inner">
+    <div class="section-label">For NPs &amp; PAs</div>
+    <h2 class="section-title">Everything You Need to<br><em>Collaborate with Confidence</em></h2>
+    <div class="divider"></div>
+    <p class="section-intro">MD-Match handles the complexity so you can focus on patient care. Here's what's included when you join.</p>
+
+    <div class="offer-list">
+
+      <div class="offer-item">
+        <div class="offer-icon">🩺</div>
+        <div class="offer-text-wrap">
+          <div class="offer-title">Specialty-Matched Collaborating Physicians</div>
+          <div class="offer-desc">Every collaboration is with a physician who specializes in your field of practice — not a random match. You work with someone who understands your patient population and clinical scope.</div>
+        </div>
+      </div>
+
+      <div class="offer-item">
+        <div class="offer-icon">📋</div>
+        <div class="offer-text-wrap">
+          <div class="offer-title">End-to-End State Compliance Support</div>
+          <div class="offer-desc">We streamline the entire process — from drafting collaborative agreements that meet each state's board of nursing requirements, to guiding prescriptive authority approval. Every step, handled.</div>
+        </div>
+      </div>
+
+      <div class="offer-item">
+        <div class="offer-icon">📅</div>
+        <div class="offer-text-wrap">
+          <div class="offer-title">Monthly Check-Ins with Dr. Wasef</div>
+          <div class="offer-desc">Brief check-ins directly with Dr. Wasef to review your state-specific requirements, track compliance, and ensure you're fully covered in the event of any board review.</div>
+        </div>
+      </div>
+
+      <div class="offer-item">
+        <div class="offer-icon">💰</div>
+        <div class="offer-text-wrap">
+          <div class="offer-title">Pricing Tailored to Your Practice</div>
+          <div class="offer-desc">Fees reflect the real demands of your state and practice setting — not a one-size-fits-all rate. Fair, transparent pricing designed to make collaboration accessible, not burdensome.</div>
+        </div>
+      </div>
+
+      <div class="offer-item">
+        <div class="offer-icon">🛡️</div>
+        <div class="offer-text-wrap">
+          <div class="offer-title">Malpractice Insurance Covered for Your Physician</div>
+          <div class="offer-desc">Medical malpractice insurance for your collaborating physician is included — reducing the need for additional coverage on your end and protecting both parties in the collaboration.</div>
+        </div>
+      </div>
+
+      <div class="offer-item">
+        <div class="offer-icon">🤝</div>
+        <div class="offer-text-wrap">
+          <div class="offer-title">$50 Match Fee · Free Rematch, Always</div>
+          <div class="offer-desc">A one-time $50 fee to get matched. If you or your collaborating physician ever need to end the agreement, we'll rematch you at no additional cost — no penalties, no hassle.</div>
+          <span class="offer-tag">No Hidden Fees</span>
+        </div>
+      </div>
+
+      <div class="offer-item">
+        <div class="offer-icon">🎉</div>
+        <div class="offer-text-wrap">
+          <div class="offer-title">50% Off Your First Three Months</div>
+          <div class="offer-desc">All new collaborations receive 50% off for the first three months — giving NPs and PAs the breathing room to get credentialed, grow their caseload, and hit their stride before full pricing applies.</div>
+          <span class="offer-tag">New Collaborations</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- FOR PHYSICIANS -->
+<section id="for-physicians">
+  <div class="section-inner">
+    <div class="section-label">For Collaborating Physicians</div>
+    <h2 class="section-title">A Partnership Built Around<br><em>Your Expertise</em></h2>
+    <div class="divider"></div>
+    <p class="section-intro">MD-Match handles the administrative burden so you can focus on what matters most — providing your expertise and guidance to the NPs and PAs who depend on it.</p>
+
+    <div class="offer-list">
+
+      <div class="offer-item">
+        <div class="offer-icon">🎯</div>
+        <div class="offer-text-wrap">
+          <div class="offer-title">Carefully Reviewed, Specialty-Aligned Matches</div>
+          <div class="offer-desc">Every match offer is reviewed to align with your specialty and your stated collaboration comfort level. You won't be matched with a practice scope you're not comfortable with.</div>
+        </div>
+      </div>
+
+      <div class="offer-item">
+        <div class="offer-icon">📋</div>
+        <div class="offer-text-wrap">
+          <div class="offer-title">Streamlined Board of Medicine Approvals</div>
+          <div class="offer-desc">We navigate state-specific collaboration approval processes with the board of medicine on your behalf — reducing the administrative lift required to get a compliant collaboration in place.</div>
+        </div>
+      </div>
+
+      <div class="offer-item">
+        <div class="offer-icon">⚖️</div>
+        <div class="offer-text-wrap">
+          <div class="offer-title">Attorney-Reviewed Collaborative Agreements</div>
+          <div class="offer-desc">Every collaborative agreement is drafted and reviewed by a healthcare attorney — structured to protect both you and your NP or PA partner, and to meet the requirements of each state.</div>
+        </div>
+      </div>
+
+      <div class="offer-item">
+        <div class="offer-icon">📅</div>
+        <div class="offer-text-wrap">
+          <div class="offer-title">Compliance Tracking &amp; State-Specific Guidance</div>
+          <div class="offer-desc">MD-Match actively tracks compliance requirements and stays in regular contact with you to review any state-specific obligations — so you're always current and covered.</div>
+        </div>
+      </div>
+
+      <div class="offer-item">
+        <div class="offer-icon">🛡️</div>
+        <div class="offer-text-wrap">
+          <div class="offer-title">Medical Malpractice Coverage Included</div>
+          <div class="offer-desc">MD-Match covers medical malpractice insurance for all collaborating physicians — protecting you throughout the collaboration.</div>
+        </div>
+      </div>
+
+      <div class="offer-item">
+        <div class="offer-icon">💰</div>
+        <div class="offer-text-wrap">
+          <div class="offer-title">Fair Compensation for Your Time</div>
+          <div class="offer-desc">Compensation is set to reflect the real demands of each state and practice type — acknowledging the responsibility you take on and ensuring collaboration is genuinely worthwhile.</div>
+        </div>
+      </div>
+
+      <div class="offer-item">
+        <div class="offer-icon">🗂️</div>
+        <div class="offer-text-wrap">
+          <div class="offer-title">Zero Administrative Burden</div>
+          <div class="offer-desc">Paperwork, payment tracking, documentation — we handle all of it. You won't spend your time managing administrative tasks. MD-Match takes care of everything behind the scenes.</div>
+        </div>
+      </div>
+
+      <div class="offer-item">
+        <div class="offer-icon">✅</div>
+        <div class="offer-text-wrap">
+          <div class="offer-title">No Fees — Just Your Availability and Expertise</div>
+          <div class="offer-desc">MD-Match does not charge our physicians. All we ask is that you be available to your NPs and PAs — to offer your expertise and guidance when they need it.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="physician-note">
+      <div class="physician-note-text">I've found that a physician who is genuinely available and engaged is the most important ingredient to a successful collaboration — and to ensuring patients receive the best care possible. That's the standard we hold ourselves to at MD-Match.</div>
+      <div class="physician-note-sig">— Dr. Philip Wasef, MD · Founder, MD-Match</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- COLLABORATION DEMANDS -->
+<section id="collab-demands">
+  <div class="section-inner">
+    <div class="section-label">State Demand Map</div>
+    <h2 class="section-title">Collaboration <em>Demand by State</em></h2>
+    <div class="divider" style="background:var(--gold);"></div>
+    <p class="section-intro">For physicians who would like to collaborate with more NPs and PAs, we recommend using the IMLC and obtaining medical licenses in the states below. States in <span style="color:#f87171; font-weight:700;">red</span> represent the highest current demand.</p>
+
+    <div style="margin-top:2rem;">
+
+      <div class="demand-block">
+        <div class="demand-block-label high">Highest Demand</div>
+        <div class="state-pills-row">
+          <span class="state-chip hot">TX</span>
+          <span class="state-chip hot">AL</span>
+          <span class="state-chip hot">CA</span>
+          <span class="state-chip hot">FL</span>
+          <span class="state-chip hot">OH</span>
+          <span class="state-chip hot">NC</span>
+          <span class="state-chip normal">NY</span>
+          <span class="state-chip normal">NJ</span>
+          <span class="state-chip normal">PA</span>
+          <span class="state-chip normal">IN</span>
+        </div>
+      </div>
+
+      <div class="demand-block">
+        <div class="demand-block-label med">Less Demand — Still Very Helpful</div>
+        <div class="state-pills-row">
+          <span class="state-chip normal">TN</span>
+          <span class="state-chip normal">LA</span>
+          <span class="state-chip normal">MO</span>
+          <span class="state-chip normal">MI</span>
+          <span class="state-chip normal">IL</span>
+          <span class="state-chip normal">KY</span>
+          <span class="state-chip noted">GA *</span>
+          <span class="state-chip noted">SC *</span>
+          <span class="state-chip normal">OK</span>
+          <span class="state-chip normal">VI</span>
+          <span class="state-chip normal">AK</span>
+          <span class="state-chip noted">MS **</span>
+          <span class="state-chip noted">MO **</span>
+          <span class="state-chip normal">WV</span>
+          <span class="state-chip normal">CT</span>
+          <span class="state-chip normal">DE</span>
+          <span class="state-chip normal">WI</span>
+        </div>
+      </div>
+
+      <div class="demand-footnotes">
+        <div class="demand-footnote"><strong>*</strong> GA and SC have strict geographical requirements.</div>
+        <div class="demand-footnote"><strong>**</strong> MS and MO have geographical requirements, but certain NPs may be exempt.</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer id="apply">
+  <div class="footer-inner">
+    <div>
+      <div class="footer-brand-name">MD-<em>Match</em></div>
+      <div class="footer-brand-sub">Collaborating Physician Network</div>
+      <p class="footer-desc">A platform built by Dr. Philip Wasef, MD — an actively collaborating psychiatrist — to give NPs, PAs, and physicians a compliant, clearly structured path to collaborate with confidence.</p>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Contact &amp; Apply</div>
+      <a href="mailto:pwase001@gmail.com">pwase001@gmail.com</a>
+      <a href="psychiatry-match-np-pa-intake.html" target="_blank">NP / PA Application</a>
+      <a href="md-match-physician-intake.html" target="_blank">Physician Application</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2025 MD-Match · Founded by Dr. Philip Wasef, MD · All rights reserved.</div>
+    <div class="footer-copy">Confidential · Not for redistribution</div>
+  </div>
+</footer>
+
+<script>
+  function toggleMenu() {
+    document.getElementById('mobileMenu').classList.toggle('open');
+  }
+  function closeMenu() {
+    document.getElementById('mobileMenu').classList.remove('open');
+  }
+</script>
+
+</body>
+</html>

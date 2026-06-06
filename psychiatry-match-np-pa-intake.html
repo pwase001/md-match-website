@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Psychiatry Match — NP / PA Intake Form</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0e1117;
+    --paper: #f5f0e8;
+    --cream: #ede7d9;
+    --teal: #2a6b6b;
+    --teal-light: #5a9e9e;
+    --rust: #9c4a2b;
+    --gold: #c49a3c;
+    --muted: #7a7469;
+    --border: #c8bfad;
+    --section-gap: 3rem;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  .letterhead {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 2.5rem 4rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .letterhead::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(-45deg, transparent, transparent 40px, rgba(255,255,255,0.015) 40px, rgba(255,255,255,0.015) 80px);
+  }
+
+  .brand { position: relative; z-index: 1; }
+
+  .brand-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.8rem;
+    font-weight: 300;
+    letter-spacing: 0.04em;
+    line-height: 1;
+  }
+
+  .brand-name span { color: var(--gold); font-style: italic; }
+
+  .brand-tagline {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(245,240,232,0.5);
+    margin-top: 0.4rem;
+  }
+
+  .form-meta {
+    position: relative;
+    z-index: 1;
+    text-align: right;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(245,240,232,0.4);
+    line-height: 2;
+  }
+
+  .form-meta strong {
+    color: var(--gold);
+    display: block;
+    font-size: 11px;
+    margin-bottom: 0.2rem;
+  }
+
+  .teal-rule {
+    height: 3px;
+    background: linear-gradient(90deg, var(--teal), var(--teal-light), var(--gold));
+  }
+
+  .intro-band {
+    background: var(--cream);
+    border-bottom: 1px solid var(--border);
+    padding: 1.6rem 4rem;
+  }
+
+  .intro-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    font-weight: 300;
+    font-style: italic;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+
+  .form-wrapper {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 3rem 2rem 5rem;
+  }
+
+  .section {
+    margin-bottom: var(--section-gap);
+    opacity: 0;
+    transform: translateY(16px);
+    animation: fadeUp 0.45s ease forwards;
+  }
+
+  .section:nth-child(1) { animation-delay: 0.05s; }
+  .section:nth-child(2) { animation-delay: 0.12s; }
+  .section:nth-child(3) { animation-delay: 0.19s; }
+  .section:nth-child(4) { animation-delay: 0.26s; }
+  .section:nth-child(5) { animation-delay: 0.33s; }
+  .section:nth-child(6) { animation-delay: 0.40s; }
+
+  @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-number {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.85rem;
+    color: var(--teal);
+    font-style: italic;
+    min-width: 1.5rem;
+  }
+
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.45rem;
+    font-weight: 300;
+    letter-spacing: 0.02em;
+  }
+
+  .section-subtitle {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-left: auto;
+  }
+
+  /* Fields */
+  .field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2rem 2rem;
+  }
+
+  .field-span-2 { grid-column: span 2; }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .field > label {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .field > label .req { color: var(--rust); margin-left: 2px; }
+
+  .field input,
+  .field select,
+  .field textarea {
+    background: white;
+    border: 1px solid var(--border);
+    border-bottom: 2px solid var(--border);
+    padding: 0.65rem 0.85rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+    -webkit-appearance: none;
+    border-radius: 0;
+  }
+
+  .field input:focus,
+  .field select:focus,
+  .field textarea:focus {
+    border-bottom-color: var(--teal);
+    background: #fdfcf9;
+  }
+
+  .field input::placeholder,
+  .field textarea::placeholder { color: var(--border); font-style: italic; }
+
+  .field select {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a7469'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.8rem center;
+    padding-right: 2rem;
+  }
+
+  .field textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
+
+  /* Check / Radio pill groups */
+  .check-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 0.1rem;
+  }
+
+  .check-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    padding: 0.45rem 0.85rem;
+    border: 1px solid var(--border);
+    background: white;
+    cursor: pointer;
+    transition: all 0.13s;
+    user-select: none;
+  }
+
+  .check-group label:hover { border-color: var(--teal-light); background: #f0f7f7; }
+
+  .check-group input[type="checkbox"],
+  .check-group input[type="radio"] {
+    accent-color: var(--teal);
+    width: 13px; height: 13px;
+    cursor: pointer; flex-shrink: 0;
+  }
+
+  /* Why Collaborating block — feature section */
+  .why-block {
+    display: flex;
+    flex-direction: column;
+    gap: 1.4rem;
+  }
+
+  .why-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .why-label {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .why-label .req { color: var(--rust); margin-left: 2px; }
+
+  .radio-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .radio-row label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 12px;
+    padding: 0.45rem 0.85rem;
+    border: 1px solid var(--border);
+    background: white;
+    cursor: pointer;
+    transition: all 0.13s;
+    user-select: none;
+  }
+
+  .radio-row label:hover { border-color: var(--teal-light); background: #f0f7f7; }
+  .radio-row input[type="radio"] { accent-color: var(--teal); width: 13px; height: 13px; cursor: pointer; }
+
+  .radio-row label:has(input:checked) {
+    border-color: var(--teal);
+    background: #eaf4f4;
+    color: var(--teal);
+  }
+
+  .conditional-field {
+    display: none;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-top: 0.4rem;
+    padding-left: 1rem;
+    border-left: 2px solid var(--teal-light);
+  }
+
+  .conditional-field.visible { display: flex; }
+
+  .conditional-field label {
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--teal);
+  }
+
+  .conditional-field input,
+  .conditional-field select,
+  .conditional-field textarea {
+    background: white;
+    border: 1px solid var(--border);
+    border-bottom: 2px solid var(--teal-light);
+    padding: 0.6rem 0.8rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--ink);
+    outline: none;
+    border-radius: 0;
+    resize: vertical;
+  }
+
+  /* State selector */
+  .three-state-panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  .state-panel { display: flex; flex-direction: column; gap: 0.6rem; }
+
+  .state-panel-label {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .state-panel-label .req { color: var(--rust); margin-left: 2px; }
+  .state-panel-note { font-size: 10px; color: var(--muted); font-style: italic; }
+
+  .state-grid { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+
+  .state-pill { display: none; }
+
+  .state-pill + label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.28rem 0.6rem;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    border: 1px solid var(--border);
+    background: white;
+    cursor: pointer;
+    transition: all 0.13s;
+    font-family: 'DM Mono', monospace;
+    min-width: 2.6rem;
+    text-align: center;
+    user-select: none;
+  }
+
+  .state-pill:checked + label { background: var(--teal); border-color: var(--teal); color: white; }
+  .state-pill + label:hover { border-color: var(--teal-light); background: #eaf4f4; }
+  .state-pill:checked + label:hover { background: var(--teal); }
+
+  .select-all-row { display: flex; gap: 0.5rem; margin-bottom: 0.3rem; }
+
+  .btn-tiny {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border: 1px solid var(--border);
+    background: white;
+    padding: 0.25rem 0.65rem;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.13s;
+  }
+
+  .btn-tiny:hover { border-color: var(--teal-light); color: var(--teal); }
+
+  .selected-count {
+    font-size: 10px;
+    color: var(--teal);
+    letter-spacing: 0.1em;
+    margin-left: auto;
+    align-self: center;
+  }
+
+  /* Legal block */
+  .legal-block {
+    background: white;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--rust);
+    padding: 1.2rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+
+  .legal-question { display: flex; flex-direction: column; gap: 0.5rem; }
+
+  .legal-question-label {
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .legal-question-label .req { color: var(--rust); margin-left: 2px; }
+
+  .legal-radio-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+  .legal-radio-row label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 12px;
+    padding: 0.45rem 0.9rem;
+    border: 1px solid var(--border);
+    background: white;
+    cursor: pointer;
+    transition: all 0.13s;
+    user-select: none;
+  }
+
+  .legal-radio-row input[type="radio"] { accent-color: var(--rust); cursor: pointer; }
+  .legal-radio-row label:has(input:checked) { border-color: var(--rust); background: #fdf5f3; color: var(--rust); }
+
+  .legal-detail { display: none; flex-direction: column; gap: 0.35rem; margin-top: 0.3rem; }
+  .legal-detail.visible { display: flex; }
+
+  .legal-detail textarea {
+    background: white;
+    border: 1px solid var(--border);
+    border-bottom: 2px solid var(--rust);
+    padding: 0.65rem 0.85rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--ink);
+    outline: none;
+    resize: vertical;
+    min-height: 70px;
+    line-height: 1.6;
+    border-radius: 0;
+  }
+
+  .legal-detail-label {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--rust);
+  }
+
+  /* Note box */
+  .note-box {
+    background: white;
+    border-left: 3px solid var(--gold);
+    padding: 0.75rem 1rem;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.7;
+    font-style: italic;
+    margin-top: 0.75rem;
+  }
+
+  /* Submit */
+  .submit-area {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.8rem 2rem;
+    background: var(--cream);
+    border: 1px solid var(--border);
+    margin-top: 2rem;
+  }
+
+  .submit-disclaimer {
+    font-size: 10px;
+    color: var(--muted);
+    max-width: 400px;
+    line-height: 1.7;
+    letter-spacing: 0.04em;
+  }
+
+  .btn-submit {
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    padding: 1rem 2.5rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-submit::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--teal), var(--gold));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+  }
+
+  .btn-submit:hover { background: #1e2530; }
+  .btn-submit:hover::after { transform: scaleX(1); }
+  .btn-submit:active { transform: scale(0.98); }
+
+  .toast {
+    display: none;
+    max-width: 780px;
+    margin: 2rem auto;
+    background: var(--teal);
+    color: white;
+    padding: 2.5rem 3rem;
+    text-align: center;
+    font-family: 'Playfair Display', serif;
+  }
+  .toast-icon { font-size: 2rem; margin-bottom: 0.75rem; font-family: sans-serif; }
+  .toast-title { font-size: 1.4rem; margin-bottom: 0.5rem; }
+  .toast-body { font-family: 'DM Mono', monospace; font-size: 12px; color: rgba(255,255,255,0.65); line-height: 1.75; }
+  .toast-body a { color: rgba(255,255,255,0.9); }
+
+  @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  @media (max-width: 700px) {
+    .letterhead { padding: 1.5rem; flex-direction: column; gap: 1rem; align-items: flex-start; }
+    .intro-band { padding: 1.4rem 1.5rem; }
+    .form-wrapper { padding: 2rem 1rem 4rem; }
+    .field-grid { grid-template-columns: 1fr; }
+    .field-span-2 { grid-column: span 1; }
+    .three-state-panels { grid-template-columns: 1fr; }
+    .submit-area { flex-direction: column; gap: 1.5rem; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<header class="letterhead">
+  <div class="brand">
+    <div class="brand-name">Psychiatry <span>Match</span></div>
+    <div class="brand-tagline">Connecting Nurse Practitioners &amp; PAs with Collaborating Psychiatrists</div>
+  </div>
+  <div class="form-meta">
+    <strong>NP / PA Intake Form</strong>
+    <span>Form NP-PA-01 · Confidential</span>
+    <span>Version 2026</span>
+  </div>
+</header>
+<div class="teal-rule"></div>
+
+<div class="intro-band">
+  <div class="intro-text">
+    Tell us about yourself and your practice so we can match you with the right collaborating psychiatrist. This form takes about 5 minutes and covers your credentials, practice setting, licensure, and what you're looking for in a collaboration.
+  </div>
+</div>
+
+<div class="form-wrapper">
+<form id="intakeForm" novalidate>
+
+  <!-- 01 · Personal & Credentials -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">01</span>
+      <span class="section-title">Personal &amp; Credentials</span>
+      <span class="section-subtitle">Basic Information</span>
+    </div>
+
+    <div class="field-grid">
+      <div class="field">
+        <label>First Name <span class="req">*</span></label>
+        <input type="text" placeholder="Jane" required>
+      </div>
+      <div class="field">
+        <label>Last Name <span class="req">*</span></label>
+        <input type="text" placeholder="Smith" required>
+      </div>
+      <div class="field">
+        <label>Professional Email <span class="req">*</span></label>
+        <input type="email" placeholder="jsmith@practice.org" required>
+      </div>
+      <div class="field">
+        <label>Phone Number <span class="req">*</span></label>
+        <input type="tel" placeholder="(555) 000-0000" required>
+      </div>
+      <div class="field">
+        <label>Provider Type <span class="req">*</span></label>
+        <select required id="providerType" onchange="togglePANote()">
+          <option value="">— Select —</option>
+          <option value="np">Nurse Practitioner (NP / APRN)</option>
+          <option value="pa">Physician Assistant (PA)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Specialty / Certification <span class="req">*</span></label>
+        <select required>
+          <option value="">— Select —</option>
+          <option>PMHNP – Psychiatric-Mental Health NP</option>
+          <option>FNP – Family Nurse Practitioner</option>
+          <option>ANP – Adult Nurse Practitioner</option>
+          <option>PNP – Pediatric Nurse Practitioner</option>
+          <option>PA-C – Certified Physician Assistant (Psychiatry)</option>
+          <option>PA-C – Certified Physician Assistant (Family Medicine)</option>
+          <option>PA-C – Other Specialty</option>
+          <option>Other / In Progress</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>NPI Number</label>
+        <input type="text" placeholder="10-digit NPI">
+      </div>
+      <div class="field">
+        <label>Years of Clinical Experience <span class="req">*</span></label>
+        <select required>
+          <option value="">— Select —</option>
+          <option>New Graduate (0–1 yr)</option>
+          <option>Early Career (1–3 yrs)</option>
+          <option>Established (3–7 yrs)</option>
+          <option>Experienced (7–15 yrs)</option>
+          <option>Seasoned (15+ yrs)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Years of Psychiatry-Specific Experience</label>
+        <select>
+          <option value="">— Select —</option>
+          <option>None — new to psychiatry</option>
+          <option>Under 1 year</option>
+          <option>1–3 years</option>
+          <option>3–7 years</option>
+          <option>7+ years</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Highest Degree Earned <span class="req">*</span></label>
+        <select required>
+          <option value="">— Select —</option>
+          <option>MSN – Master of Science in Nursing</option>
+          <option>DNP – Doctor of Nursing Practice</option>
+          <option>PhD – Doctor of Philosophy (Nursing)</option>
+          <option>MMS – Master of Medical Science (PA)</option>
+          <option>MPAS – Master of Physician Assistant Studies</option>
+          <option>Other</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- 02 · Why You Need a Collaborating Psychiatrist -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">02</span>
+      <span class="section-title">Your Practice &amp; Why You're Here</span>
+      <span class="section-subtitle">Helps Us Find the Right Fit</span>
+    </div>
+
+    <div class="why-block">
+
+      <div class="why-row">
+        <div class="why-label">Why are you seeking a collaborating psychiatrist now? <span class="req">*</span></div>
+        <div class="radio-row">
+          <label><input type="radio" name="whyReason" value="new-practice" onchange="handleWhyChange(this)"> <span>Opening a new private practice</span></label>
+          <label><input type="radio" name="whyReason" value="joining-group" onchange="handleWhyChange(this)"> <span>Joining a group practice</span></label>
+          <label><input type="radio" name="whyReason" value="switching" onchange="handleWhyChange(this)"> <span>Switching collaborating physicians</span></label>
+          <label><input type="radio" name="whyReason" value="adding" onchange="handleWhyChange(this)"> <span>Adding a collaborator (expanding)</span></label>
+          <label><input type="radio" name="whyReason" value="first-time" onchange="handleWhyChange(this)"> <span>First time ever — new to practice</span></label>
+          <label><input type="radio" name="whyReason" value="other" onchange="handleWhyChange(this)"> <span>Other</span></label>
+        </div>
+        <div class="conditional-field" id="why-switching">
+          <label>Why are you switching? What didn't work with the previous arrangement?</label>
+          <textarea placeholder="e.g., Previous collaborator retired, communication was inconsistent, moving to a new state…"></textarea>
+        </div>
+        <div class="conditional-field" id="why-other">
+          <label>Please describe your situation</label>
+          <textarea placeholder="Tell us more…"></textarea>
+        </div>
+      </div>
+
+      <div class="why-row">
+        <div class="why-label">Where will you be seeing patients? <span class="req">*</span></div>
+        <div class="radio-row">
+          <label><input type="radio" name="patientSetting" value="in-person"> <span>In-Person Only</span></label>
+          <label><input type="radio" name="patientSetting" value="virtual"> <span>Telehealth / Virtual Only</span></label>
+          <label><input type="radio" name="patientSetting" value="both"> <span>Both In-Person &amp; Virtual</span></label>
+        </div>
+      </div>
+
+      <div class="why-row">
+        <div class="why-label">Practice setting <span class="req">*</span></div>
+        <div class="radio-row">
+          <label><input type="radio" name="practiceSetting" value="private-solo"> <span>Private Practice — Solo</span></label>
+          <label><input type="radio" name="practiceSetting" value="private-group"> <span>Private Practice — Group</span></label>
+          <label><input type="radio" name="practiceSetting" value="community"> <span>Community Mental Health</span></label>
+          <label><input type="radio" name="practiceSetting" value="integrated"> <span>Integrated Primary Care</span></label>
+          <label><input type="radio" name="practiceSetting" value="telehealth-platform"> <span>Telehealth Platform</span></label>
+          <label><input type="radio" name="practiceSetting" value="hospital"> <span>Hospital / Health System</span></label>
+          <label><input type="radio" name="practiceSetting" value="other-setting"> <span>Other</span></label>
+        </div>
+      </div>
+
+      <div class="why-row">
+        <div class="why-label">Will you be prescribing controlled substances? <span class="req">*</span></div>
+        <div class="radio-row">
+          <label><input type="radio" name="controlled" value="yes" onchange="toggleControlled(true)"> <span>Yes</span></label>
+          <label><input type="radio" name="controlled" value="no" onchange="toggleControlled(false)"> <span>No</span></label>
+          <label><input type="radio" name="controlled" value="unsure" onchange="toggleControlled(false)"> <span>Unsure / Not yet</span></label>
+        </div>
+        <div class="conditional-field" id="controlled-detail">
+          <label>Which schedules? Check all that apply</label>
+          <div class="check-group">
+            <label><input type="checkbox"> <span>Schedule II (e.g., stimulants, opioids)</span></label>
+            <label><input type="checkbox"> <span>Schedule III (e.g., buprenorphine)</span></label>
+            <label><input type="checkbox"> <span>Schedule IV (e.g., benzodiazepines)</span></label>
+            <label><input type="checkbox"> <span>Schedule V</span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="why-row">
+        <div class="why-label">Patient population you will primarily serve</div>
+        <div class="check-group">
+          <label><input type="checkbox"> <span>Children &amp; Adolescents</span></label>
+          <label><input type="checkbox"> <span>Adults (18–64)</span></label>
+          <label><input type="checkbox"> <span>Geriatric (65+)</span></label>
+          <label><input type="checkbox"> <span>Perinatal / Postpartum</span></label>
+          <label><input type="checkbox"> <span>LGBTQ+</span></label>
+          <label><input type="checkbox"> <span>Substance Use / Addiction</span></label>
+          <label><input type="checkbox"> <span>Trauma / PTSD</span></label>
+          <label><input type="checkbox"> <span>General Psychiatry</span></label>
+        </div>
+      </div>
+
+      <div class="why-row">
+        <div class="why-label">Approximate weekly patient volume (once fully practicing)</div>
+        <div class="radio-row">
+          <label><input type="radio" name="volume"> <span>Under 10 patients/week</span></label>
+          <label><input type="radio" name="volume"> <span>10–25 patients/week</span></label>
+          <label><input type="radio" name="volume"> <span>25–50 patients/week</span></label>
+          <label><input type="radio" name="volume"> <span>50+ patients/week</span></label>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 03 · Licensure, Collaboration Needed & DEA -->
+
+  <!-- 03 · Ketamine & TMS -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">03</span>
+      <span class="section-title">Ketamine &amp; TMS Services</span>
+      <span class="section-subtitle">Advanced Treatments</span>
+    </div>
+
+    <div class="why-block">
+
+      <div class="why-row">
+        <div class="why-label">Do you currently offer or plan to offer ketamine therapy in your practice?</div>
+        <div class="radio-row">
+          <label><input type="radio" name="ketamine" value="yes-current" onchange="handleKetamineChange(this)"> <span>Yes — currently offering</span></label>
+          <label><input type="radio" name="ketamine" value="yes-planned" onchange="handleKetamineChange(this)"> <span>Yes — planning to offer</span></label>
+          <label><input type="radio" name="ketamine" value="no" onchange="handleKetamineChange(this)"> <span>No</span></label>
+        </div>
+        <div class="conditional-field" id="ketamine-detail">
+          <label>Please describe your ketamine program (e.g., IV infusion, IM, intranasal, protocol used, patient population)</label>
+          <textarea placeholder="e.g., IV ketamine infusions for treatment-resistant depression, working with anesthesia support…"></textarea>
+        </div>
+      </div>
+
+      <div class="why-row">
+        <div class="why-label">Do you currently offer or plan to offer TMS (Transcranial Magnetic Stimulation) therapy?</div>
+        <div class="radio-row">
+          <label><input type="radio" name="tms" value="yes-current" onchange="handleTMSChange(this)"> <span>Yes — currently offering</span></label>
+          <label><input type="radio" name="tms" value="yes-planned" onchange="handleTMSChange(this)"> <span>Yes — planning to offer</span></label>
+          <label><input type="radio" name="tms" value="no" onchange="handleTMSChange(this)"> <span>No</span></label>
+        </div>
+        <div class="conditional-field" id="tms-detail">
+          <label>Please describe your TMS program (e.g., device/protocol used, conditions treated, session frequency)</label>
+          <textarea placeholder="e.g., NeuroStar TMS for major depressive disorder, standard 36-session protocol…"></textarea>
+        </div>
+      </div>
+
+      <div class="why-row">
+        <div class="why-label">Are there any other specialized or advanced treatment modalities you offer or plan to offer?</div>
+        <div class="radio-row">
+          <label><input type="radio" name="otherAdvanced" value="yes" onchange="handleOtherAdvancedChange(this)"> <span>Yes</span></label>
+          <label><input type="radio" name="otherAdvanced" value="no" onchange="handleOtherAdvancedChange(this)"> <span>No</span></label>
+        </div>
+        <div class="conditional-field" id="otherAdvanced-detail">
+          <label>Please describe the treatment(s)</label>
+          <textarea placeholder="e.g., SPRAVATO (esketamine), neurofeedback, EMDR, psychedelic-assisted therapy…"></textarea>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="note-box">
+      Collaborating physicians at MD-Match are experienced with advanced treatment modalities. Disclosing your services helps us match you with a physician who has relevant clinical familiarity, which supports better collaboration and appropriate oversight.
+    </div>
+
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">04</span>
+      <span class="section-title">Licensure, Collaboration &amp; DEA</span>
+      <span class="section-subtitle">Collaboration-Required States Only</span>
+    </div>
+
+    <div class="note-box" style="margin-top:0; margin-bottom:1.4rem;">
+      Only states where NPs and PAs are legally required to have a collaborating physician are shown. States with full independent practice authority are excluded as no collaboration agreement is needed there.
+    </div>
+
+    <div class="three-state-panels">
+
+      <div class="state-panel">
+        <div class="state-panel-label">Licensed In <span class="req">*</span></div>
+        <div class="state-panel-note">States where you hold an active NP or PA license</div>
+        <div class="select-all-row">
+          <button type="button" class="btn-tiny" onclick="selectAll('lic')">All</button>
+          <button type="button" class="btn-tiny" onclick="clearAll('lic')">Clear</button>
+          <span class="selected-count" id="lic-count">0 selected</span>
+        </div>
+        <div class="state-grid" id="licGrid"></div>
+      </div>
+
+      <div class="state-panel">
+        <div class="state-panel-label">Need Collaboration In <span class="req">*</span></div>
+        <div class="state-panel-note">States where you require a collaborative agreement to practice or prescribe</div>
+        <div class="select-all-row">
+          <button type="button" class="btn-tiny" onclick="selectAll('collab')">All</button>
+          <button type="button" class="btn-tiny" onclick="clearAll('collab')">Clear</button>
+          <span class="selected-count" id="collab-count">0 selected</span>
+        </div>
+        <div class="state-grid" id="collabGrid"></div>
+      </div>
+
+      <div class="state-panel">
+        <div class="state-panel-label">Active DEA Registration</div>
+        <div class="state-panel-note">States where you currently hold an active DEA number (or plan to obtain one)</div>
+        <div class="select-all-row">
+          <button type="button" class="btn-tiny" onclick="selectAll('dea')">All</button>
+          <button type="button" class="btn-tiny" onclick="clearAll('dea')">Clear</button>
+          <span class="selected-count" id="dea-count">0 selected</span>
+        </div>
+        <div class="state-grid" id="deaGrid"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 04 · Legal & Board Standing -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">05</span>
+      <span class="section-title">Legal &amp; Board Standing</span>
+      <span class="section-subtitle">Required Disclosure</span>
+    </div>
+
+    <div class="legal-block">
+
+      <div class="legal-question">
+        <div class="legal-question-label">Do you have any current, pending, or past disciplinary actions with any state Nursing Board or Medical Board? <span class="req">*</span></div>
+        <div class="legal-radio-row">
+          <label><input type="radio" name="boardAction" value="no" onchange="toggleLegal('boardAction', false)"> <span>No</span></label>
+          <label><input type="radio" name="boardAction" value="yes" onchange="toggleLegal('boardAction', true)"> <span>Yes</span></label>
+        </div>
+        <div class="legal-detail" id="boardAction-detail">
+          <div class="legal-detail-label">Please describe the nature, state(s), and current status</div>
+          <textarea placeholder="e.g., Complaint filed in Texas in 2022, resolved with no finding in 2023…"></textarea>
+        </div>
+      </div>
+
+      <div class="legal-question">
+        <div class="legal-question-label">Has your NP or PA license ever been suspended, revoked, or placed on probation in any state? <span class="req">*</span></div>
+        <div class="legal-radio-row">
+          <label><input type="radio" name="licenseSuspension" value="no" onchange="toggleLegal('licenseSuspension', false)"> <span>No</span></label>
+          <label><input type="radio" name="licenseSuspension" value="yes" onchange="toggleLegal('licenseSuspension', true)"> <span>Yes</span></label>
+        </div>
+        <div class="legal-detail" id="licenseSuspension-detail">
+          <div class="legal-detail-label">Please provide the state(s), dates, and current status</div>
+          <textarea placeholder="e.g., License placed on probation in Florida 2019–2020, now fully reinstated…"></textarea>
+        </div>
+      </div>
+
+      <div class="legal-question">
+        <div class="legal-question-label">Has your DEA registration ever been suspended, revoked, or voluntarily surrendered? <span class="req">*</span></div>
+        <div class="legal-radio-row">
+          <label><input type="radio" name="deaAction" value="no" onchange="toggleLegal('deaAction', false)"> <span>No</span></label>
+          <label><input type="radio" name="deaAction" value="yes" onchange="toggleLegal('deaAction', true)"> <span>Yes</span></label>
+        </div>
+        <div class="legal-detail" id="deaAction-detail">
+          <div class="legal-detail-label">Please describe the circumstances and current status</div>
+          <textarea placeholder="e.g., DEA voluntarily surrendered in 2018 while under investigation, reissued 2019…"></textarea>
+        </div>
+      </div>
+
+      <div class="legal-question">
+        <div class="legal-question-label">Are you currently involved in any malpractice litigation? <span class="req">*</span></div>
+        <div class="legal-radio-row">
+          <label><input type="radio" name="malpractice" value="no" onchange="toggleLegal('malpractice', false)"> <span>No</span></label>
+          <label><input type="radio" name="malpractice" value="yes" onchange="toggleLegal('malpractice', true)"> <span>Yes</span></label>
+        </div>
+        <div class="legal-detail" id="malpractice-detail">
+          <div class="legal-detail-label">Brief description (you are not required to disclose case-specific legal details)</div>
+          <textarea placeholder="e.g., One open matter in New York, represented by counsel, pending resolution…"></textarea>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="note-box">
+      Disclosure of a past issue does not automatically disqualify you. All responses are reviewed confidentially by our team and evaluated in context. Omitting material information may result in removal from the platform.
+    </div>
+  </div>
+
+  <!-- 05 · Final -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">06</span>
+      <span class="section-title">One Last Thing</span>
+    </div>
+    <div class="field-grid">
+      <div class="field">
+        <label>Ideal Start Date for Collaboration</label>
+        <input type="date">
+      </div>
+      <div class="field">
+        <label>How Did You Hear About Psychiatry Match?</label>
+        <select>
+          <option value="">— Select —</option>
+          <option>Colleague / Referral</option>
+          <option>Conference / Event</option>
+          <option>LinkedIn</option>
+          <option>Search Engine</option>
+          <option>AANP / AAPA / Professional Organization</option>
+          <option>Social Media</option>
+          <option>Podcast</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field field-span-2">
+        <label>Anything Else We Should Know</label>
+        <textarea placeholder="Additional context about your practice, specific needs from a collaborating psychiatrist, questions for our team…"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Submit -->
+  <div class="submit-area">
+    <div class="submit-disclaimer">
+      Fields marked <span style="color:var(--rust)">*</span> are required. All information is kept strictly confidential and is never shared publicly or sold. You will hear from our team within 3–5 business days.
+    </div>
+    <button type="submit" class="btn-submit">Submit Application →</button>
+  </div>
+
+</form>
+</div>
+
+<div class="toast" id="toast">
+  <div class="toast-icon">✓</div>
+  <div class="toast-title">Application Submitted</div>
+  <div class="toast-body">Thank you — we'll review your application and be in touch within 3–5 business days.<br>Questions? Email <a href="mailto:pwase001@gmail.com">pwase001@gmail.com</a></div>
+</div>
+
+<script>
+  const COLLAB_STATES = [
+    'AL','AR','CA','CT','DE','FL','GA','IL','IN','KS',
+    'KY','LA','MD','MI','MO','MS','NC','NJ','NM','NY',
+    'OH','OK','PA','SC','TN','TX','VA','WI','WV'
+  ];
+
+  function buildPills(containerId, prefix) {
+    const container = document.getElementById(containerId);
+    COLLAB_STATES.forEach(st => {
+      const id = `${prefix}-${st}`;
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.className = 'state-pill';
+      input.id = id;
+      input.value = st;
+      input.addEventListener('change', () => updateCount(prefix));
+      const label = document.createElement('label');
+      label.htmlFor = id;
+      label.textContent = st;
+      container.appendChild(input);
+      container.appendChild(label);
+    });
+  }
+
+  function updateCount(prefix) {
+    const checked = document.querySelectorAll(`.state-pill[id^="${prefix}-"]:checked`).length;
+    const el = document.getElementById(`${prefix}-count`);
+    if (el) el.textContent = checked === 0 ? '0 selected' : `${checked} selected`;
+  }
+
+  function selectAll(prefix) {
+    document.querySelectorAll(`.state-pill[id^="${prefix}-"]`).forEach(el => el.checked = true);
+    updateCount(prefix);
+  }
+
+  function clearAll(prefix) {
+    document.querySelectorAll(`.state-pill[id^="${prefix}-"]`).forEach(el => el.checked = false);
+    updateCount(prefix);
+  }
+
+  function toggleLegal(name, show) {
+    const el = document.getElementById(`${name}-detail`);
+    if (el) el.classList.toggle('visible', show);
+  }
+
+  function handleWhyChange(radio) {
+    document.getElementById('why-switching').classList.remove('visible');
+    document.getElementById('why-other').classList.remove('visible');
+    if (radio.value === 'switching') document.getElementById('why-switching').classList.add('visible');
+    if (radio.value === 'other') document.getElementById('why-other').classList.add('visible');
+  }
+
+  function toggleControlled(show) {
+    document.getElementById('controlled-detail').classList.toggle('visible', show);
+  }
+
+  buildPills('licGrid', 'lic');
+  buildPills('collabGrid', 'collab');
+  buildPills('deaGrid', 'dea');
+
+  document.getElementById('intakeForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = this.querySelector('.btn-submit');
+    btn.textContent = 'Sending…';
+    btn.disabled = true;
+
+    const form = e.target;
+    const data = new FormData(form);
+    ['lic','collab','dea'].forEach(prefix => {
+      const checked = [...document.querySelectorAll(`.state-pill[id^="${prefix}-"]:checked`)].map(el => el.value);
+      data.set(prefix === 'lic' ? 'licensed_states' : prefix === 'collab' ? 'collab_states' : 'dea_states', checked.join(', ') || 'None');
+    });
+    data.set('_subject', 'New NP / PA Application — MD-Match');
+    const emailEl = form.querySelector('input[type="email"]');
+    if (emailEl) data.set('_replyto', emailEl.value);
+
+    try {
+      data.set('access_key', 'c7f6fe93-49ba-4e3b-ab74-c55a3ace033d');
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        body: data,
+        headers: { 'Accept': 'application/json' }
+      });
+      if (res.ok) {
+        form.style.display = 'none';
+        const toast = document.getElementById('toast');
+        toast.style.display = 'block';
+      } else {
+        btn.textContent = 'Submit Application →';
+        btn.disabled = false;
+        alert('Submission failed — please email pwase001@gmail.com directly.');
+      }
+    } catch {
+      btn.textContent = 'Submit Application →';
+      btn.disabled = false;
+      alert('Network error — please email pwase001@gmail.com directly.');
+    }
+  });
+
+function handleKetamineChange(el) {
+  var detail = document.getElementById('ketamine-detail');
+  detail.classList.toggle('visible', el.value === 'yes-current' || el.value === 'yes-planned');
+}
+function handleTMSChange(el) {
+  var detail = document.getElementById('tms-detail');
+  detail.classList.toggle('visible', el.value === 'yes-current' || el.value === 'yes-planned');
+}
+function handleOtherAdvancedChange(el) {
+  var detail = document.getElementById('otherAdvanced-detail');
+  detail.classList.toggle('visible', el.value === 'yes');
+}
+
+</script>
+</body>
+</html>
