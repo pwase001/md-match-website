@@ -151,21 +151,44 @@
   .footer-bottom { max-width: 1060px; margin: 2.5rem auto 0; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
   .footer-copy { font-size: 11.5px; color: rgba(255,255,255,0.35); }
 
+  /* FOUNDER CARD */
+  .founder-card { display: flex; gap: 2.8rem; align-items: flex-start; margin-top: 2rem; }
+  .founder-photo { width: 220px; height: 280px; object-fit: cover; object-position: center top; border-radius: 10px; flex-shrink: 0; border: 3px solid var(--border); box-shadow: 0 8px 32px rgba(11,53,53,0.12); }
+  .founder-bio { flex: 1; }
+
   /* MOBILE */
-  .mobile-menu { display: none; position: fixed; inset: 0; top: var(--nav-h); background: var(--teal-deep); z-index: 99; flex-direction: column; padding: 2rem; gap: 1rem; }
+  .mobile-menu { display: none; position: fixed; inset: 0; top: var(--nav-h); background: var(--teal-deep); z-index: 99; flex-direction: column; padding: 2rem; gap: 1rem; overflow-y: auto; }
   .mobile-menu.open { display: flex; }
-  .mobile-menu a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 1.1rem; font-weight: 600; padding: 0.7rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .mobile-menu a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 1.1rem; font-weight: 600; padding: 0.8rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
 
   @media (max-width: 900px) {
     .goals-grid { grid-template-columns: 1fr 1fr; }
     .footer-inner { grid-template-columns: 1fr; gap: 2rem; }
     .nav-links { display: none; }
     .hamburger { display: flex; }
+    .founder-card { flex-direction: column; align-items: center; text-align: center; gap: 1.8rem; }
+    .founder-photo { width: 180px; height: 230px; }
   }
   @media (max-width: 600px) {
     nav { padding: 0 1.2rem; }
-    section { padding: 3.5rem 1.2rem; }
+    section { padding: 3rem 1.1rem; }
     .goals-grid { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 2rem; }
+    .hero-sub { font-size: 0.95rem; }
+    .hero-ctas { flex-direction: column; align-items: center; }
+    .hero-ctas a { width: 100%; max-width: 300px; text-align: center; }
+    .section-title { font-size: 1.75rem; }
+    .offer-item { gap: 1rem; }
+    .offer-icon { width: 36px; height: 36px; font-size: 1rem; }
+    .offer-title { font-size: 1.05rem; }
+    .offer-desc { font-size: 13.5px; }
+    .demand-block { padding: 1.2rem 1.1rem; }
+    .state-pills-row { gap: 0.4rem; }
+    .state-chip { font-size: 11.5px; padding: 0.3rem 0.6rem; }
+    .footer-inner { gap: 1.5rem; }
+    .physician-note { padding: 1.3rem 1.4rem; }
+    .physician-note-text { font-size: 0.95rem; }
+    .founder-photo { width: 160px; height: 200px; }
   }
 </style>
 </head>
@@ -183,7 +206,7 @@
     <a href="#for-physicians">For Physicians</a>
     <a href="#collab-demands">State Demand</a>
     <a href="psychiatry-match-np-pa-intake.html" target="_blank" class="nav-btn">NP / PA Application</a>
-    <a href="md-match-physician-intake.html" target="_blank" class="nav-btn">Physician Application</a>
+    <a href="psychiatry-match-np-pa-intake.html" target="_blank" class="nav-btn">Physician Application</a>
   </div>
   <div class="hamburger" onclick="toggleMenu()">
     <span></span><span></span><span></span>
@@ -197,7 +220,7 @@
   <a href="#for-physicians" onclick="closeMenu()">For Physicians</a>
   <a href="#collab-demands" onclick="closeMenu()">Collaboration Demands</a>
   <a href="psychiatry-match-np-pa-intake.html" target="_blank" onclick="closeMenu()">NP / PA Application</a>
-  <a href="md-match-physician-intake.html" target="_blank" onclick="closeMenu()">Physician Application</a>
+  <a href="psychiatry-match-np-pa-intake.html" target="_blank" onclick="closeMenu()">Physician Application</a>
 </div>
 
 <!-- HERO -->
@@ -208,7 +231,7 @@
     <p class="hero-sub">MD-Match connects NPs and PAs to collaborating physicians — with fair pricing, fair compensation, and a structured framework built for compliance in every state.</p>
     <div class="hero-ctas">
       <a href="psychiatry-match-np-pa-intake.html" target="_blank" class="btn-gold">NP / PA Application</a>
-      <a href="md-match-physician-intake.html" target="_blank" class="btn-outline">Physician Application</a>
+      <a href="psychiatry-match-np-pa-intake.html" target="_blank" class="btn-outline">Physician Application</a>
     </div>
   </div>
 </section>
@@ -219,7 +242,14 @@
     <div class="section-label">Our Mission</div>
     <h2 class="section-title">What MD-Match <em>Stands For</em></h2>
     <div class="divider"></div>
-    <p class="section-intro">MD-Match was built by Dr. Philip Wasef, MD — an actively collaborating psychiatrist — to solve a problem he experienced firsthand: collaboration that works for everyone, not just one side of the table.</p>
+    <div class="founder-card">
+      <img src="dr-wasef.jpg" alt="Dr. Philip Wasef, MD" class="founder-photo">
+      <div class="founder-bio">
+        <p class="section-intro" style="margin-bottom:1rem;">MD-Match was built by Dr. Philip Wasef, MD — an actively collaborating psychiatrist — to solve a problem he experienced firsthand: collaboration that works for everyone, not just one side of the table.</p>
+        <p style="color:var(--muted); font-size:14.5px; line-height:1.85;">After years of collaborating with NPs and PAs across multiple states, Dr. Wasef recognized a gap: most platforms served one side of the arrangement while leaving the other navigating compliance alone. MD-Match was designed from the ground up to fix that — giving both physicians and advanced practice providers a structured, compliant, and fairly priced framework they can trust.</p>
+        <div style="margin-top:1.2rem; font-size:13px; font-weight:700; color:var(--teal); letter-spacing:0.05em;">Dr. Philip Wasef, MD &nbsp;·&nbsp; Founder &amp; Actively Collaborating Psychiatrist</div>
+      </div>
+    </div>
 
   </div>
 </section>
@@ -450,7 +480,7 @@
       <div class="footer-col-title">Contact &amp; Apply</div>
       <a href="mailto:pwase001@gmail.com">pwase001@gmail.com</a>
       <a href="psychiatry-match-np-pa-intake.html" target="_blank">NP / PA Application</a>
-      <a href="md-match-physician-intake.html" target="_blank">Physician Application</a>
+      <a href="psychiatry-match-np-pa-intake.html" target="_blank">Physician Application</a>
     </div>
   </div>
   <div class="footer-bottom">
