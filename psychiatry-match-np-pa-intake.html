@@ -598,23 +598,23 @@
     <div class="field-grid">
       <div class="field">
         <label>First Name <span class="req">*</span></label>
-        <input type="text" placeholder="Jane" required>
+        <input type="text" name="First Name" placeholder="Jane" required>
       </div>
       <div class="field">
         <label>Last Name <span class="req">*</span></label>
-        <input type="text" placeholder="Smith" required>
+        <input type="text" name="Last Name" placeholder="Smith" required>
       </div>
       <div class="field">
         <label>Professional Email <span class="req">*</span></label>
-        <input type="email" placeholder="jsmith@practice.org" required>
+        <input type="email" name="Professional Email" placeholder="jsmith@practice.org" required>
       </div>
       <div class="field">
         <label>Phone Number <span class="req">*</span></label>
-        <input type="tel" placeholder="(555) 000-0000" required>
+        <input type="tel" name="Phone Number" placeholder="(555) 000-0000" required>
       </div>
       <div class="field">
         <label>Provider Type <span class="req">*</span></label>
-        <select required id="providerType" onchange="togglePANote()">
+        <select name="Provider Type" required id="providerType" onchange="togglePANote()">
           <option value="">— Select —</option>
           <option value="np">Nurse Practitioner (NP / APRN)</option>
           <option value="pa">Physician Assistant (PA)</option>
@@ -622,7 +622,7 @@
       </div>
       <div class="field">
         <label>Specialty / Certification <span class="req">*</span></label>
-        <select required>
+        <select name="Specialty / Certification" required>
           <option value="">— Select —</option>
           <option>PMHNP – Psychiatric-Mental Health NP</option>
           <option>FNP – Family Nurse Practitioner</option>
@@ -636,11 +636,11 @@
       </div>
       <div class="field">
         <label>NPI Number</label>
-        <input type="text" placeholder="10-digit NPI">
+        <input type="text" name="NPI Number" placeholder="10-digit NPI">
       </div>
       <div class="field">
         <label>Years of Clinical Experience <span class="req">*</span></label>
-        <select required>
+        <select name="Years of Clinical Experience" required>
           <option value="">— Select —</option>
           <option>New Graduate (0–1 yr)</option>
           <option>Early Career (1–3 yrs)</option>
@@ -651,7 +651,7 @@
       </div>
       <div class="field">
         <label>Years of Psychiatry-Specific Experience</label>
-        <select>
+        <select name="Years of Psychiatry-Specific Experience">
           <option value="">— Select —</option>
           <option>None — new to psychiatry</option>
           <option>Under 1 year</option>
@@ -662,7 +662,7 @@
       </div>
       <div class="field">
         <label>Highest Degree Earned <span class="req">*</span></label>
-        <select required>
+        <select name="Highest Degree Earned" required>
           <option value="">— Select —</option>
           <option>MSN – Master of Science in Nursing</option>
           <option>DNP – Doctor of Nursing Practice</option>
@@ -697,11 +697,11 @@
         </div>
         <div class="conditional-field" id="why-switching">
           <label>Why are you switching? What didn't work with the previous arrangement?</label>
-          <textarea placeholder="e.g., Previous collaborator retired, communication was inconsistent, moving to a new state…"></textarea>
+          <textarea name="Why Switching" placeholder="e.g., Previous collaborator retired, communication was inconsistent, moving to a new state…"></textarea>
         </div>
         <div class="conditional-field" id="why-other">
           <label>Please describe your situation</label>
-          <textarea placeholder="Tell us more…"></textarea>
+          <textarea name="Other Reason" placeholder="Tell us more…"></textarea>
         </div>
       </div>
 
@@ -793,7 +793,7 @@
         </div>
         <div class="conditional-field" id="ketamine-detail">
           <label>Please describe your ketamine program (e.g., IV infusion, IM, intranasal, protocol used, patient population)</label>
-          <textarea placeholder="e.g., IV ketamine infusions for treatment-resistant depression, working with anesthesia support…"></textarea>
+          <textarea name="Ketamine Program Details" placeholder="e.g., IV ketamine infusions for treatment-resistant depression, working with anesthesia support…"></textarea>
         </div>
       </div>
 
@@ -806,7 +806,7 @@
         </div>
         <div class="conditional-field" id="tms-detail">
           <label>Please describe your TMS program (e.g., device/protocol used, conditions treated, session frequency)</label>
-          <textarea placeholder="e.g., NeuroStar TMS for major depressive disorder, standard 36-session protocol…"></textarea>
+          <textarea name="TMS Program Details" placeholder="e.g., NeuroStar TMS for major depressive disorder, standard 36-session protocol…"></textarea>
         </div>
       </div>
 
@@ -818,7 +818,7 @@
         </div>
         <div class="conditional-field" id="otherAdvanced-detail">
           <label>Please describe the treatment(s)</label>
-          <textarea placeholder="e.g., SPRAVATO (esketamine), neurofeedback, EMDR, psychedelic-assisted therapy…"></textarea>
+          <textarea name="Other Advanced Treatments" placeholder="e.g., SPRAVATO (esketamine), neurofeedback, EMDR, psychedelic-assisted therapy…"></textarea>
         </div>
       </div>
 
@@ -897,7 +897,7 @@
         </div>
         <div class="legal-detail" id="boardAction-detail">
           <div class="legal-detail-label">Please describe the nature, state(s), and current status</div>
-          <textarea placeholder="e.g., Complaint filed in Texas in 2022, resolved with no finding in 2023…"></textarea>
+          <textarea name="Board Action Details" placeholder="e.g., Complaint filed in Texas in 2022, resolved with no finding in 2023…"></textarea>
         </div>
       </div>
 
@@ -909,7 +909,7 @@
         </div>
         <div class="legal-detail" id="licenseSuspension-detail">
           <div class="legal-detail-label">Please provide the state(s), dates, and current status</div>
-          <textarea placeholder="e.g., License placed on probation in Florida 2019–2020, now fully reinstated…"></textarea>
+          <textarea name="License Suspension Details" placeholder="e.g., License placed on probation in Florida 2019–2020, now fully reinstated…"></textarea>
         </div>
       </div>
 
@@ -921,7 +921,7 @@
         </div>
         <div class="legal-detail" id="deaAction-detail">
           <div class="legal-detail-label">Please describe the circumstances and current status</div>
-          <textarea placeholder="e.g., DEA voluntarily surrendered in 2018 while under investigation, reissued 2019…"></textarea>
+          <textarea name="DEA Action Details" placeholder="e.g., DEA voluntarily surrendered in 2018 while under investigation, reissued 2019…"></textarea>
         </div>
       </div>
 
@@ -933,7 +933,7 @@
         </div>
         <div class="legal-detail" id="malpractice-detail">
           <div class="legal-detail-label">Brief description (you are not required to disclose case-specific legal details)</div>
-          <textarea placeholder="e.g., One open matter in New York, represented by counsel, pending resolution…"></textarea>
+          <textarea name="Malpractice Details" placeholder="e.g., One open matter in New York, represented by counsel, pending resolution…"></textarea>
         </div>
       </div>
 
@@ -953,11 +953,11 @@
     <div class="field-grid">
       <div class="field">
         <label>Ideal Start Date for Collaboration</label>
-        <input type="date">
+        <input type="date" name="Ideal Start Date">
       </div>
       <div class="field">
         <label>How Did You Hear About Psychiatry Match?</label>
-        <select>
+        <select name="How Did You Hear About Psychiatry Match">
           <option value="">— Select —</option>
           <option>Colleague / Referral</option>
           <option>Conference / Event</option>
@@ -971,7 +971,7 @@
       </div>
       <div class="field field-span-2">
         <label>Anything Else We Should Know</label>
-        <textarea placeholder="Additional context about your practice, specific needs from a collaborating psychiatrist, questions for our team…"></textarea>
+        <textarea name="Anything Else We Should Know" placeholder="Additional context about your practice, specific needs from a collaborating psychiatrist, questions for our team…"></textarea>
       </div>
     </div>
   </div>

@@ -440,23 +440,23 @@
       <div class="i-field-grid">
         <div class="i-field">
           <label>First Name <span class="req">*</span></label>
-          <input type="text" placeholder="Jane" required>
+          <input type="text" name="First Name" placeholder="Jane" required>
         </div>
         <div class="i-field">
           <label>Last Name <span class="req">*</span></label>
-          <input type="text" placeholder="Smith" required>
+          <input type="text" name="Last Name" placeholder="Smith" required>
         </div>
         <div class="i-field">
           <label>Professional Email <span class="req">*</span></label>
-          <input type="email" placeholder="jsmith@practice.org" required>
+          <input type="email" name="Professional Email" placeholder="jsmith@practice.org" required>
         </div>
         <div class="i-field">
           <label>Phone Number <span class="req">*</span></label>
-          <input type="tel" placeholder="(555) 000-0000" required>
+          <input type="tel" name="Phone Number" placeholder="(555) 000-0000" required>
         </div>
         <div class="i-field">
           <label>Medical Degree <span class="req">*</span></label>
-          <select required>
+          <select name="Medical Degree" required>
             <option value="">— Select —</option>
             <option>MD – Doctor of Medicine</option>
             <option>DO – Doctor of Osteopathic Medicine</option>
@@ -464,7 +464,7 @@
         </div>
         <div class="i-field">
           <label>Board Certification Status <span class="req">*</span></label>
-          <select required>
+          <select name="Board Certification Status" required>
             <option value="">— Select —</option>
             <option>Board Certified (ABPN)</option>
             <option>Board Eligible</option>
@@ -474,11 +474,11 @@
         </div>
         <div class="i-field">
           <label>NPI Number</label>
-          <input type="text" placeholder="10-digit NPI">
+          <input type="text" name="NPI Number" placeholder="10-digit NPI">
         </div>
         <div class="i-field">
           <label>Years in Practice <span class="req">*</span></label>
-          <select required>
+          <select name="Years in Practice" required>
             <option value="">— Select —</option>
             <option>0–2 years</option>
             <option>3–5 years</option>
@@ -628,7 +628,7 @@
           </div>
           <div class="i-legal-detail" id="i-boardAction-detail">
             <div class="i-legal-detail-label">Please describe the nature, state(s), and current status</div>
-            <textarea placeholder="e.g., Complaint filed in Texas in 2022, resolved with no finding in 2023…"></textarea>
+            <textarea name="Board Action Details" placeholder="e.g., Complaint filed in Texas in 2022, resolved with no finding in 2023…"></textarea>
           </div>
         </div>
         <div class="i-legal-question">
@@ -639,7 +639,7 @@
           </div>
           <div class="i-legal-detail" id="i-licenseSuspension-detail">
             <div class="i-legal-detail-label">Please provide the state(s), dates, and current status</div>
-            <textarea placeholder="e.g., License was placed on probation in Florida from 2019–2020, now fully reinstated…"></textarea>
+            <textarea name="License Suspension Details" placeholder="e.g., License was placed on probation in Florida from 2019–2020, now fully reinstated…"></textarea>
           </div>
         </div>
         <div class="i-legal-question">
@@ -650,7 +650,7 @@
           </div>
           <div class="i-legal-detail" id="i-deaAction-detail">
             <div class="i-legal-detail-label">Please describe the circumstances and current status</div>
-            <textarea placeholder="e.g., DEA registration voluntarily surrendered in 2018 while under investigation, reissued 2019…"></textarea>
+            <textarea name="DEA Action Details" placeholder="e.g., DEA registration voluntarily surrendered in 2018 while under investigation, reissued 2019…"></textarea>
           </div>
         </div>
         <div class="i-legal-question">
@@ -661,7 +661,7 @@
           </div>
           <div class="i-legal-detail" id="i-malpractice-detail">
             <div class="i-legal-detail-label">Brief description (you are not required to disclose case-specific legal details)</div>
-            <textarea placeholder="e.g., One open matter in New York, represented by counsel, pending resolution…"></textarea>
+            <textarea name="Malpractice Details" placeholder="e.g., One open matter in New York, represented by counsel, pending resolution…"></textarea>
           </div>
         </div>
       </div>
@@ -678,7 +678,7 @@
       <div class="i-field-grid">
         <div class="i-field">
           <label>How Did You Hear About MD-Match?</label>
-          <select>
+          <select name="How Did You Hear About MD-Match">
             <option value="">— Select —</option>
             <option>Colleague / Referral</option>
             <option>Conference / Event</option>
