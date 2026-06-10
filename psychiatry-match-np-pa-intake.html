@@ -948,7 +948,7 @@
   <div class="section">
     <div class="section-header">
       <span class="section-number">06</span>
-      <span class="section-title">One Last Thing</span>
+      <span class="section-title">How Did You Hear About MD-Match?</span>
     </div>
     <div class="field-grid">
       <div class="field">
@@ -956,18 +956,21 @@
         <input type="date" name="Ideal Start Date">
       </div>
       <div class="field">
-        <label>How Did You Hear About Psychiatry Match?</label>
-        <select name="How Did You Hear About Psychiatry Match">
+        <label>How Did You Hear About MD-Match?</label>
+        <select name="How Did You Hear About MD-Match" onchange="toggleReferralField(this)">
           <option value="">— Select —</option>
           <option>Colleague / Referral</option>
-          <option>Conference / Event</option>
           <option>LinkedIn</option>
           <option>Search Engine</option>
+          <option>Indeed</option>
           <option>AANP / AAPA / Professional Organization</option>
           <option>Social Media</option>
-          <option>Podcast</option>
           <option>Other</option>
         </select>
+        <div class="conditional-field" id="referral-detail" style="margin-top:0.6rem;">
+          <label>Colleague's Name</label>
+          <input type="text" name="Referred By" placeholder="e.g., Jane Smith">
+        </div>
       </div>
       <div class="field field-span-2">
         <label>Anything Else We Should Know</label>
@@ -1092,6 +1095,10 @@
       alert('Network error — please email philipwasef@md-match.com directly.');
     }
   });
+
+function toggleReferralField(sel) {
+  document.getElementById('referral-detail').classList.toggle('visible', sel.value === 'Colleague / Referral');
+}
 
 function handleKetamineChange(el) {
   var detail = document.getElementById('ketamine-detail');
