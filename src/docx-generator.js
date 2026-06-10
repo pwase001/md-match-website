@@ -98,12 +98,6 @@ export async function generateDocx(f) {
           ],
         }),
         new Paragraph({
-          spacing: { after: 60 },
-          children: [
-            new TextRun({ text: providerName, bold: true, size: 26, color: DARK, font: 'Calibri' }),
-          ],
-        }),
-        new Paragraph({
           spacing: { after: 200 },
           border: { bottom: { style: BorderStyle.SINGLE, size: 12, color: TEAL } },
           children: [
@@ -123,8 +117,6 @@ export async function generateDocx(f) {
           labelRow('Specialty', f['Specialty']),
           labelRow('Highest Degree Earned', f['Medical Degree']),
           labelRow('Years of Experience', f['Years of Clinical Experience']),
-          labelRow('Email', f['Email']),
-          labelRow('Phone', f['Phone']),
         ]),
 
         // Section 2: Collaboration & Licensure
