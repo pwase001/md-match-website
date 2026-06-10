@@ -144,7 +144,7 @@ function buildSummary(f) {
     ${row('Email', f['Email'])}
     ${row('Phone', f['Phone'])}
     ${row('Provider Type', f['Provider Type'])}
-    ${row('Medical Degree', f['Medical Degree'])}
+    ${row('Highest Degree Earned', f['Medical Degree'])}
     ${row('Specialty', f['Specialty'])}
     ${row('Years of Experience', f['Years of Clinical Experience'])}
     ${section('Collaboration & Licensure')}
