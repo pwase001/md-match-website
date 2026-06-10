@@ -786,15 +786,28 @@
     <div class="why-block">
 
       <div class="why-row">
-        <div class="why-label">Do you currently offer or plan to offer ketamine therapy in your practice?</div>
+        <div class="why-label">Are you currently prescribing or planning to prescribe Esketamine (intranasal / Spravato)?</div>
         <div class="radio-row">
-          <label><input type="radio" name="ketamine" value="yes-current" onchange="handleKetamineChange(this)"> <span>Yes — currently offering</span></label>
-          <label><input type="radio" name="ketamine" value="yes-planned" onchange="handleKetamineChange(this)"> <span>Yes — planning to offer</span></label>
-          <label><input type="radio" name="ketamine" value="no" onchange="handleKetamineChange(this)"> <span>No</span></label>
+          <label><input type="radio" name="esketamine" value="Yes — currently prescribing" onchange="handleEsketamineChange(this)"> <span>Yes — currently prescribing</span></label>
+          <label><input type="radio" name="esketamine" value="Yes — planning to prescribe" onchange="handleEsketamineChange(this)"> <span>Yes — planning to prescribe</span></label>
+          <label><input type="radio" name="esketamine" value="No" onchange="handleEsketamineChange(this)"> <span>No</span></label>
+        </div>
+        <div class="conditional-field" id="esketamine-detail">
+          <label>Please describe your Esketamine program (e.g., patient population, setting, frequency)</label>
+          <textarea name="Esketamine Program Details" placeholder="e.g., Spravato for treatment-resistant depression, REMS-certified clinic, bi-weekly sessions…"></textarea>
+        </div>
+      </div>
+
+      <div class="why-row">
+        <div class="why-label">Do you currently offer or plan to offer IV / IM Ketamine therapy?</div>
+        <div class="radio-row">
+          <label><input type="radio" name="ketamine" value="Yes — currently offering" onchange="handleKetamineChange(this)"> <span>Yes — currently offering</span></label>
+          <label><input type="radio" name="ketamine" value="Yes — planning to offer" onchange="handleKetamineChange(this)"> <span>Yes — planning to offer</span></label>
+          <label><input type="radio" name="ketamine" value="No" onchange="handleKetamineChange(this)"> <span>No</span></label>
         </div>
         <div class="conditional-field" id="ketamine-detail">
-          <label>Please describe your ketamine program (e.g., IV infusion, IM, intranasal, protocol used, patient population)</label>
-          <textarea name="Ketamine Program Details" placeholder="e.g., IV ketamine infusions for treatment-resistant depression, working with anesthesia support…"></textarea>
+          <label>Please describe your IV / IM Ketamine program (e.g., protocol used, patient population, setting)</label>
+          <textarea name="IV IM Ketamine Program Details" placeholder="e.g., IV ketamine infusions for treatment-resistant depression, working with anesthesia support…"></textarea>
         </div>
       </div>
 
@@ -1101,9 +1114,11 @@ function toggleReferralField(sel) {
   document.getElementById('referral-detail').classList.toggle('visible', sel.value === 'Colleague / Referral');
 }
 
+function handleEsketamineChange(el) {
+  document.getElementById('esketamine-detail').classList.toggle('visible', el.value !== 'No');
+}
 function handleKetamineChange(el) {
-  var detail = document.getElementById('ketamine-detail');
-  detail.classList.toggle('visible', el.value === 'yes-current' || el.value === 'yes-planned');
+  document.getElementById('ketamine-detail').classList.toggle('visible', el.value !== 'No');
 }
 function handleTMSChange(el) {
   var detail = document.getElementById('tms-detail');
