@@ -97,8 +97,8 @@ async function handleNpPaSubmit(request, env) {
     }
 
     const resendPayload = {
-      from: 'MD-Match Intake <noreply@md-match.com>',
-      to: ['philipwasef@md-match.com', 'pwase001@gmail.com'],
+      from: 'MD-Match Intake <noreply@send.md-match.com>',
+      to: ['philipwasef@md-match.com'],
       reply_to: f['Email'] !== '—' ? f['Email'] : undefined,
       subject: `New NP/PA Application — ${providerName}`,
       html: summary,
