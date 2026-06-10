@@ -26,12 +26,60 @@ async function handleNpPaSubmit(request, env) {
       }
     }
 
-    const providerName = fields['Full Name'] || 'Unknown';
+    // Normalize field names from form to friendly display names
+    const patientSettingMap = {
+      'in-person': 'In-Person Only',
+      'virtual': 'Telehealth / Virtual Only',
+      'both': 'Both In-Person & Virtual',
+    };
+    const practiceSettingMap = {
+      'private-solo': 'Private Practice — Solo',
+      'private-group': 'Private Practice — Group',
+      'community': 'Community Mental Health',
+      'integrated': 'Integrated Primary Care',
+      'telehealth-platform': 'Telehealth Platform',
+      'hospital': 'Hospital / Health System',
+      'other-setting': 'Other',
+    };
+    const tmsMap = {
+      'yes-current': 'Yes — currently offering',
+      'yes-planned': 'Yes — planning to offer',
+      'no': 'No',
+    };
+    const providerTypeMap = { 'np': 'Nurse Practitioner (NP / APRN)', 'pa': 'Physician Assistant (PA)' };
+
+    const f = {
+      'Full Name': [fields['First Name'], fields['Last Name']].filter(Boolean).join(' ') || '—',
+      'Email': fields['Professional Email'] || '—',
+      'Phone': fields['Phone Number'] || '—',
+      'Provider Type': providerTypeMap[fields['Provider Type']] || fields['Provider Type'] || '—',
+      'Specialty': fields['Specialty / Certification'] || '—',
+      'Medical Degree': fields['Highest Degree Earned'] || '—',
+      'Years of Clinical Experience': fields['Years of Clinical Experience'] || '—',
+      'States Needing Collaboration': fields['States Needing Collaboration'] || '—',
+      'DEA States': fields['DEA States'] || 'None specified',
+      'Patient Setting': patientSettingMap[fields['patientSetting']] || fields['patientSetting'] || '—',
+      'Practice Setting': practiceSettingMap[fields['practiceSetting']] || fields['practiceSetting'] || '—',
+      'Patient Population': fields['Patient Population'] || '—',
+      'Weekly Hours': fields['Weekly Hours'] || '—',
+      'Controlled Schedule': fields['Controlled Schedule'] || (fields['controlled'] === 'no' ? 'No' : fields['controlled'] === 'unsure' ? 'Unsure / Not yet' : '—'),
+      'esketamine': fields['esketamine'] || '—',
+      'Esketamine Program Details': fields['Esketamine Program Details'] || '',
+      'ketamine': fields['ketamine'] || '—',
+      'IV IM Ketamine Program Details': fields['IV IM Ketamine Program Details'] || '',
+      'TMS': tmsMap[fields['tms']] || fields['tms'] || '—',
+      'TMS Program Details': fields['TMS Program Details'] || '',
+      'Additional Information': fields['Anything Else We Should Know'] || '—',
+      'How Did You Hear About MD-Match': fields['How Did You Hear About MD-Match'] || '—',
+      'Referred By': fields['Referred By'] || '',
+    };
+
+    const providerName = f['Full Name'] !== '—' ? f['Full Name'] : 'Unknown';
 
     // Generate Word document
     let docxResult;
     try {
-      docxResult = await generateDocx(fields);
+      docxResult = await generateDocx(f);
     } catch (docxErr) {
       console.error('DOCX generation error:', docxErr?.message || docxErr);
       return jsonResponse({ success: false, error: 'Document generation failed' }, 500);
@@ -40,7 +88,7 @@ async function handleNpPaSubmit(request, env) {
     const filename = `NP-PA-Profile-${providerName.replace(/[^a-zA-Z0-9]/g, '-')}.docx`;
 
     // Build plain-text summary for email body
-    const summary = buildSummary(fields);
+    const summary = buildSummary(f);
 
     // Send via Resend
     if (!env.RESEND_API_KEY) {
@@ -51,7 +99,7 @@ async function handleNpPaSubmit(request, env) {
     const resendPayload = {
       from: 'MD-Match Intake <noreply@md-match.com>',
       to: ['philipwasef@md-match.com'],
-      reply_to: fields['Email'] || undefined,
+      reply_to: f['Email'] !== '—' ? f['Email'] : undefined,
       subject: `New NP/PA Application — ${providerName}`,
       html: summary,
       attachments: [{ filename, content: base64Docx }],
