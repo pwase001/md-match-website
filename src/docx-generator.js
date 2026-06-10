@@ -188,5 +188,11 @@ export async function generateDocx(f) {
     }],
   });
 
-  return Packer.toBuffer(doc);
+  // toBase64String is more reliable in non-Node environments
+  const base64 = await Packer.toBase64String(doc);
+  // Decode base64 back to Uint8Array for attachment
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return { base64, bytes };
 }
