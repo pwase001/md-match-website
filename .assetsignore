@@ -1,0 +1,9 @@
+node_modules/
+src/
+.github/
+dist/
+*.jsonc
+*.json
+*.lock
+*.log
+.git/

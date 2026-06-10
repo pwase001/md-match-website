@@ -1064,13 +1064,8 @@
       const checked = [...document.querySelectorAll(`.state-pill[id^="${prefix}-"]:checked`)].map(el => el.value);
       data.set(prefix === 'collab' ? 'States Needing Collaboration' : 'DEA States', checked.join(', ') || 'None');
     });
-    data.set('_subject', 'New NP / PA Application — MD-Match');
-    const emailEl = form.querySelector('input[type="email"]');
-    if (emailEl) data.set('_replyto', emailEl.value);
-
     try {
-      data.set('access_key', '1364c90b-fb88-4e0c-b9ce-6b133c9e6d3a');
-      const res = await fetch('https://api.web3forms.com/submit', {
+      const res = await fetch('/np-pa-submit', {
         method: 'POST',
         body: data,
         headers: { 'Accept': 'application/json' }

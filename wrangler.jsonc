@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "morning-art-6f48",
+  "main": "src/worker.js",
   "compatibility_date": "2026-06-06",
   "observability": {
     "enabled": true
