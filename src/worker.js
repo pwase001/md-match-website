@@ -29,34 +29,47 @@ async function handleNpPaSubmit(request, env) {
     const providerName = fields['Full Name'] || 'Unknown';
 
     // Generate Word document
-    const docxBuffer = await generateDocx(fields);
-    const base64Docx = bufferToBase64(docxBuffer);
+    let docxResult;
+    try {
+      docxResult = await generateDocx(fields);
+    } catch (docxErr) {
+      console.error('DOCX generation error:', docxErr?.message || docxErr);
+      return jsonResponse({ success: false, error: 'Document generation failed' }, 500);
+    }
+    const base64Docx = docxResult.base64;
     const filename = `NP-PA-Profile-${providerName.replace(/[^a-zA-Z0-9]/g, '-')}.docx`;
 
     // Build plain-text summary for email body
     const summary = buildSummary(fields);
 
     // Send via Resend
+    if (!env.RESEND_API_KEY) {
+      console.error('RESEND_API_KEY secret is not set');
+      return jsonResponse({ success: false, error: 'Server misconfiguration' }, 500);
+    }
+
+    const resendPayload = {
+      from: 'MD-Match Intake <noreply@md-match.com>',
+      to: ['philipwasef@md-match.com'],
+      reply_to: fields['Email'] || undefined,
+      subject: `New NP/PA Application — ${providerName}`,
+      html: summary,
+      attachments: [{ filename, content: base64Docx }],
+    };
+
     const resendRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${env.RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        from: 'MD-Match Intake <noreply@md-match.com>',
-        to: ['philipwasef@md-match.com'],
-        reply_to: fields['Email'] || undefined,
-        subject: `New NP/PA Application — ${providerName}`,
-        html: summary,
-        attachments: [{ filename, content: base64Docx }],
-      }),
+      body: JSON.stringify(resendPayload),
     });
 
     if (!resendRes.ok) {
       const errBody = await resendRes.text();
-      console.error('Resend error:', errBody);
-      return jsonResponse({ success: false, error: 'Email delivery failed' }, 500);
+      console.error('Resend error status:', resendRes.status, 'body:', errBody);
+      return jsonResponse({ success: false, error: 'Email delivery failed', detail: errBody }, 500);
     }
 
     return jsonResponse({ success: true });
@@ -108,15 +121,6 @@ function buildSummary(f) {
   </table>
   <p style="color:#aaa;font-size:11px;margin-top:24px">Word document attached · MD-Match.com</p>
 </div>`;
-}
-
-function bufferToBase64(buffer) {
-  const bytes = new Uint8Array(buffer);
-  let binary = '';
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary);
 }
 
 function jsonResponse(data, status = 200) {
