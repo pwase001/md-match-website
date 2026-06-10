@@ -847,30 +847,13 @@
   <div class="section">
     <div class="section-header">
       <span class="section-number">04</span>
-      <span class="section-title">Licensure, Collaboration &amp; DEA</span>
-      <span class="section-subtitle">Collaboration-Required States Only</span>
+      <span class="section-title">Collaboration &amp; DEA</span>
     </div>
 
-    <div class="note-box" style="margin-top:0; margin-bottom:1.4rem;">
-      Only states where NPs and PAs are legally required to have a collaborating physician are shown. States with full independent practice authority are excluded as no collaboration agreement is needed there.
-    </div>
-
-    <div class="three-state-panels">
+    <div class="three-state-panels" style="grid-template-columns: 1fr 1fr;">
 
       <div class="state-panel">
-        <div class="state-panel-label">Licensed In <span class="req">*</span></div>
-        <div class="state-panel-note">States where you hold an active NP or PA license</div>
-        <div class="select-all-row">
-          <button type="button" class="btn-tiny" onclick="selectAll('lic')">All</button>
-          <button type="button" class="btn-tiny" onclick="clearAll('lic')">Clear</button>
-          <span class="selected-count" id="lic-count">0 selected</span>
-        </div>
-        <div class="state-grid" id="licGrid"></div>
-      </div>
-
-      <div class="state-panel">
-        <div class="state-panel-label">Need Collaboration In <span class="req">*</span></div>
-        <div class="state-panel-note">States where you require a collaborative agreement to practice or prescribe</div>
+        <div class="state-panel-label">Which state(s) do you need a collaboration? <span class="req">*</span></div>
         <div class="select-all-row">
           <button type="button" class="btn-tiny" onclick="selectAll('collab')">All</button>
           <button type="button" class="btn-tiny" onclick="clearAll('collab')">Clear</button>
@@ -880,8 +863,7 @@
       </div>
 
       <div class="state-panel">
-        <div class="state-panel-label">Active DEA Registration</div>
-        <div class="state-panel-note">States where you currently hold an active DEA number (or plan to obtain one)</div>
+        <div class="state-panel-label">Which state(s) do you have a DEA?</div>
         <div class="select-all-row">
           <button type="button" class="btn-tiny" onclick="selectAll('dea')">All</button>
           <button type="button" class="btn-tiny" onclick="clearAll('dea')">Clear</button>
@@ -1067,7 +1049,6 @@
     document.getElementById('controlled-detail').classList.toggle('visible', show);
   }
 
-  buildPills('licGrid', 'lic');
   buildPills('collabGrid', 'collab');
   buildPills('deaGrid', 'dea');
 
@@ -1079,9 +1060,9 @@
 
     const form = e.target;
     const data = new FormData(form);
-    ['lic','collab','dea'].forEach(prefix => {
+    ['collab','dea'].forEach(prefix => {
       const checked = [...document.querySelectorAll(`.state-pill[id^="${prefix}-"]:checked`)].map(el => el.value);
-      data.set(prefix === 'lic' ? 'licensed_states' : prefix === 'collab' ? 'collab_states' : 'dea_states', checked.join(', ') || 'None');
+      data.set(prefix === 'collab' ? 'States Needing Collaboration' : 'DEA States', checked.join(', ') || 'None');
     });
     data.set('_subject', 'New NP / PA Application — MD-Match');
     const emailEl = form.querySelector('input[type="email"]');
