@@ -121,7 +121,7 @@ export async function generateDocx(f) {
         dataTable([
           labelRow('Provider Type', f['Provider Type']),
           labelRow('Specialty', f['Specialty']),
-          labelRow('Medical Degree', f['Medical Degree']),
+          labelRow('Highest Degree Earned', f['Medical Degree']),
           labelRow('Years of Experience', f['Years of Clinical Experience']),
           labelRow('Email', f['Email']),
           labelRow('Phone', f['Phone']),
