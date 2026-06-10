@@ -1,0 +1,11 @@
+{
+  "name": "md-match-website",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "docx": "^9.7.1"
+  },
+  "devDependencies": {
+    "wrangler": "^4.99.0"
+  }
+}
