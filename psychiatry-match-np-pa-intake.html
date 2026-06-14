@@ -735,12 +735,41 @@
           <label><input type="radio" name="controlled" value="unsure" onchange="toggleControlled(false)"> <span>Unsure / Not yet</span></label>
         </div>
         <div class="conditional-field" id="controlled-detail">
-          <label>Which schedules? Check all that apply</label>
-          <div class="check-group">
-            <label><input type="checkbox" name="Controlled Schedule" value="Schedule II (stimulants, opioids)"> <span>Schedule II (e.g., stimulants, opioids)</span></label>
-            <label><input type="checkbox" name="Controlled Schedule" value="Schedule III (buprenorphine)"> <span>Schedule III (e.g., buprenorphine)</span></label>
-            <label><input type="checkbox" name="Controlled Schedule" value="Schedule IV (benzodiazepines)"> <span>Schedule IV (e.g., benzodiazepines)</span></label>
-            <label><input type="checkbox" name="Controlled Schedule" value="Schedule V"> <span>Schedule V</span></label>
+          <div style="display:flex;flex-direction:column;gap:1.2rem;margin-top:0.4rem;">
+
+            <div>
+              <label style="font-weight:600;display:block;margin-bottom:0.4rem;">How often do you prescribe — or plan to prescribe — Schedule II stimulants (e.g., Adderall, Vyvanse)?</label>
+              <div class="radio-row" style="flex-direction:column;gap:0.3rem;">
+                <label><input type="radio" name="Stimulants Frequency" value="Never"> <span>Never</span></label>
+                <label><input type="radio" name="Stimulants Frequency" value="Rarely (1–2 scripts/month or less)"> <span>Rarely — 1–2 scripts per month or less</span></label>
+                <label><input type="radio" name="Stimulants Frequency" value="Sometimes (1–2 scripts/week)"> <span>Sometimes — 1–2 scripts per week</span></label>
+                <label><input type="radio" name="Stimulants Frequency" value="Often (3–5 scripts/week)"> <span>Often — 3–5 scripts per week</span></label>
+                <label><input type="radio" name="Stimulants Frequency" value="Frequently (almost daily / routine)"> <span>Frequently — almost daily / routinely prescribed for my patient population</span></label>
+              </div>
+            </div>
+
+            <div>
+              <label style="font-weight:600;display:block;margin-bottom:0.4rem;">How often do you prescribe — or plan to prescribe — benzodiazepines (e.g., Xanax, Klonopin, Valium)?</label>
+              <div class="radio-row" style="flex-direction:column;gap:0.3rem;">
+                <label><input type="radio" name="Benzodiazepines Frequency" value="Never"> <span>Never</span></label>
+                <label><input type="radio" name="Benzodiazepines Frequency" value="Rarely (1–2 scripts/month or less)"> <span>Rarely — 1–2 scripts per month or less</span></label>
+                <label><input type="radio" name="Benzodiazepines Frequency" value="Sometimes (1–2 scripts/week)"> <span>Sometimes — 1–2 scripts per week</span></label>
+                <label><input type="radio" name="Benzodiazepines Frequency" value="Often (3–5 scripts/week)"> <span>Often — 3–5 scripts per week</span></label>
+                <label><input type="radio" name="Benzodiazepines Frequency" value="Frequently (almost daily / routine)"> <span>Frequently — almost daily / routinely prescribed for my patient population</span></label>
+              </div>
+            </div>
+
+            <div>
+              <label style="font-weight:600;display:block;margin-bottom:0.4rem;">How often do you prescribe — or plan to prescribe — MAT for substance use (e.g., buprenorphine / Suboxone)?</label>
+              <div class="radio-row" style="flex-direction:column;gap:0.3rem;">
+                <label><input type="radio" name="MAT Frequency" value="Never"> <span>Never</span></label>
+                <label><input type="radio" name="MAT Frequency" value="Rarely (1–2 scripts/month or less)"> <span>Rarely — 1–2 scripts per month or less</span></label>
+                <label><input type="radio" name="MAT Frequency" value="Sometimes (1–2 scripts/week)"> <span>Sometimes — 1–2 scripts per week</span></label>
+                <label><input type="radio" name="MAT Frequency" value="Often (3–5 scripts/week)"> <span>Often — 3–5 scripts per week</span></label>
+                <label><input type="radio" name="MAT Frequency" value="Frequently (almost daily / routine)"> <span>Frequently — almost daily / routinely prescribed for my patient population</span></label>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>

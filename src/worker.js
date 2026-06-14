@@ -62,7 +62,10 @@ async function handleNpPaSubmit(request, env) {
       'Practice Setting': practiceSettingMap[fields['practiceSetting']] || fields['practiceSetting'] || '—',
       'Patient Population': fields['Patient Population'] || '—',
       'Weekly Hours': fields['Weekly Hours'] || '—',
-      'Controlled Schedule': fields['Controlled Schedule'] || (fields['controlled'] === 'no' ? 'No' : fields['controlled'] === 'unsure' ? 'Unsure / Not yet' : '—'),
+      'Controlled Substances': fields['controlled'] === 'no' ? 'No' : fields['controlled'] === 'unsure' ? 'Unsure / Not yet' : 'Yes',
+      'Stimulants Frequency': fields['Stimulants Frequency'] || '—',
+      'Benzodiazepines Frequency': fields['Benzodiazepines Frequency'] || '—',
+      'MAT Frequency': fields['MAT Frequency'] || '—',
       'esketamine': fields['esketamine'] || '—',
       'Esketamine Program Details': fields['Esketamine Program Details'] || '',
       'ketamine': fields['ketamine'] || '—',
@@ -156,7 +159,10 @@ function buildSummary(f) {
     ${row('Patient Population', f['Patient Population'])}
     ${row('Weekly Hours', f['Weekly Hours'])}
     ${section('Clinical Services')}
-    ${row('Controlled Substances', f['Controlled Schedule'])}
+    ${row('Controlled Substances', f['Controlled Substances'])}
+    ${f['Controlled Substances'] === 'Yes' ? row('Stimulants (Schedule II)', f['Stimulants Frequency']) : ''}
+    ${f['Controlled Substances'] === 'Yes' ? row('Benzodiazepines (Schedule IV)', f['Benzodiazepines Frequency']) : ''}
+    ${f['Controlled Substances'] === 'Yes' ? row('MAT / Buprenorphine', f['MAT Frequency']) : ''}
     ${row('Esketamine (Intranasal)', f['esketamine'])}
     ${f['esketamine'] && f['esketamine'] !== 'No' ? row('Esketamine Details', f['Esketamine Program Details']) : ''}
     ${row('IV / IM Ketamine', f['ketamine'])}
