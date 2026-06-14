@@ -138,7 +138,12 @@ export async function generateDocx(f) {
         // Section 4: Clinical Services
         sectionHeader('Clinical Services'),
         dataTable([
-          labelRow('Controlled Substances', f['Controlled Schedule'] || f['controlled'] || '—'),
+          labelRow('Controlled Substances', f['Controlled Substances'] || '—'),
+          ...(f['Controlled Substances'] === 'Yes' ? [
+            labelRow('Stimulants (Schedule II)', f['Stimulants Frequency']),
+            labelRow('Benzodiazepines (Schedule IV)', f['Benzodiazepines Frequency']),
+            labelRow('MAT / Buprenorphine', f['MAT Frequency']),
+          ] : []),
           labelRow('Esketamine (Intranasal)', f['esketamine']),
           ...(f['esketamine'] && f['esketamine'] !== 'No' ? [labelRow('Esketamine Details', f['Esketamine Program Details'])] : []),
           labelRow('IV / IM Ketamine', f['ketamine']),
