@@ -117,6 +117,7 @@ export async function generateDocx(f) {
           labelRow('Specialty', f['Specialty']),
           labelRow('Highest Degree Earned', f['Medical Degree']),
           labelRow('Years of Experience', f['Years of Clinical Experience']),
+          labelRow('Years of Psychiatry Experience', f['Years of Psychiatry Experience']),
         ]),
 
         // Section 2: Collaboration & Licensure

@@ -65,6 +65,7 @@ async function handleNpPaSubmit(request, env) {
       'Specialty': fields['Specialty / Certification'] || '—',
       'Medical Degree': fields['Highest Degree Earned'] || '—',
       'Years of Clinical Experience': fields['Years of Clinical Experience'] || '—',
+      'Years of Psychiatry Experience': fields['Years of Psychiatry-Specific Experience'] || '—',
       'Why Seeking Collaboration': whyReasonMap[fields['whyReason']] || fields['whyReason'] || '—',
       'Why Switching Details': fields['Why Switching'] || '',
       'Other Reason Details': fields['Other Reason'] || '',
@@ -171,6 +172,7 @@ function buildSummary(f) {
     ${row('Highest Degree Earned', f['Medical Degree'])}
     ${row('Specialty', f['Specialty'])}
     ${row('Years of Experience', f['Years of Clinical Experience'])}
+    ${row('Years of Psychiatry Experience', f['Years of Psychiatry Experience'])}
     ${section('Reason for Seeking Collaboration')}
     ${row('Why Seeking Collaboration', f['Why Seeking Collaboration'])}
     ${f['Why Switching Details'] ? row('Why Switching', f['Why Switching Details']) : ''}
