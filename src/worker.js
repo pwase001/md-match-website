@@ -48,6 +48,15 @@ async function handleNpPaSubmit(request, env) {
     };
     const providerTypeMap = { 'np': 'Nurse Practitioner (NP / APRN)', 'pa': 'Physician Assistant (PA)' };
 
+    const whyReasonMap = {
+      'new-practice': 'Opening a new private practice',
+      'joining-group': 'Joining a group practice',
+      'switching': 'Switching collaborating physicians',
+      'adding': 'Adding a collaborator (expanding)',
+      'first-time': 'First time ever — new to practice',
+      'other': 'Other',
+    };
+
     const f = {
       'Full Name': [fields['First Name'], fields['Last Name']].filter(Boolean).join(' ') || '—',
       'Email': fields['Professional Email'] || '—',
@@ -56,6 +65,9 @@ async function handleNpPaSubmit(request, env) {
       'Specialty': fields['Specialty / Certification'] || '—',
       'Medical Degree': fields['Highest Degree Earned'] || '—',
       'Years of Clinical Experience': fields['Years of Clinical Experience'] || '—',
+      'Why Seeking Collaboration': whyReasonMap[fields['whyReason']] || fields['whyReason'] || '—',
+      'Why Switching Details': fields['Why Switching'] || '',
+      'Other Reason Details': fields['Other Reason'] || '',
       'States Needing Collaboration': fields['States Needing Collaboration'] || '—',
       'DEA States': fields['DEA States'] || 'None specified',
       'Patient Setting': patientSettingMap[fields['patientSetting']] || fields['patientSetting'] || '—',
@@ -72,6 +84,15 @@ async function handleNpPaSubmit(request, env) {
       'IV IM Ketamine Program Details': fields['IV IM Ketamine Program Details'] || '',
       'TMS': tmsMap[fields['tms']] || fields['tms'] || '—',
       'TMS Program Details': fields['TMS Program Details'] || '',
+      'Board Action': fields['boardAction'] === 'yes' ? 'Yes' : 'No',
+      'Board Action Details': fields['Board Action Details'] || '',
+      'License Suspension': fields['licenseSuspension'] === 'yes' ? 'Yes' : 'No',
+      'License Suspension Details': fields['License Suspension Details'] || '',
+      'DEA Action': fields['deaAction'] === 'yes' ? 'Yes' : 'No',
+      'DEA Action Details': fields['DEA Action Details'] || '',
+      'Malpractice': fields['malpractice'] === 'yes' ? 'Yes' : 'No',
+      'Malpractice Details': fields['Malpractice Details'] || '',
+      'Ideal Start Date': fields['Ideal Start Date'] || '—',
       'Additional Information': fields['Anything Else We Should Know'] || '—',
       'How Did You Hear About MD-Match': fields['How Did You Hear About MD-Match'] || '—',
       'Referred By': fields['Referred By'] || '',
@@ -150,6 +171,10 @@ function buildSummary(f) {
     ${row('Highest Degree Earned', f['Medical Degree'])}
     ${row('Specialty', f['Specialty'])}
     ${row('Years of Experience', f['Years of Clinical Experience'])}
+    ${section('Reason for Seeking Collaboration')}
+    ${row('Why Seeking Collaboration', f['Why Seeking Collaboration'])}
+    ${f['Why Switching Details'] ? row('Why Switching', f['Why Switching Details']) : ''}
+    ${f['Other Reason Details'] ? row('Other Reason', f['Other Reason Details']) : ''}
     ${section('Collaboration & Licensure')}
     ${row('States Needing Collaboration', f['States Needing Collaboration'])}
     ${row('DEA States', f['DEA States'])}
@@ -168,6 +193,17 @@ function buildSummary(f) {
     ${row('IV / IM Ketamine', f['ketamine'])}
     ${f['ketamine'] && f['ketamine'] !== 'No' ? row('IV/IM Ketamine Details', f['IV IM Ketamine Program Details']) : ''}
     ${row('TMS', f['TMS'])}
+    ${section('Legal & Board Standing')}
+    ${row('Board Disciplinary Action', f['Board Action'])}
+    ${f['Board Action'] === 'Yes' ? row('Board Action Details', f['Board Action Details']) : ''}
+    ${row('License Suspension', f['License Suspension'])}
+    ${f['License Suspension'] === 'Yes' ? row('License Suspension Details', f['License Suspension Details']) : ''}
+    ${row('DEA Action', f['DEA Action'])}
+    ${f['DEA Action'] === 'Yes' ? row('DEA Action Details', f['DEA Action Details']) : ''}
+    ${row('Malpractice', f['Malpractice'])}
+    ${f['Malpractice'] === 'Yes' ? row('Malpractice Details', f['Malpractice Details']) : ''}
+    ${section('Availability')}
+    ${row('Ideal Start Date', f['Ideal Start Date'])}
     ${row('Additional Information', f['Additional Information'])}
     ${section('Referral')}
     ${row('How Did You Hear About Us', f['How Did You Hear About MD-Match'])}

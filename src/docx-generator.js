@@ -153,7 +153,13 @@ export async function generateDocx(f) {
           labelRow('Other Advanced Services', f['Other Advanced Services']),
         ]),
 
-        // Section 5: Additional Information
+        // Section 5: Availability
+        sectionHeader('Availability'),
+        dataTable([
+          labelRow('Ideal Start Date', f['Ideal Start Date']),
+        ]),
+
+        // Section 6: Additional Information
         sectionHeader('Additional Information'),
         new Paragraph({
           spacing: { before: 80, after: 240 },
