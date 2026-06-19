@@ -93,7 +93,7 @@ async function handleNpPaSubmit(request, env) {
       'DEA Action Details': fields['DEA Action Details'] || '',
       'Malpractice': fields['malpractice'] === 'yes' ? 'Yes' : 'No',
       'Malpractice Details': fields['Malpractice Details'] || '',
-      'Ideal Start Date': fields['Ideal Start Date'] || '—',
+      'Ideal Start Date': formatDate(fields['Ideal Start Date']),
       'Additional Information': fields['Anything Else We Should Know'] || '—',
       'How Did You Hear About MD-Match': fields['How Did You Hear About MD-Match'] || '—',
       'Referred By': fields['Referred By'] || '',
@@ -213,6 +213,14 @@ function buildSummary(f) {
   </table>
   <p style="color:#aaa;font-size:11px;margin-top:24px">Word document attached · MD-Match.com</p>
 </div>`;
+}
+
+function formatDate(str) {
+  if (!str) return '—';
+  const [y, m, d] = str.split('-');
+  if (!y || !m || !d) return str;
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return `${months[parseInt(m, 10) - 1]} ${parseInt(d, 10)}, ${y}`;
 }
 
 function jsonResponse(data, status = 200) {
