@@ -291,11 +291,6 @@
 
       <form id="compliance-form">
 
-        <!-- FormSubmit config -->
-        <input type="hidden" name="_subject" value="Monthly NP/PA Collaboration Compliance Review Submission" />
-        <input type="hidden" name="_captcha" value="false" />
-        <input type="hidden" name="_template" value="table" />
-
         <!-- Provider Info -->
         <div class="section-label">Provider Information</div>
         <div class="info-grid">
@@ -559,10 +554,9 @@
       const formData = new FormData(this);
 
       try {
-        const response = await fetch('https://formsubmit.co/ajax/philipwasef@md-match.com', {
+        const response = await fetch('/np-compliance-submit', {
           method: 'POST',
-          headers: { 'Accept': 'application/json' },
-          body: formData
+          body: formData,
         });
 
         if (response.ok) {

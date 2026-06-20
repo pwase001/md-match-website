@@ -8,6 +8,14 @@ export default {
       return handleNpPaSubmit(request, env);
     }
 
+    if (request.method === 'POST' && url.pathname === '/md-compliance-submit') {
+      return handleComplianceSubmit(request, env, 'md');
+    }
+
+    if (request.method === 'POST' && url.pathname === '/np-compliance-submit') {
+      return handleComplianceSubmit(request, env, 'np');
+    }
+
     // Serve static assets for all other requests
     return env.ASSETS.fetch(request);
   },
@@ -228,4 +236,93 @@ function jsonResponse(data, status = 200) {
     status,
     headers: { 'Content-Type': 'application/json' },
   });
+}
+
+async function handleComplianceSubmit(request, env, role) {
+  try {
+    const formData = await request.formData();
+    const f = {};
+    for (const [key, value] of formData.entries()) {
+      f[key] = value;
+    }
+
+    if (!env.RESEND_API_KEY) {
+      return jsonResponse({ success: false, error: 'Server misconfiguration' }, 500);
+    }
+
+    const isNp = role === 'np';
+    const submitterName = isNp ? (f['Provider_Name'] || 'Unknown') : (f['Physician_Name'] || 'Unknown');
+    const subject = isNp
+      ? `Monthly NP/PA Compliance Review — ${submitterName}`
+      : `Monthly MD Compliance Review — ${submitterName}`;
+
+    const row = (label, val) =>
+      val
+        ? `<tr><td style="padding:6px 12px;font-weight:600;color:#1e2530;background:#f2f4f6;width:40%;font-family:sans-serif;font-size:13px;border-bottom:1px solid #ddd">${label}</td><td style="padding:6px 12px;color:#1e2530;font-family:sans-serif;font-size:13px;border-bottom:1px solid #ddd">${val}</td></tr>`
+        : '';
+
+    const section = (title) =>
+      `<tr><td colspan="2" style="padding:10px 12px 4px;font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.08em;color:#1B6CA8;font-family:sans-serif;border-bottom:2px solid #1B6CA8">${title}</td></tr>`;
+
+    const infoRows = isNp
+      ? `${row('Provider Name', f['Provider_Name'])}${row('NPI Number', f['Provider_NPI'])}${row('Collaborating Physician', f['Collaborating_Physician'])}${row('Submission Month', f['Submission_Month'])}`
+      : `${row('Physician Name', f['Physician_Name'])}${row('NPI Number', f['Physician_NPI'])}${row('Collaborator Name', f['Collaborator_Name'])}${row('Submission Month', f['Submission_Month'])}`;
+
+    const extraRows = isNp
+      ? `${row('Charts Provided', f['Q5_ChartCount'] || (f['Q5_ChartReview'] || ''))}${row('Chart Log Kept', f['Q6_ChartLog'])}${f['Q6_WhyNot'] ? row('Chart Log — Why Not', f['Q6_WhyNot']) : ''}`
+      : `${row('Charts Reviewed', f['Q5_ChartCount'] || (f['Q5_ChartReview'] || ''))}`;
+
+    const html = `
+<div style="max-width:680px;margin:0 auto;font-family:sans-serif">
+  <h2 style="color:#1B6CA8;margin-bottom:4px">${isNp ? 'NP/PA' : 'MD'} Monthly Compliance Review — MD-Match</h2>
+  <p style="color:#555;font-size:13px">Submitted ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</p>
+  <table style="width:100%;border-collapse:collapse;margin-top:16px">
+    ${section('Provider Information')}
+    ${infoRows}
+    ${section('Compliance Questions')}
+    ${row('State(s)', f['Q1_States'])}
+    ${row('Patients Seen', f['Q2_PatientsSeen'])}
+    ${f['Q2_PatientCount'] ? row('Estimated Patient Count', f['Q2_PatientCount']) : ''}
+    ${f['Q2_WhyNot'] ? row('Patients Seen — Why Not', f['Q2_WhyNot']) : ''}
+    ${row('Check-In Held', f['Q3_CheckIn'])}
+    ${f['Q3_MeetingDate'] ? row('Meeting Date', formatDate(f['Q3_MeetingDate'])) : ''}
+    ${f['Q3_WhyNot'] ? row('Check-In — Why Not', f['Q3_WhyNot']) : ''}
+    ${row('Quality Assurance', f['Q4_QA'])}
+    ${f['Q4_QA_Items_Selected'] ? row('QA Items', f['Q4_QA_Items_Selected']) : ''}
+    ${f['Q4_WhyNot'] ? row('QA — Why Not', f['Q4_WhyNot']) : ''}
+    ${row('Chart Review', f['Q5_ChartReview'])}
+    ${extraRows}
+    ${f['Q5_WhyNot'] ? row('Chart Review — Why Not', f['Q5_WhyNot']) : ''}
+    ${section('Attestation')}
+    ${row('Attestation', f['Attestation'])}
+    ${row('Digital Signature', f['Digital_Signature'])}
+  </table>
+  <p style="color:#aaa;font-size:11px;margin-top:24px">MD-Match.com</p>
+</div>`;
+
+    const resendRes = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'MD-Match Compliance <noreply@md-match.com>',
+        to: ['philipwasef@md-match.com'],
+        subject,
+        html,
+      }),
+    });
+
+    if (!resendRes.ok) {
+      const errBody = await resendRes.text();
+      console.error('Resend error:', resendRes.status, errBody);
+      return jsonResponse({ success: false, error: 'Email delivery failed' }, 500);
+    }
+
+    return jsonResponse({ success: true });
+  } catch (err) {
+    console.error('Compliance submit error:', err);
+    return jsonResponse({ success: false, error: 'Server error' }, 500);
+  }
 }

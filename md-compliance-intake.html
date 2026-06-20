@@ -286,12 +286,14 @@
     </div>
 
     <div class="card-body">
-      <form action="https://formsubmit.co/philipwasef@md-match.com" method="POST">
+      <!-- Success message -->
+      <div id="success-msg" style="display:none; background:#e6f4ea; border:1px solid #a8d5b5; border-radius:10px; padding:24px; text-align:center; margin-bottom:24px;">
+        <div style="font-size:2rem; margin-bottom:8px;">✅</div>
+        <div style="font-size:1.1rem; font-weight:700; color:#1a3a5c; margin-bottom:6px;">Submission Received</div>
+        <div style="font-size:0.9rem; color:#444;">Thank you — your monthly compliance review has been submitted successfully.</div>
+      </div>
 
-        <!-- FormSubmit config -->
-        <input type="hidden" name="_subject" value="Monthly Collaboration Compliance Review Submission" />
-        <input type="hidden" name="_captcha" value="false" />
-        <input type="hidden" name="_template" value="table" />
+      <form id="compliance-form">
 
         <!-- Physician Info -->
         <div class="section-label">Physician Information</div>
@@ -488,7 +490,7 @@
         </div>
 
         <div class="submit-section">
-          <button type="submit">Submit</button>
+          <button type="submit" id="submit-btn">Submit</button>
           <p class="required-note">Your response will be sent securely upon submission.</p>
         </div>
 
@@ -506,9 +508,34 @@
       }
     }
 
-    document.querySelector('form').addEventListener('submit', function() {
+    document.getElementById('compliance-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
       const checked = Array.from(document.querySelectorAll('.qa-item:checked')).map(cb => cb.value);
       document.getElementById('qa-hidden').value = checked.length ? checked.join('; ') : 'None selected';
+
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      try {
+        const response = await fetch('/md-compliance-submit', {
+          method: 'POST',
+          body: new FormData(this),
+        });
+
+        if (response.ok) {
+          document.getElementById('compliance-form').style.display = 'none';
+          document.getElementById('success-msg').style.display = 'block';
+          window.scrollTo(0, 0);
+        } else {
+          throw new Error('Submission failed');
+        }
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = 'Submit';
+        alert('There was a problem submitting the form. Please try again.');
+      }
     });
   </script>
 </body>
