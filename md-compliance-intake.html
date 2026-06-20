@@ -518,10 +518,15 @@
       btn.disabled = true;
       btn.textContent = 'Submitting...';
 
+      const data = new FormData(this);
+      data.set('access_key', 'c7f6fe93-49ba-4e3b-ab74-c55a3ace033d');
+      data.set('_subject', 'Monthly MD Compliance Review — MD-Match');
+
       try {
-        const response = await fetch('/md-compliance-submit', {
+        const response = await fetch('https://api.web3forms.com/submit', {
           method: 'POST',
-          body: new FormData(this),
+          body: data,
+          headers: { 'Accept': 'application/json' },
         });
 
         if (response.ok) {
