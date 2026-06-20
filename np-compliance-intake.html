@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Collaboration Compliance Review — NP / PA</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f4f6f9;
+      color: #1a1a2e;
+      min-height: 100vh;
+      padding: 40px 16px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+      max-width: 720px;
+      margin: 0 auto;
+      overflow: hidden;
+    }
+
+    .card-header {
+      background: #1a3a5c;
+      color: #ffffff;
+      padding: 32px 40px;
+    }
+
+    .card-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.3px;
+    }
+
+    .card-header p {
+      font-size: 0.95rem;
+      opacity: 0.85;
+      line-height: 1.5;
+    }
+
+    .card-body {
+      padding: 36px 40px;
+    }
+
+    .question-block {
+      margin-bottom: 32px;
+    }
+
+    .question-block:last-of-type {
+      margin-bottom: 0;
+    }
+
+    .question-label {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      line-height: 1.4;
+      color: #1a1a2e;
+    }
+
+    .question-number {
+      display: inline-block;
+      background: #1a3a5c;
+      color: #fff;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-align: center;
+      line-height: 24px;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+
+    .radio-group, .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .radio-option, .checkbox-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .radio-option input[type="radio"],
+    .checkbox-option input[type="checkbox"] {
+      margin-top: 3px;
+      accent-color: #1a3a5c;
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .radio-option span,
+    .checkbox-option span {
+      font-size: 0.95rem;
+      color: #333;
+      line-height: 1.4;
+    }
+
+    .sub-field {
+      margin-top: 12px;
+      margin-left: 26px;
+      display: none;
+    }
+
+    .sub-field.visible {
+      display: block;
+    }
+
+    .sub-label {
+      font-size: 0.875rem;
+      color: #555;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: #1a1a2e;
+      background: #fafafa;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      font-family: inherit;
+    }
+
+    input[type="text"]:focus,
+    input[type="date"]:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #1a3a5c;
+      box-shadow: 0 0 0 3px rgba(26, 58, 92, 0.1);
+      background: #fff;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .checkbox-sub {
+      margin-top: 12px;
+      margin-left: 26px;
+      display: none;
+    }
+
+    .checkbox-sub.visible {
+      display: block;
+    }
+
+    .checkbox-sub-label {
+      font-size: 0.875rem;
+      color: #555;
+      margin-bottom: 10px;
+      font-style: italic;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #e5e7eb;
+      margin: 28px 0;
+    }
+
+    .submit-section {
+      margin-top: 36px;
+      text-align: center;
+    }
+
+    button[type="submit"] {
+      background: #1a3a5c;
+      color: #fff;
+      border: none;
+      padding: 14px 48px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    button[type="submit"]:hover {
+      background: #15304e;
+    }
+
+    button[type="submit"]:active {
+      transform: scale(0.98);
+    }
+
+    .required-note {
+      font-size: 0.8rem;
+      color: #888;
+      margin-top: 10px;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .field-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #444;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .section-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #1a3a5c;
+      margin-bottom: 14px;
+    }
+
+    .attestation-box {
+      background: #f0f4f8;
+      border: 1px solid #c9d8e8;
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+    }
+
+    .attestation-box p {
+      font-size: 0.9rem;
+      color: #333;
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+    .attestation-check {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .attestation-check input[type="checkbox"] {
+      margin-top: 3px;
+      accent-color: #1a3a5c;
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .attestation-check span {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #1a1a2e;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="card-header">
+      <h1>Collaboration Compliance Review</h1>
+      <p>Please complete this quick monthly compliance review designed to ensure compliance and review collaboration requirements.</p>
+    </div>
+
+    <div class="card-body">
+      <!-- Success message -->
+      <div id="success-msg" style="display:none; background:#e6f4ea; border:1px solid #a8d5b5; border-radius:10px; padding:24px; text-align:center; margin-bottom:24px;">
+        <div style="font-size:2rem; margin-bottom:8px;">✅</div>
+        <div style="font-size:1.1rem; font-weight:700; color:#1a3a5c; margin-bottom:6px;">Submission Received</div>
+        <div style="font-size:0.9rem; color:#444;">Thank you — your monthly compliance review has been submitted successfully.</div>
+      </div>
+
+      <form id="compliance-form">
+
+        <!-- FormSubmit config -->
+        <input type="hidden" name="_subject" value="Monthly NP/PA Collaboration Compliance Review Submission" />
+        <input type="hidden" name="_captcha" value="false" />
+        <input type="hidden" name="_template" value="table" />
+
+        <!-- Provider Info -->
+        <div class="section-label">Provider Information</div>
+        <div class="info-grid">
+          <div>
+            <label class="field-label" for="provider_name">Your Name <span style="color:#c0392b">*</span></label>
+            <input type="text" id="provider_name" name="Provider_Name" placeholder="First Last" required />
+          </div>
+          <div>
+            <label class="field-label" for="provider_npi">NPI Number <span style="color:#c0392b">*</span></label>
+            <input type="text" id="provider_npi" name="Provider_NPI" placeholder="10-digit NPI" required pattern="\d{10}" title="NPI must be 10 digits" />
+          </div>
+          <div>
+            <label class="field-label" for="physician_name">Collaborating Physician <span style="color:#c0392b">*</span></label>
+            <input type="text" id="physician_name" name="Collaborating_Physician" placeholder="Physician name" required />
+          </div>
+          <div>
+            <label class="field-label" for="submission_month">Submission Month <span style="color:#c0392b">*</span></label>
+            <input type="month" id="submission_month" name="Submission_Month" required style="width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:0.9rem;color:#1a1a2e;background:#fafafa;font-family:inherit;" />
+          </div>
+        </div>
+
+        <hr class="divider" />
+
+        <!-- Q1 -->
+        <div class="question-block">
+          <div class="question-label">
+            <span class="question-number">1</span>
+            What state(s) do you collaborate with this provider?
+          </div>
+          <input type="text" name="Q1_States" placeholder="Enter state(s)..." required />
+        </div>
+
+        <hr class="divider" />
+
+        <!-- Q2 -->
+        <div class="question-block">
+          <div class="question-label">
+            <span class="question-number">2</span>
+            Have patients been seen this month?
+          </div>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" name="Q2_PatientsSeen" value="Yes" onchange="toggle('q2-yes', true); toggle('q2-no', false)" required />
+              <span>Yes</span>
+            </label>
+            <div class="sub-field" id="q2-yes">
+              <div class="sub-label">Estimated number of patients seen this month:</div>
+              <input type="text" name="Q2_PatientCount" placeholder="Enter estimated number..." />
+            </div>
+            <label class="radio-option">
+              <input type="radio" name="Q2_PatientsSeen" value="No" onchange="toggle('q2-no', true); toggle('q2-yes', false)" />
+              <span>No</span>
+            </label>
+          </div>
+          <div class="sub-field" id="q2-no">
+            <div class="sub-label">Why not?</div>
+            <textarea name="Q2_WhyNot" placeholder="Please explain..."></textarea>
+          </div>
+        </div>
+
+        <hr class="divider" />
+
+        <!-- Q3 -->
+        <div class="question-block">
+          <div class="question-label">
+            <span class="question-number">3</span>
+            Have you had a check-in with your collaborating physician this month?
+          </div>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" name="Q3_CheckIn" value="Yes" onchange="toggle('q3-yes', true); toggle('q3-no', false)" required />
+              <span>Yes</span>
+            </label>
+            <div class="sub-field" id="q3-yes">
+              <div class="sub-label">Date of meeting:</div>
+              <input type="date" name="Q3_MeetingDate" />
+            </div>
+            <label class="radio-option">
+              <input type="radio" name="Q3_CheckIn" value="No" onchange="toggle('q3-no', true); toggle('q3-yes', false)" />
+              <span>No</span>
+            </label>
+            <div class="sub-field" id="q3-no">
+              <div class="sub-label">Why not?</div>
+              <textarea name="Q3_WhyNot" placeholder="Please explain..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <hr class="divider" />
+
+        <!-- Q4 -->
+        <div class="question-block">
+          <div class="question-label">
+            <span class="question-number">4</span>
+            Has quality assurance occurred this month?
+          </div>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" name="Q4_QA" value="Yes" onchange="toggle('q4-yes', true); toggle('q4-no', false)" required />
+              <span>Yes</span>
+            </label>
+            <div class="checkbox-sub" id="q4-yes">
+              <div class="checkbox-sub-label">Choose only which ones apply this month:</div>
+              <div class="checkbox-group">
+                <label class="checkbox-option">
+                  <input type="checkbox" class="qa-item" value="Discussed complex and high risk cases" />
+                  <span>Discussed complex and high risk cases</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" class="qa-item" value="Created / reviewed protocols for when physician must be consulted" />
+                  <span>Created / reviewed protocols for when physician must be consulted</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" class="qa-item" value="Reached out to physician for urgent clinical matters" />
+                  <span>Reached out to physician for urgent clinical matters</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" class="qa-item" value="Reviewed my treatment population and discussed practice guidelines and/or treatment protocols" />
+                  <span>Reviewed my treatment population and discussed practice guidelines and/or treatment protocols</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" class="qa-item" value="Reviewed medication prescribing protocols" />
+                  <span>Reviewed medication prescribing protocols</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" class="qa-item" value="Discussed controlled substance prescribing protocols" />
+                  <span>Discussed controlled substance prescribing protocols</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" class="qa-item" value="Reviewed scope-of-practice boundaries documented in the collaboration agreement" />
+                  <span>Reviewed scope-of-practice boundaries documented in the collaboration agreement</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" class="qa-item" value="Reviewed prescribing patterns for controlled substances" />
+                  <span>Reviewed prescribing patterns for controlled substances</span>
+                </label>
+                <label class="checkbox-option">
+                  <input type="checkbox" class="qa-item" value="Tracked patient outcomes and adverse events" />
+                  <span>Tracked patient outcomes and adverse events</span>
+                </label>
+                <input type="hidden" name="Q4_QA_Items_Selected" id="qa-hidden" />
+              </div>
+            </div>
+            <label class="radio-option">
+              <input type="radio" name="Q4_QA" value="No" onchange="toggle('q4-no', true); toggle('q4-yes', false)" />
+              <span>No</span>
+            </label>
+            <div class="sub-field" id="q4-no">
+              <div class="sub-label">Why not?</div>
+              <textarea name="Q4_WhyNot" placeholder="Please explain..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <hr class="divider" />
+
+        <!-- Q5 -->
+        <div class="question-block">
+          <div class="question-label">
+            <span class="question-number">5</span>
+            Have you provided patient charts for your physician to review?
+          </div>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" name="Q5_ChartReview" value="Yes" onchange="toggle('q5-yes', true); toggle('q5-no', false)" required />
+              <span>Yes</span>
+            </label>
+            <div class="sub-field" id="q5-yes">
+              <div class="sub-label">How many charts were provided?</div>
+              <input type="text" name="Q5_ChartCount" placeholder="Enter number of charts..." />
+            </div>
+            <label class="radio-option">
+              <input type="radio" name="Q5_ChartReview" value="No - not required by state(s) this month" onchange="toggle('q5-yes', false); toggle('q5-no', false)" />
+              <span>No, not required by state(s) this month</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="Q5_ChartReview" value="No" onchange="toggle('q5-no', true); toggle('q5-yes', false)" />
+              <span>No</span>
+            </label>
+            <div class="sub-field" id="q5-no">
+              <div class="sub-label">Why not?</div>
+              <textarea name="Q5_WhyNot" placeholder="Please explain..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <hr class="divider" />
+
+        <!-- Q6 -->
+        <div class="question-block">
+          <div class="question-label">
+            <span class="question-number">6</span>
+            If charts have been sent to your physician for review, have you kept a log for tracking purposes of which charts were sent?
+          </div>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" name="Q6_ChartLog" value="Yes" onchange="toggle('q6-no', false)" required />
+              <span>Yes</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="Q6_ChartLog" value="No" onchange="toggle('q6-no', true); toggle('q6-na', false)" />
+              <span>No</span>
+            </label>
+            <div class="sub-field" id="q6-no">
+              <div class="sub-label">Why not?</div>
+              <textarea name="Q6_WhyNot" placeholder="Please explain..."></textarea>
+            </div>
+            <label class="radio-option">
+              <input type="radio" name="Q6_ChartLog" value="Not Applicable" onchange="toggle('q6-no', false)" />
+              <span>Not Applicable</span>
+            </label>
+          </div>
+        </div>
+
+        <hr class="divider" />
+
+        <!-- Attestation -->
+        <div class="attestation-box">
+          <p>By submitting this form, I attest that the information provided above is accurate and complete to the best of my knowledge, and that I have fulfilled my collaboration obligations in accordance with applicable state regulations and the terms of my collaboration agreement.</p>
+          <div class="attestation-check">
+            <input type="checkbox" id="attestation" name="Attestation" value="I attest that all information is accurate and complete" required />
+            <span>I attest that the above information is accurate and complete.</span>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 24px;">
+          <label class="field-label" for="digital_signature">Digital Signature (type full name) <span style="color:#c0392b">*</span></label>
+          <input type="text" id="digital_signature" name="Digital_Signature" placeholder="Type your full legal name" required />
+        </div>
+
+        <div class="submit-section">
+          <button type="submit" id="submit-btn">Submit</button>
+          <p class="required-note">Your response will be sent securely upon submission.</p>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function toggle(id, show) {
+      const el = document.getElementById(id);
+      if (show) {
+        el.classList.add('visible');
+      } else {
+        el.classList.remove('visible');
+      }
+    }
+
+    document.getElementById('compliance-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      // Compile Q4 checkboxes into single field
+      const checked = Array.from(document.querySelectorAll('.qa-item:checked')).map(cb => cb.value);
+      document.getElementById('qa-hidden').value = checked.length ? checked.join('; ') : 'None selected';
+
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      const formData = new FormData(this);
+
+      try {
+        const response = await fetch('https://formsubmit.co/ajax/philipwasef@md-match.com', {
+          method: 'POST',
+          headers: { 'Accept': 'application/json' },
+          body: formData
+        });
+
+        if (response.ok) {
+          document.getElementById('compliance-form').style.display = 'none';
+          document.getElementById('success-msg').style.display = 'block';
+          window.scrollTo(0, 0);
+        } else {
+          throw new Error('Submission failed');
+        }
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = 'Submit';
+        alert('There was a problem submitting the form. Please try again.');
+      }
+    });
+  </script>
+</body>
+</html>
