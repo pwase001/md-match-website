@@ -200,3 +200,97 @@ export async function generateDocx(f) {
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
   return { base64, bytes };
 }
+
+export async function generatePhysicianDocx(f) {
+  const doc = new Document({
+    styles: {
+      default: {
+        document: {
+          run: { font: 'Calibri', size: 20, color: DARK },
+        },
+      },
+    },
+    sections: [{
+      properties: {
+        page: {
+          margin: {
+            top: convertInchesToTwip(1),
+            bottom: convertInchesToTwip(1),
+            left: convertInchesToTwip(1.1),
+            right: convertInchesToTwip(1.1),
+          },
+        },
+      },
+      children: [
+        new Paragraph({
+          spacing: { after: 200 },
+          border: { bottom: { style: BorderStyle.SINGLE, size: 12, color: TEAL } },
+          children: [
+            new TextRun({ text: 'PHYSICIAN PROFILE', bold: true, size: 32, color: TEAL, font: 'Calibri' }),
+          ],
+        }),
+
+        sectionHeader('Personal & Credentials'),
+        dataTable([
+          labelRow('Medical Degree', f['Medical Degree']),
+          labelRow('Specialty', f['Specialty']),
+          labelRow('Board Certification Status', f['Board Certification Status']),
+          labelRow('NPI Number', f['NPI Number']),
+          labelRow('Years in Practice', f['Years in Practice']),
+        ]),
+
+        sectionHeader('Licensure, Collaboration & DEA'),
+        dataTable([
+          labelRow('Licensed States', f['Licensed States']),
+          labelRow('Available to Collaborate', f['Collab States']),
+          labelRow('DEA States', f['DEA States'] || 'None specified'),
+        ]),
+
+        sectionHeader('Clinical Preferences'),
+        dataTable([
+          labelRow('Controlled Substances Comfort', f['Controlled Substances Comfort']),
+          ...(f['Controlled Substances Comfort'] !== 'No' ? [labelRow('Schedule II Signoff', f['Schedule II Signoff'])] : []),
+          labelRow('IV Ketamine Comfort', f['IV Ketamine Comfort']),
+          labelRow('IM Ketamine Comfort', f['IM Ketamine Comfort']),
+          labelRow('Intranasal Ketamine Comfort', f['Intranasal Ketamine Comfort']),
+          labelRow('TMS Comfort', f['TMS Comfort']),
+          labelRow('Credentialing Willingness', f['Credentialing Willingness']),
+        ]),
+
+        sectionHeader('Legal & Board Standing'),
+        dataTable([
+          labelRow('Board Disciplinary Action', f['Board Action']),
+          ...(f['Board Action'] === 'Yes' ? [labelRow('Board Action Details', f['Board Action Details'])] : []),
+          labelRow('License Suspension', f['License Suspension']),
+          ...(f['License Suspension'] === 'Yes' ? [labelRow('License Suspension Details', f['License Suspension Details'])] : []),
+          labelRow('DEA Action', f['DEA Action']),
+          ...(f['DEA Action'] === 'Yes' ? [labelRow('DEA Action Details', f['DEA Action Details'])] : []),
+          labelRow('Malpractice', f['Malpractice']),
+          ...(f['Malpractice'] === 'Yes' ? [labelRow('Malpractice Details', f['Malpractice Details'])] : []),
+        ]),
+
+        new Paragraph({
+          spacing: { before: 200 },
+          border: { top: { style: BorderStyle.SINGLE, size: 4, color: 'DDDDDD' } },
+          children: [
+            new TextRun({
+              text: `Submitted via MD-Match.com  ·  ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`,
+              size: 16, color: '888888', font: 'Calibri', italics: true,
+            }),
+          ],
+        }),
+        ...(f['How Did You Hear About MD-Match']
+          ? [new Paragraph({
+            children: [new TextRun({ text: `Referral source: ${f['How Did You Hear About MD-Match']}`, size: 16, color: '888888', font: 'Calibri', italics: true })],
+          })]
+          : []),
+      ],
+    }],
+  });
+
+  const base64 = await Packer.toBase64String(doc);
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return { base64, bytes };
+}
