@@ -789,11 +789,9 @@
       const checked = [...document.querySelectorAll(`.i-state-pill[id^="${prefix}-"]:checked`)].map(el => el.value);
       data.set(prefix === 'lic' ? 'licensed_states' : prefix === 'collab' ? 'collab_states' : 'dea_states', checked.join(', ') || 'None');
     });
-    data.set('access_key', 'c7f6fe93-49ba-4e3b-ab74-c55a3ace033d');
-    data.set('_subject', 'New Physician Application — MD-Match');
 
     try {
-      const res = await fetch('https://api.web3forms.com/submit', {
+      const res = await fetch('/physician-submit', {
         method: 'POST',
         body: data,
         headers: { 'Accept': 'application/json' }
