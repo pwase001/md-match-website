@@ -673,6 +673,10 @@
           <option>Other</option>
         </select>
       </div>
+      <div class="field field-span-2" id="practice-address-field" style="display:none;">
+        <label>Practice Site Address <span class="req">*</span> <span style="font-weight:400;color:#888;font-size:0.85em;">(Required for Texas)</span></label>
+        <input type="text" name="Practice Site Address" id="practiceSiteAddress" placeholder="e.g., 123 Main St, Austin, TX 78701">
+      </div>
     </div>
   </div>
 
@@ -970,16 +974,27 @@
     </div>
   </div>
 
-  <!-- 05 · Final -->
+  <!-- 05 · Start Date -->
   <div class="section">
     <div class="section-header">
       <span class="section-number">06</span>
-      <span class="section-title">Ideal Start Date</span>
+      <span class="section-title">Start Date</span>
     </div>
     <div class="field-grid">
       <div class="field">
         <label>Ideal Start Date for Collaboration</label>
         <input type="date" name="Ideal Start Date">
+      </div>
+      <div class="field field-span-2">
+        <label>When do you plan to see your first patient?</label>
+        <div class="radio-row" style="flex-direction:column;gap:0.4rem;margin-top:0.3rem;">
+          <label><input type="radio" name="First Patient Timeline" value="Already seeing patients"> <span>I am already seeing patients</span></label>
+          <label><input type="radio" name="First Patient Timeline" value="Within the next 2 weeks"> <span>I plan to see my first patient within the next 2 weeks</span></label>
+          <label><input type="radio" name="First Patient Timeline" value="Within the next 4 weeks"> <span>I plan to see my first patient within the next 4 weeks</span></label>
+          <label><input type="radio" name="First Patient Timeline" value="Within the next 2 months"> <span>I plan to see my first patient within the next 2 months</span></label>
+          <label><input type="radio" name="First Patient Timeline" value="Within the next 3 months"> <span>I plan to see my first patient within the next 3 months</span></label>
+          <label><input type="radio" name="First Patient Timeline" value="Longer than 3 months — extensive credentialing needed"> <span>I still need extensive credentialing and expect to wait longer than 3 months</span></label>
+        </div>
       </div>
     </div>
   </div>
@@ -1091,6 +1106,17 @@
 
   buildPills('collabGrid', 'collab');
   buildPills('deaGrid', 'dea');
+
+  // Show Practice Site Address field when TX is selected in collaboration states
+  document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('state-pill') && e.target.id.startsWith('collab-')) {
+      const txSelected = document.querySelector('.state-pill[id="collab-TX"]')?.checked;
+      const field = document.getElementById('practice-address-field');
+      const input = document.getElementById('practiceSiteAddress');
+      field.style.display = txSelected ? '' : 'none';
+      input.required = !!txSelected;
+    }
+  });
 
   document.getElementById('intakeForm').addEventListener('submit', async function(e) {
     e.preventDefault();
