@@ -297,12 +297,6 @@
   .radio-row label:hover { border-color: var(--teal-light); background: #f0f7f7; }
   .radio-row input[type="radio"] { accent-color: var(--teal); width: 13px; height: 13px; cursor: pointer; }
 
-  /* Simple dot-style radio list (stacked, no pill borders) */
-  .dot-list { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.3rem; }
-  .dot-list label { display: flex; align-items: center; gap: 0.6rem; font-size: 13px; cursor: pointer; padding: 0; border: none; background: none; color: var(--ink); }
-  .dot-list label:hover { background: none; border: none; color: var(--teal); }
-  .dot-list input[type="radio"] { display: none; }
-  .dot-list label:has(input[type="radio"]:checked) { font-weight: 700; color: var(--teal-deep); }
 
   .radio-row label:has(input:checked) {
     border-color: var(--teal);
@@ -992,15 +986,15 @@
         <label>Ideal Start Date for Collaboration</label>
         <input type="date" name="Ideal Start Date">
       </div>
-      <div class="field field-span-2">
-        <label>When do you plan to see your first patient?</label>
-        <div class="dot-list">
-          <label><input type="radio" name="First Patient Timeline" value="I am already seeing patients"> I am already seeing patients</label>
-          <label><input type="radio" name="First Patient Timeline" value="Within 2 weeks"> Within 2 weeks</label>
-          <label><input type="radio" name="First Patient Timeline" value="Within 4 weeks"> Within 4 weeks</label>
-          <label><input type="radio" name="First Patient Timeline" value="Within 2 months"> Within 2 months</label>
-          <label><input type="radio" name="First Patient Timeline" value="Within 3 months"> Within 3 months</label>
-          <label><input type="radio" name="First Patient Timeline" value="I still need an extensive amount of credentialing and expect to wait longer than 3 months to see my first patient"> I still need an extensive amount of credentialing and expect to wait longer than 3 months to see my first patient</label>
+      <div class="why-row">
+        <div class="why-label">When do you plan to see your first patient?</div>
+        <div class="radio-row" style="flex-direction:column;gap:0.3rem;">
+          <label><input type="radio" name="First Patient Timeline" value="I am already seeing patients"> <span>I am already seeing patients</span></label>
+          <label><input type="radio" name="First Patient Timeline" value="Within 2 weeks"> <span>Within 2 weeks</span></label>
+          <label><input type="radio" name="First Patient Timeline" value="Within 4 weeks"> <span>Within 4 weeks</span></label>
+          <label><input type="radio" name="First Patient Timeline" value="Within 2 months"> <span>Within 2 months</span></label>
+          <label><input type="radio" name="First Patient Timeline" value="Within 3 months"> <span>Within 3 months</span></label>
+          <label><input type="radio" name="First Patient Timeline" value="I still need an extensive amount of credentialing and expect to wait longer than 3 months to see my first patient"> <span>I still need an extensive amount of credentialing and expect to wait longer than 3 months to see my first patient</span></label>
         </div>
       </div>
     </div>
