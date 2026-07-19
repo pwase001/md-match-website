@@ -97,7 +97,9 @@ async function handleNpPaSubmit(request, env) {
       'DEA Action Details': fields['DEA Action Details'] || '',
       'Malpractice': fields['malpractice'] === 'yes' ? 'Yes' : 'No',
       'Malpractice Details': fields['Malpractice Details'] || '',
+      'Practice Site Address': fields['Practice Site Address'] || '',
       'Ideal Start Date': formatDate(fields['Ideal Start Date']),
+      'First Patient Timeline': fields['First Patient Timeline'] || '—',
       'Additional Information': fields['Anything Else We Should Know'] || '—',
       'How Did You Hear About MD-Match': fields['How Did You Hear About MD-Match'] || '—',
       'Referred By': fields['Referred By'] || '',
@@ -321,6 +323,7 @@ function buildSummary(f) {
     ${row('Specialty', f['Specialty'])}
     ${row('Years of Experience', f['Years of Clinical Experience'])}
     ${row('Years of Psychiatry Experience', f['Years of Psychiatry Experience'])}
+    ${f['Practice Site Address'] ? row('Practice Site Address', f['Practice Site Address']) : ''}
     ${section('Reason for Seeking Collaboration')}
     ${row('Why Seeking Collaboration', f['Why Seeking Collaboration'])}
     ${f['Why Switching Details'] ? row('Why Switching', f['Why Switching Details']) : ''}
@@ -354,6 +357,7 @@ function buildSummary(f) {
     ${f['Malpractice'] === 'Yes' ? row('Malpractice Details', f['Malpractice Details']) : ''}
     ${section('Availability')}
     ${row('Ideal Start Date', f['Ideal Start Date'])}
+    ${row('First Patient Timeline', f['First Patient Timeline'])}
     ${row('Additional Information', f['Additional Information'])}
     ${section('Referral')}
     ${row('How Did You Hear About Us', f['How Did You Hear About MD-Match'])}

@@ -158,6 +158,7 @@ export async function generateDocx(f) {
         sectionHeader('Availability'),
         dataTable([
           labelRow('Ideal Start Date', f['Ideal Start Date']),
+          labelRow('First Patient Timeline', f['First Patient Timeline']),
         ]),
 
         // Section 6: Additional Information
