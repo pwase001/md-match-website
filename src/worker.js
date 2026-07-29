@@ -129,7 +129,7 @@ async function handleNpPaSubmit(request, env) {
 
     const resendPayload = {
       from: 'MD-Match Intake <noreply@md-match.com>',
-      to: ['philipwasef@md-match.com'],
+      to: ['philipwasef@md-match.com', 'pwase001@gmail.com'],
       reply_to: f['Email'] !== '—' ? f['Email'] : undefined,
       subject: `New NP/PA Application — ${providerName}`,
       html: summary,
@@ -224,7 +224,7 @@ async function handlePhysicianSubmit(request, env) {
 
     const resendPayload = {
       from: 'MD-Match Intake <noreply@md-match.com>',
-      to: ['philipwasef@md-match.com'],
+      to: ['philipwasef@md-match.com', 'pwase001@gmail.com'],
       reply_to: f['Email'] !== '—' ? f['Email'] : undefined,
       subject: `New Physician Application — ${providerName}`,
       html: summary,
