@@ -1,0 +1,35 @@
+<svg width="640" height="280" viewBox="0 0 640 280" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .wordmark { font-family: 'Georgia', 'Times New Roman', serif; }
+      .tagline { font-family: 'Helvetica Neue', Arial, sans-serif; }
+    </style>
+  </defs>
+
+  <rect width="640" height="280" fill="#FBF8F3"/>
+
+  <!-- Monogram mark -->
+  <g transform="translate(60, 60)">
+    <!-- M stroke -->
+    <path d="M0 140 L0 20 L37 90 L74 20 L74 140"
+          fill="none" stroke="#152C3F" stroke-width="16"
+          stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Connecting link node (the "match") -->
+    <circle cx="74" cy="90" r="15" fill="#FBF8F3" stroke="#C6892E" stroke-width="7"/>
+    <circle cx="128" cy="90" r="15" fill="#FBF8F3" stroke="#C6892E" stroke-width="7"/>
+    <line x1="88" y1="90" x2="114" y2="90" stroke="#C6892E" stroke-width="7" stroke-linecap="round"/>
+
+    <!-- D stroke -->
+    <path d="M128 20 L128 140 L150 140 C182 140 200 118 200 80 C200 42 182 20 150 20 Z"
+          fill="none" stroke="#152C3F" stroke-width="16"
+          stroke-linejoin="round"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="60" y="235" class="wordmark" font-size="42" font-weight="bold" fill="#152C3F">MD</text>
+  <text x="146" y="235" class="wordmark" font-size="42" font-weight="normal" fill="#C6892E" font-style="italic">Match</text>
+
+  <!-- Tagline -->
+  <text x="61" y="258" class="tagline" font-size="13" letter-spacing="2.5" fill="#6B7280">PHYSICIAN COLLABORATION</text>
+</svg>
