@@ -12,6 +12,10 @@ export default {
       return handlePhysicianSubmit(request, env);
     }
 
+    if (request.method === 'POST' && url.pathname === '/physician-licensure-submit') {
+      return handlePhysicianLicensureSubmit(request, env);
+    }
+
     // Serve static assets for all other requests
     return env.ASSETS.fetch(request);
   },
@@ -244,6 +248,63 @@ async function handlePhysicianSubmit(request, env) {
       const errBody = await resendRes.text();
       console.error('Resend error status:', resendRes.status, 'body:', errBody);
       return jsonResponse({ success: false, error: 'Email delivery failed', detail: errBody }, 500);
+    }
+
+    return jsonResponse({ success: true });
+  } catch (err) {
+    console.error('Worker error:', err);
+    return jsonResponse({ success: false, error: 'Server error' }, 500);
+  }
+}
+
+async function handlePhysicianLicensureSubmit(request, env) {
+  try {
+    const formData = await request.formData();
+    const fields = {};
+    for (const [key, value] of formData.entries()) fields[key] = value;
+
+    const name = [fields['First Name'], fields['Last Name']].filter(Boolean).join(' ') || 'Unknown';
+
+    if (!env.RESEND_API_KEY) return jsonResponse({ success: false, error: 'Server misconfiguration' }, 500);
+
+    const row = (label, val) =>
+      `<tr><td style="padding:6px 12px;font-weight:600;color:#1e2530;background:#f2f4f6;width:38%;font-family:sans-serif;font-size:13px;border-bottom:1px solid #ddd">${label}</td><td style="padding:6px 12px;color:#1e2530;font-family:sans-serif;font-size:13px;border-bottom:1px solid #ddd">${val || '—'}</td></tr>`;
+    const section = (title) =>
+      `<tr><td colspan="2" style="padding:10px 12px 4px;font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.08em;color:#1B6CA8;font-family:sans-serif;border-bottom:2px solid #1B6CA8">${title}</td></tr>`;
+
+    const html = `
+<div style="max-width:680px;margin:0 auto;font-family:sans-serif">
+  <h2 style="color:#1B6CA8;margin-bottom:4px">Physician Licensure — MD-Match</h2>
+  <p style="color:#555;font-size:13px">Submitted ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</p>
+  <table style="width:100%;border-collapse:collapse;margin-top:16px">
+    ${section('Contact')}
+    ${row('Full Name', name)}
+    ${row('Email', fields['Professional Email'] || '—')}
+    ${row('Phone', fields['Phone Number'] || '—')}
+    ${section('Licensure & Collaboration')}
+    ${row('Licensed States', fields['licensed_states'] || '—')}
+    ${row('Available to Collaborate', fields['collab_states'] || '—')}
+    ${row('DEA States', fields['dea_states'] || 'None')}
+  </table>
+  <p style="color:#aaa;font-size:11px;margin-top:24px">MD-Match.com</p>
+</div>`;
+
+    const resendRes = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'MD-Match Intake <noreply@md-match.com>',
+        to: ['philipwasef@md-match.com', 'pwase001@gmail.com'],
+        reply_to: fields['Professional Email'] || undefined,
+        subject: `Physician Licensure Submission — ${name}`,
+        html,
+      }),
+    });
+
+    if (!resendRes.ok) {
+      const errBody = await resendRes.text();
+      console.error('Resend error:', resendRes.status, errBody);
+      return jsonResponse({ success: false, error: 'Email delivery failed' }, 500);
     }
 
     return jsonResponse({ success: true });
