@@ -16,6 +16,10 @@ export default {
       return handlePhysicianLicensureSubmit(request, env);
     }
 
+    if (request.method === 'POST' && url.pathname === '/send-licensure-email') {
+      return handleSendLicensureEmail(request, env);
+    }
+
     // Serve static assets for all other requests
     return env.ASSETS.fetch(request);
   },
@@ -251,6 +255,48 @@ async function handlePhysicianSubmit(request, env) {
       return jsonResponse({ success: false, error: 'Email delivery failed', detail: errBody }, 500);
     }
 
+    return jsonResponse({ success: true });
+  } catch (err) {
+    console.error('Worker error:', err);
+    return jsonResponse({ success: false, error: 'Server error' }, 500);
+  }
+}
+
+async function handleSendLicensureEmail(request, env) {
+  try {
+    const { first, last, email } = await request.json();
+    if (!email) return jsonResponse({ success: false, error: 'Missing email' }, 400);
+    if (!env.RESEND_API_KEY) return jsonResponse({ success: false, error: 'Server misconfiguration' }, 500);
+
+    const lastName = last || '';
+    const salutation = lastName ? `Dr. ${lastName}` : 'Doctor';
+
+    const html = `
+<div style="max-width:600px;margin:0 auto;font-family:sans-serif;font-size:15px;line-height:1.7;color:#1a3333">
+  <p>Dear ${salutation},</p>
+  <p>As we begin matching NPs and PAs with collaborating physicians, we want to make sure we have your most up-to-date information on file. Unfortunately, a technical issue with our original intake form prevented all 50 states from loading correctly, which may have limited your selections.</p>
+  <p>Could you take just one minute to complete this quick form with your current states of licensure, collaboration availability, and DEA registration?</p>
+  <p><a href="https://md-match.com/physician-licensure.html" style="color:#1a6b6b;font-weight:700">https://md-match.com/physician-licensure.html</a></p>
+  <p>We appreciate your time and are looking forward to making several successful matches with you soon.</p>
+  <p>Warm regards,<br><strong>Philip Wasef, MD</strong><br>MD-Match</p>
+</div>`;
+
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'Philip Wasef, MD <philipwasef@md-match.com>',
+        to: [email],
+        subject: 'Quick Update — State Licensure & Availability',
+        html,
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      console.error('Resend error:', res.status, err);
+      return jsonResponse({ success: false, error: 'Email delivery failed' }, 500);
+    }
     return jsonResponse({ success: true });
   } catch (err) {
     console.error('Worker error:', err);

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MD-Match — Send Licensure Emails</title>
+<link rel="icon" type="image/svg+xml" href="/logo.svg">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f0f4f4;
+    color: #1a3333;
+    padding: 2rem 1rem 4rem;
+    font-size: 14px;
+  }
+  .page { max-width: 680px; margin: 0 auto; }
+
+  h1 {
+    font-size: 1.3rem;
+    color: #0b3535;
+    margin-bottom: 0.3rem;
+  }
+  .subtitle { color: #4a6b6b; font-size: 13px; margin-bottom: 2rem; }
+
+  .card {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    margin-bottom: 1.5rem;
+  }
+
+  .card-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #1a6b6b;
+    margin-bottom: 1rem;
+  }
+
+  /* Recipient rows */
+  .recipients { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1rem; }
+  .recipient-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 2fr auto;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  input[type="text"], input[type="email"] {
+    padding: 0.5rem 0.7rem;
+    border: 1.5px solid #d0e2e2;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    color: #1a3333;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.15s;
+  }
+  input:focus { border-color: #1a6b6b; }
+
+  .btn-remove {
+    background: none;
+    border: none;
+    color: #aaa;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 0 4px;
+    transition: color 0.15s;
+  }
+  .btn-remove:hover { color: #c0392b; }
+
+  .btn-add {
+    background: none;
+    border: 1.5px dashed #d0e2e2;
+    border-radius: 6px;
+    padding: 0.45rem 1rem;
+    cursor: pointer;
+    color: #4a6b6b;
+    font-size: 13px;
+    font-family: inherit;
+    width: 100%;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .btn-add:hover { border-color: #1a6b6b; color: #1a6b6b; background: #f0f7f7; }
+
+  /* Preview */
+  .preview {
+    background: #f8fbfb;
+    border: 1px solid #d0e2e2;
+    border-radius: 6px;
+    padding: 1rem 1.2rem;
+    font-size: 13px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    color: #1a3333;
+  }
+  .preview-note { font-size: 11px; color: #4a6b6b; margin-bottom: 0.5rem; }
+
+  /* Send button */
+  .send-area { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .btn-send {
+    background: #0b3535;
+    color: white;
+    border: none;
+    padding: 0.8rem 2rem;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+  .btn-send:hover { background: #1a6b6b; }
+  .btn-send:disabled { background: #aaa; cursor: default; }
+
+  /* Log */
+  .log { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 1rem; }
+  .log-item {
+    font-size: 12.5px;
+    padding: 0.4rem 0.8rem;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .log-item.sending { background: #f0f7f7; color: #1a6b6b; }
+  .log-item.ok { background: #f0faf0; color: #1a7a1a; }
+  .log-item.err { background: #fdf5f3; color: #c0392b; }
+
+  .col-labels {
+    display: grid;
+    grid-template-columns: 1fr 1fr 2fr auto;
+    gap: 0.5rem;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #4a6b6b;
+    margin-bottom: 0.3rem;
+    padding: 0 0;
+  }
+
+  @media (max-width: 560px) {
+    .recipient-row { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; }
+    .recipient-row input[type="email"] { grid-column: 1 / -1; }
+    .btn-remove { grid-column: 2; justify-self: end; }
+    .col-labels { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>Send Licensure Update Email</h1>
+  <p class="subtitle">Emails send from <strong>philipwasef@md-match.com</strong> — add as many doctors as you like, then hit Send All.</p>
+
+  <div class="card">
+    <div class="card-title">Recipients</div>
+    <div class="col-labels">
+      <span>First Name</span><span>Last Name</span><span>Email</span><span></span>
+    </div>
+    <div class="recipients" id="recipientList">
+      <div class="recipient-row">
+        <input type="text" placeholder="First Name" class="r-first">
+        <input type="text" placeholder="Last Name" class="r-last">
+        <input type="email" placeholder="doctor@example.com" class="r-email">
+        <button class="btn-remove" onclick="removeRow(this)" title="Remove">×</button>
+      </div>
+    </div>
+    <button class="btn-add" onclick="addRow()">+ Add another doctor</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Email Preview</div>
+    <p class="preview-note">Each doctor receives a personalized version with their own name.</p>
+    <div class="preview">Subject: Quick Update — State Licensure &amp; Availability
+
+Dear Dr. [Last Name],
+
+As we begin matching NPs and PAs with collaborating physicians, we want to make sure we have your most up-to-date information on file. Unfortunately, a technical issue with our original intake form prevented all 50 states from loading correctly, which may have limited your selections.
+
+Could you take just one minute to complete this quick form with your current states of licensure, collaboration availability, and DEA registration?
+
+https://md-match.com/physician-licensure.html
+
+We appreciate your time and are looking forward to making several successful matches with you soon.
+
+Warm regards,
+Philip Wasef, MD
+MD-Match</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Send</div>
+    <div class="send-area">
+      <button class="btn-send" id="sendBtn" onclick="sendAll()">Send All Emails →</button>
+      <span id="sendStatus" style="font-size:13px;color:#4a6b6b;"></span>
+    </div>
+    <div class="log" id="log"></div>
+  </div>
+
+</div>
+<script>
+  function addRow() {
+    const row = document.createElement('div');
+    row.className = 'recipient-row';
+    row.innerHTML = `
+      <input type="text" placeholder="First Name" class="r-first">
+      <input type="text" placeholder="Last Name" class="r-last">
+      <input type="email" placeholder="doctor@example.com" class="r-email">
+      <button class="btn-remove" onclick="removeRow(this)" title="Remove">×</button>
+    `;
+    document.getElementById('recipientList').appendChild(row);
+  }
+
+  function removeRow(btn) {
+    const rows = document.querySelectorAll('.recipient-row');
+    if (rows.length > 1) btn.closest('.recipient-row').remove();
+  }
+
+  function getRecipients() {
+    return [...document.querySelectorAll('.recipient-row')].map(row => ({
+      first: row.querySelector('.r-first').value.trim(),
+      last: row.querySelector('.r-last').value.trim(),
+      email: row.querySelector('.r-email').value.trim(),
+    })).filter(r => r.email);
+  }
+
+  function logItem(msg, type) {
+    const el = document.createElement('div');
+    el.className = `log-item ${type}`;
+    el.textContent = msg;
+    document.getElementById('log').appendChild(el);
+    return el;
+  }
+
+  async function sendAll() {
+    const recipients = getRecipients();
+    if (!recipients.length) { alert('Please add at least one doctor with an email address.'); return; }
+
+    const btn = document.getElementById('sendBtn');
+    btn.disabled = true;
+    document.getElementById('log').innerHTML = '';
+    document.getElementById('sendStatus').textContent = `Sending ${recipients.length} email${recipients.length > 1 ? 's' : ''}…`;
+
+    let ok = 0, fail = 0;
+    for (const r of recipients) {
+      const name = [r.first, r.last].filter(Boolean).join(' ') || r.email;
+      const item = logItem(`Sending to ${name} (${r.email})…`, 'sending');
+      try {
+        const res = await fetch('/send-licensure-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({ first: r.first, last: r.last, email: r.email }),
+        });
+        if (res.ok) {
+          item.textContent = `✓ Sent to ${name} (${r.email})`;
+          item.className = 'log-item ok';
+          ok++;
+        } else {
+          item.textContent = `✗ Failed for ${name} (${r.email})`;
+          item.className = 'log-item err';
+          fail++;
+        }
+      } catch {
+        item.textContent = `✗ Network error for ${name} (${r.email})`;
+        item.className = 'log-item err';
+        fail++;
+      }
+    }
+
+    document.getElementById('sendStatus').textContent =
+      `Done — ${ok} sent${fail ? `, ${fail} failed` : ''}.`;
+    btn.disabled = false;
+  }
+</script>
+</body>
+</html>
