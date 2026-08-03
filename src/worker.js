@@ -186,6 +186,7 @@ async function handlePhysicianSubmit(request, env) {
       'Board Certification Status': fields['Board Certification Status'] || '—',
       'NPI Number': fields['NPI Number'] || '—',
       'Years in Practice': fields['Years in Practice'] || '—',
+      'State of Residence': fields['State of Residence'] || '—',
       'Licensed States': fields['licensed_states'] || '—',
       'Collab States': fields['collab_states'] || '—',
       'DEA States': fields['dea_states'] || 'None specified',
@@ -281,6 +282,7 @@ async function handlePhysicianLicensureSubmit(request, env) {
     ${row('Full Name', name)}
     ${row('Email', fields['Professional Email'] || '—')}
     ${row('Phone', fields['Phone Number'] || '—')}
+    ${row('State of Residence', fields['State of Residence'] || '—')}
     ${section('Licensure & Collaboration')}
     ${row('Licensed States', fields['licensed_states'] || '—')}
     ${row('Available to Collaborate', fields['collab_states'] || '—')}
@@ -335,6 +337,7 @@ function buildPhysicianSummary(f) {
     ${row('Board Certification Status', f['Board Certification Status'])}
     ${row('NPI Number', f['NPI Number'])}
     ${row('Years in Practice', f['Years in Practice'])}
+    ${row('State of Residence', f['State of Residence'])}
     ${section('Licensure, Collaboration & DEA')}
     ${row('Licensed States', f['Licensed States'])}
     ${row('Available to Collaborate', f['Collab States'])}
