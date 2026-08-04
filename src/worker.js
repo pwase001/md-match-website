@@ -475,7 +475,9 @@ async function handleCreateCollaboration(request, env) {
     if (!totalAmountCents || totalAmountCents <= platformFeeCents) {
       return jsonResponse({ success: false, error: 'Invalid amount' }, 400);
     }
-    const applicationFeePercent = Math.round((platformFeeCents / totalAmountCents) * 100 * 10000) / 10000;
+    // Stripe's application_fee_percent accepts at most 2 decimal places, so the flat
+    // platform fee can be off by a cent or two — acceptable for this fee structure.
+    const applicationFeePercent = Math.round((platformFeeCents / totalAmountCents) * 100 * 100) / 100;
 
     const client = await db.getClient(env.DB, clientId);
     const physician = await db.getPhysician(env.DB, physicianId);
