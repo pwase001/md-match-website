@@ -74,13 +74,17 @@ export async function createCollaborationSubscription(stripe, {
 }) {
   const trialEnd = Math.floor(new Date(startDateISO + 'T12:00:00Z').getTime() / 1000);
 
+  // Subscription price_data requires an existing product — unlike Checkout Session
+  // line_items.price_data, it does not accept inline product_data.
+  const product = await stripe.products.create({ name: description });
+
   const subscription = await stripe.subscriptions.create({
     customer: customerId,
     items: [
       {
         price_data: {
           currency: 'usd',
-          product_data: { name: description },
+          product: product.id,
           unit_amount: totalAmountCents,
           recurring: { interval: 'month' },
         },
