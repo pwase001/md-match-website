@@ -263,7 +263,7 @@
         body: JSON.stringify({ collaborationId: id }),
       });
       const data = await res.json();
-      if (!data.success) alert(data.error || 'Failed to activate');
+      if (!data.success) alert((data.error || 'Failed to activate') + (data.detail ? '\n\n' + data.detail : ''));
       loadData();
     } catch {
       alert('Network error');

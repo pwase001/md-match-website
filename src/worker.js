@@ -567,7 +567,7 @@ async function handleActivateCollaboration(request, env) {
     return jsonResponse({ success: true, subscriptionId: subscription.id });
   } catch (err) {
     console.error('Activate collaboration error:', err);
-    return jsonResponse({ success: false, error: 'Server error' }, 500);
+    return jsonResponse({ success: false, error: 'Server error', detail: err?.message || String(err) }, 500);
   }
 }
 
