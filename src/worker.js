@@ -1,4 +1,8 @@
 import { generateDocx, generatePhysicianDocx } from './docx-generator.js';
+import * as db from './db.js';
+import * as tokens from './tokens.js';
+import * as stripeHelpers from './stripe-helpers.js';
+import { handlePlatformWebhook, handleConnectWebhook } from './stripe-webhook.js';
 
 export default {
   async fetch(request, env) {
@@ -18,6 +22,38 @@ export default {
 
     if (request.method === 'POST' && url.pathname === '/send-licensure-email') {
       return handleSendLicensureEmail(request, env);
+    }
+
+    if (request.method === 'POST' && url.pathname === '/stripe-webhook') {
+      return handlePlatformWebhook(request, env);
+    }
+
+    if (request.method === 'POST' && url.pathname === '/stripe-webhook-connect') {
+      return handleConnectWebhook(request, env);
+    }
+
+    if (url.pathname === '/admin/login' && request.method === 'POST') {
+      return handleAdminLogin(request, env);
+    }
+
+    if (url.pathname.startsWith('/admin/api/')) {
+      return handleAdminApi(request, env, url);
+    }
+
+    if (url.pathname === '/physician-onboard/start') {
+      return handlePhysicianOnboardStart(request, env, url);
+    }
+
+    if (url.pathname === '/physician-onboard/complete') {
+      return handlePhysicianOnboardComplete(request, env, url);
+    }
+
+    if (url.pathname === '/client/add-bank/start') {
+      return handleClientAddBankStart(request, env, url);
+    }
+
+    if (url.pathname === '/client/add-bank/complete') {
+      return handleClientAddBankComplete(request, env, url);
     }
 
     // Serve static assets for all other requests
@@ -114,6 +150,18 @@ async function handleNpPaSubmit(request, env) {
     };
 
     const providerName = f['Full Name'] !== '—' ? f['Full Name'] : 'Unknown';
+
+    // Persist a client record for admin matching (non-fatal if it fails)
+    try {
+      if (f['Email'] !== '—') {
+        const existing = await db.getClientByEmail(env.DB, f['Email']);
+        if (!existing) {
+          await db.createClient(env.DB, { fullName: providerName, email: f['Email'], phone: f['Phone'] !== '—' ? f['Phone'] : null });
+        }
+      }
+    } catch (dbErr) {
+      console.error('DB error saving client:', dbErr?.message || dbErr);
+    }
 
     // Generate Word document
     let docxResult;
@@ -213,6 +261,18 @@ async function handlePhysicianSubmit(request, env) {
     };
 
     const providerName = f['Full Name'] !== '—' ? f['Full Name'] : 'Unknown';
+
+    // Persist a physician record for admin matching (non-fatal if it fails)
+    try {
+      if (f['Email'] !== '—') {
+        const existing = await db.getPhysicianByEmail(env.DB, f['Email']);
+        if (!existing) {
+          await db.createPhysician(env.DB, { fullName: providerName, email: f['Email'], phone: f['Phone'] !== '—' ? f['Phone'] : null });
+        }
+      }
+    } catch (dbErr) {
+      console.error('DB error saving physician:', dbErr?.message || dbErr);
+    }
 
     let docxResult;
     try {
@@ -360,6 +420,263 @@ async function handlePhysicianLicensureSubmit(request, env) {
     console.error('Worker error:', err);
     return jsonResponse({ success: false, error: 'Server error' }, 500);
   }
+}
+
+// ---- Admin ----
+
+async function handleAdminLogin(request, env) {
+  try {
+    const { password } = await request.json();
+    if (!env.ADMIN_PASSWORD || password !== env.ADMIN_PASSWORD) {
+      return jsonResponse({ success: false, error: 'Invalid password' }, 401);
+    }
+    const cookie = await tokens.createAdminSessionCookie(env);
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json', 'Set-Cookie': cookie },
+    });
+  } catch (err) {
+    console.error('Admin login error:', err);
+    return jsonResponse({ success: false, error: 'Server error' }, 500);
+  }
+}
+
+async function handleAdminApi(request, env, url) {
+  if (!(await tokens.isAdminRequest(request, env))) {
+    return jsonResponse({ success: false, error: 'Unauthorized' }, 401);
+  }
+
+  if (url.pathname === '/admin/api/data' && request.method === 'GET') {
+    const [clients, physicians, collaborations] = await Promise.all([
+      db.listClients(env.DB),
+      db.listPhysicians(env.DB),
+      db.listCollaborations(env.DB),
+    ]);
+    return jsonResponse({ success: true, clients, physicians, collaborations });
+  }
+
+  if (url.pathname === '/admin/api/collaborations' && request.method === 'POST') {
+    return handleCreateCollaboration(request, env);
+  }
+
+  if (url.pathname === '/admin/api/collaborations/activate' && request.method === 'POST') {
+    return handleActivateCollaboration(request, env);
+  }
+
+  return jsonResponse({ success: false, error: 'Not found' }, 404);
+}
+
+async function handleCreateCollaboration(request, env) {
+  try {
+    const { clientId, physicianId, totalAmountUsd, platformFeeUsd, startDate, notes } = await request.json();
+
+    const totalAmountCents = Math.round(Number(totalAmountUsd) * 100);
+    const platformFeeCents = Math.round(Number(platformFeeUsd || 200) * 100);
+    if (!totalAmountCents || totalAmountCents <= platformFeeCents) {
+      return jsonResponse({ success: false, error: 'Invalid amount' }, 400);
+    }
+    // Stripe's application_fee_percent accepts at most 2 decimal places, so the flat
+    // platform fee can be off by a cent or two — acceptable for this fee structure.
+    const applicationFeePercent = Math.round((platformFeeCents / totalAmountCents) * 100 * 100) / 100;
+
+    const client = await db.getClient(env.DB, clientId);
+    const physician = await db.getPhysician(env.DB, physicianId);
+    if (!client || !physician) {
+      return jsonResponse({ success: false, error: 'Client or physician not found' }, 404);
+    }
+
+    const collaboration = await db.createCollaboration(env.DB, {
+      clientId, physicianId, totalAmountCents, platformFeeCents, applicationFeePercent, startDate, notes,
+    });
+
+    const stripe = stripeHelpers.getStripe(env);
+    const origin = new URL(request.url).origin;
+
+    // Ensure the physician has a Connect account and send them an onboarding link
+    let stripeAccountId = physician.stripe_account_id;
+    if (!stripeAccountId) {
+      const account = await stripeHelpers.createPhysicianAccount(stripe, physician);
+      stripeAccountId = account.id;
+      await db.setPhysicianStripeAccountId(env.DB, physician.id, stripeAccountId);
+    }
+    const onboardToken = await tokens.createMagicToken(env, { pid: physician.id });
+    const onboardStartUrl = `${origin}/physician-onboard/start?pid=${physician.id}&t=${encodeURIComponent(onboardToken)}`;
+    await sendEmail(env, {
+      to: [physician.email],
+      from: 'MD-Match <noreply@md-match.com>',
+      subject: 'Set Up Payouts — MD-Match Collaboration',
+      html: `<p>Hi Dr. ${physician.full_name.split(' ').pop()},</p><p>You've been matched with a collaborating provider. To receive your monthly collaboration payment, please complete a short payout setup with our payment processor, Stripe:</p><p><a href="${onboardStartUrl}">${onboardStartUrl}</a></p><p>Warm regards,<br>MD-Match</p>`,
+    });
+
+    // Ensure the client has a Stripe Customer and send them a bank-link request
+    let stripeCustomerId = client.stripe_customer_id;
+    if (!stripeCustomerId) {
+      stripeCustomerId = await stripeHelpers.createOrGetCustomer(stripe, client);
+      await db.setClientStripeCustomerId(env.DB, client.id, stripeCustomerId);
+    }
+    const bankToken = await tokens.createMagicToken(env, { cid: collaboration.id });
+    const bankStartUrl = `${origin}/client/add-bank/start?collab=${collaboration.id}&t=${encodeURIComponent(bankToken)}`;
+    await sendEmail(env, {
+      to: [client.email],
+      from: 'MD-Match <noreply@md-match.com>',
+      subject: 'Set Up Payment — MD-Match Collaboration',
+      html: `<p>Hi ${client.full_name},</p><p>To finalize your collaboration agreement, please connect your bank account for monthly ACH payment:</p><p><a href="${bankStartUrl}">${bankStartUrl}</a></p><p>Warm regards,<br>MD-Match</p>`,
+    });
+
+    return jsonResponse({ success: true, collaboration });
+  } catch (err) {
+    console.error('Create collaboration error:', err);
+    return jsonResponse({ success: false, error: 'Server error' }, 500);
+  }
+}
+
+async function handleActivateCollaboration(request, env) {
+  try {
+    const { collaborationId } = await request.json();
+    const collaboration = await db.getCollaboration(env.DB, collaborationId);
+    if (!collaboration) return jsonResponse({ success: false, error: 'Not found' }, 404);
+
+    const physician = await db.getPhysician(env.DB, collaboration.physician_id);
+    const client = await db.getClient(env.DB, collaboration.client_id);
+
+    const stripe = stripeHelpers.getStripe(env);
+
+    // Check the physician's Connect account status live rather than trusting the
+    // account.updated webhook to have already flipped transfers_active — the webhook
+    // is a convenience for the admin UI, not the source of truth for this gate.
+    const account = await stripe.accounts.retrieve(physician.stripe_account_id);
+    const transfersActive = account.capabilities?.transfers === 'active';
+    if (transfersActive !== !!physician.transfers_active) {
+      await db.setPhysicianTransfersActive(env.DB, physician.stripe_account_id, transfersActive);
+    }
+    if (!transfersActive) {
+      return jsonResponse({ success: false, error: 'Physician has not completed payout onboarding yet' }, 400);
+    }
+    if (!collaboration.client_payment_method_ready) {
+      return jsonResponse({ success: false, error: 'Client has not connected a bank account yet' }, 400);
+    }
+
+    const subscription = await stripeHelpers.createCollaborationSubscription(stripe, {
+      customerId: client.stripe_customer_id,
+      physicianAccountId: physician.stripe_account_id,
+      totalAmountCents: collaboration.total_amount_cents,
+      applicationFeePercent: collaboration.application_fee_percent,
+      startDateISO: collaboration.start_date,
+      description: `Collaboration services — ${physician.full_name}`,
+    });
+
+    await db.activateCollaboration(env.DB, collaboration.id, subscription.id);
+    return jsonResponse({ success: true, subscriptionId: subscription.id });
+  } catch (err) {
+    console.error('Activate collaboration error:', err);
+    return jsonResponse({ success: false, error: 'Server error', detail: err?.message || String(err) }, 500);
+  }
+}
+
+// ---- Physician Connect onboarding ----
+
+async function handlePhysicianOnboardStart(request, env, url) {
+  const pid = Number(url.searchParams.get('pid'));
+  const t = url.searchParams.get('t');
+  const payload = await tokens.verifyMagicToken(env, t);
+  if (!payload || payload.pid !== pid) {
+    return new Response('Invalid or expired link.', { status: 403 });
+  }
+
+  const physician = await db.getPhysician(env.DB, pid);
+  if (!physician) return new Response('Not found.', { status: 404 });
+
+  const stripe = stripeHelpers.getStripe(env);
+  let stripeAccountId = physician.stripe_account_id;
+  if (!stripeAccountId) {
+    const account = await stripeHelpers.createPhysicianAccount(stripe, physician);
+    stripeAccountId = account.id;
+    await db.setPhysicianStripeAccountId(env.DB, physician.id, stripeAccountId);
+  }
+
+  const origin = url.origin;
+  const refreshUrl = `${origin}/physician-onboard/start?pid=${pid}&t=${encodeURIComponent(t)}`;
+  const returnUrl = `${origin}/physician-onboard/complete?pid=${pid}`;
+  const onboardingUrl = await stripeHelpers.createPhysicianOnboardingLink(stripe, stripeAccountId, refreshUrl, returnUrl);
+
+  return Response.redirect(onboardingUrl, 302);
+}
+
+async function handlePhysicianOnboardComplete(request, env, url) {
+  const pid = Number(url.searchParams.get('pid'));
+  try {
+    const physician = await db.getPhysician(env.DB, pid);
+    if (physician?.stripe_account_id) {
+      const stripe = stripeHelpers.getStripe(env);
+      const account = await stripe.accounts.retrieve(physician.stripe_account_id);
+      const transfersActive = account.capabilities?.transfers === 'active';
+      await db.setPhysicianTransfersActive(env.DB, physician.stripe_account_id, transfersActive);
+    }
+  } catch (err) {
+    console.error('Physician onboard complete status check error:', err);
+  }
+  return new Response(
+    '<html><body style="font-family:sans-serif;max-width:500px;margin:60px auto;text-align:center"><h2>Thanks!</h2><p>Your payout setup is being reviewed. We\'ll notify you once your collaboration is active.</p></body></html>',
+    { headers: { 'Content-Type': 'text/html' } }
+  );
+}
+
+// ---- Client ACH bank linking ----
+
+async function handleClientAddBankStart(request, env, url) {
+  const collabId = Number(url.searchParams.get('collab'));
+  const t = url.searchParams.get('t');
+  const payload = await tokens.verifyMagicToken(env, t);
+  if (!payload || payload.cid !== collabId) {
+    return new Response('Invalid or expired link.', { status: 403 });
+  }
+
+  const collaboration = await db.getCollaboration(env.DB, collabId);
+  if (!collaboration) return new Response('Not found.', { status: 404 });
+  const client = await db.getClient(env.DB, collaboration.client_id);
+
+  const stripe = stripeHelpers.getStripe(env);
+  let stripeCustomerId = client.stripe_customer_id;
+  if (!stripeCustomerId) {
+    stripeCustomerId = await stripeHelpers.createOrGetCustomer(stripe, client);
+    await db.setClientStripeCustomerId(env.DB, client.id, stripeCustomerId);
+  }
+
+  const origin = url.origin;
+  const successUrl = `${origin}/client/add-bank/complete?collab=${collabId}&session_id={CHECKOUT_SESSION_ID}`;
+  const cancelUrl = `${origin}/client/add-bank/start?collab=${collabId}&t=${encodeURIComponent(t)}`;
+  const checkoutUrl = await stripeHelpers.createBankLinkCheckoutSession(stripe, stripeCustomerId, successUrl, cancelUrl, { collaboration_id: String(collabId) });
+
+  return Response.redirect(checkoutUrl, 302);
+}
+
+async function handleClientAddBankComplete(request, env, url) {
+  const collabId = Number(url.searchParams.get('collab'));
+  const sessionId = url.searchParams.get('session_id');
+  try {
+    const stripe = stripeHelpers.getStripe(env);
+    await stripeHelpers.attachDefaultPaymentMethodFromSetup(stripe, sessionId);
+    await db.setCollaborationClientPaymentReady(env.DB, collabId, true);
+  } catch (err) {
+    console.error('Bank link complete error:', err);
+  }
+  return new Response(
+    '<html><body style="font-family:sans-serif;max-width:500px;margin:60px auto;text-align:center"><h2>Bank account connected</h2><p>Thanks! Your payment method is on file. We\'ll be in touch once your collaboration is active.</p></body></html>',
+    { headers: { 'Content-Type': 'text/html' } }
+  );
+}
+
+async function sendEmail(env, { to, from, subject, html, attachments }) {
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from, to, subject, html, attachments }),
+  });
+  if (!res.ok) {
+    const errBody = await res.text();
+    console.error('Resend error:', res.status, errBody);
+  }
+  return res.ok;
 }
 
 function buildPhysicianSummary(f) {

@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "docx": "^9.7.1"
+    "docx": "^9.7.1",
+    "stripe": "^18.0.0"
   },
   "devDependencies": {
     "wrangler": "^4.99.0"
