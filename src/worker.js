@@ -2,7 +2,7 @@ import { generateDocx, generatePhysicianDocx } from './docx-generator.js';
 import * as db from './db.js';
 import * as tokens from './tokens.js';
 import * as stripeHelpers from './stripe-helpers.js';
-import { handleStripeWebhook } from './stripe-webhook.js';
+import { handlePlatformWebhook, handleConnectWebhook } from './stripe-webhook.js';
 
 export default {
   async fetch(request, env) {
@@ -25,7 +25,11 @@ export default {
     }
 
     if (request.method === 'POST' && url.pathname === '/stripe-webhook') {
-      return handleStripeWebhook(request, env);
+      return handlePlatformWebhook(request, env);
+    }
+
+    if (request.method === 'POST' && url.pathname === '/stripe-webhook-connect') {
+      return handleConnectWebhook(request, env);
     }
 
     if (url.pathname === '/admin/login' && request.method === 'POST') {
