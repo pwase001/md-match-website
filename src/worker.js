@@ -537,14 +537,23 @@ async function handleActivateCollaboration(request, env) {
     const physician = await db.getPhysician(env.DB, collaboration.physician_id);
     const client = await db.getClient(env.DB, collaboration.client_id);
 
-    if (!physician.transfers_active) {
+    const stripe = stripeHelpers.getStripe(env);
+
+    // Check the physician's Connect account status live rather than trusting the
+    // account.updated webhook to have already flipped transfers_active — the webhook
+    // is a convenience for the admin UI, not the source of truth for this gate.
+    const account = await stripe.accounts.retrieve(physician.stripe_account_id);
+    const transfersActive = account.capabilities?.transfers === 'active';
+    if (transfersActive !== !!physician.transfers_active) {
+      await db.setPhysicianTransfersActive(env.DB, physician.stripe_account_id, transfersActive);
+    }
+    if (!transfersActive) {
       return jsonResponse({ success: false, error: 'Physician has not completed payout onboarding yet' }, 400);
     }
     if (!collaboration.client_payment_method_ready) {
       return jsonResponse({ success: false, error: 'Client has not connected a bank account yet' }, 400);
     }
 
-    const stripe = stripeHelpers.getStripe(env);
     const subscription = await stripeHelpers.createCollaborationSubscription(stripe, {
       customerId: client.stripe_customer_id,
       physicianAccountId: physician.stripe_account_id,
@@ -592,6 +601,18 @@ async function handlePhysicianOnboardStart(request, env, url) {
 }
 
 async function handlePhysicianOnboardComplete(request, env, url) {
+  const pid = Number(url.searchParams.get('pid'));
+  try {
+    const physician = await db.getPhysician(env.DB, pid);
+    if (physician?.stripe_account_id) {
+      const stripe = stripeHelpers.getStripe(env);
+      const account = await stripe.accounts.retrieve(physician.stripe_account_id);
+      const transfersActive = account.capabilities?.transfers === 'active';
+      await db.setPhysicianTransfersActive(env.DB, physician.stripe_account_id, transfersActive);
+    }
+  } catch (err) {
+    console.error('Physician onboard complete status check error:', err);
+  }
   return new Response(
     '<html><body style="font-family:sans-serif;max-width:500px;margin:60px auto;text-align:center"><h2>Thanks!</h2><p>Your payout setup is being reviewed. We\'ll notify you once your collaboration is active.</p></body></html>',
     { headers: { 'Content-Type': 'text/html' } }
