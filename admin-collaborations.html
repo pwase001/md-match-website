@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MD-Match — Collaborations Admin</title>
+<link rel="icon" type="image/svg+xml" href="/logo.svg">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f0f4f4;
+    color: #1a3333;
+    padding: 2rem 1rem 4rem;
+    font-size: 14px;
+  }
+  .page { max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 1.3rem; color: #0b3535; margin-bottom: 0.3rem; }
+  .subtitle { color: #4a6b6b; font-size: 13px; margin-bottom: 2rem; }
+
+  .card {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    margin-bottom: 1.5rem;
+  }
+  .card-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #1a6b6b;
+    margin-bottom: 1rem;
+  }
+
+  input, select, textarea {
+    padding: 0.5rem 0.7rem;
+    border: 1.5px solid #d0e2e2;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    color: #1a3333;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.15s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: #1a6b6b; }
+  label { font-size: 12px; font-weight: 600; color: #4a6b6b; display: block; margin-bottom: 0.3rem; }
+  .field { margin-bottom: 0.9rem; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+  .btn {
+    background: #0b3535;
+    color: white;
+    border: none;
+    padding: 0.7rem 1.6rem;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn:hover { background: #1a6b6b; }
+  .btn:disabled { background: #aaa; cursor: default; }
+  .btn-small { padding: 0.4rem 0.9rem; font-size: 12px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th, td { text-align: left; padding: 0.5rem 0.6rem; border-bottom: 1px solid #eef2f2; }
+  th { color: #4a6b6b; text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; }
+  .badge { padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 11px; font-weight: 700; }
+  .badge.pending_setup { background: #fdf3e3; color: #a06a00; }
+  .badge.active { background: #f0faf0; color: #1a7a1a; }
+  .badge.canceled { background: #fdf5f3; color: #c0392b; }
+  .badge.ready { background: #f0faf0; color: #1a7a1a; }
+  .badge.notready { background: #fdf5f3; color: #c0392b; }
+
+  #loginCard { max-width: 360px; margin: 4rem auto; }
+  #app { display: none; }
+  .msg { font-size: 13px; margin-top: 0.6rem; }
+  .msg.err { color: #c0392b; }
+  .msg.ok { color: #1a7a1a; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="card" id="loginCard">
+    <div class="card-title">Admin Login</div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="password" onkeydown="if(event.key==='Enter') login()">
+    </div>
+    <button class="btn" onclick="login()">Log In</button>
+    <div class="msg err" id="loginMsg"></div>
+  </div>
+
+  <div id="app">
+    <h1>Collaborations</h1>
+    <p class="subtitle">Match a client with a physician to kick off payout onboarding and bank-account setup.</p>
+
+    <div class="card">
+      <div class="card-title">Create Collaboration</div>
+      <div class="field-row">
+        <div class="field">
+          <label>Client (NP/PA)</label>
+          <select id="clientSelect"></select>
+        </div>
+        <div class="field">
+          <label>Collaborating Physician</label>
+          <select id="physicianSelect"></select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Total Monthly Amount (USD)</label>
+          <input type="number" id="totalAmount" placeholder="900" min="1" step="0.01">
+        </div>
+        <div class="field">
+          <label>Platform Fee (USD)</label>
+          <input type="number" id="platformFee" value="200" min="0" step="0.01">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Billing Start Date</label>
+          <input type="date" id="startDate">
+        </div>
+        <div class="field">
+          <label>Notes (optional)</label>
+          <input type="text" id="notes" placeholder="Specialty, agreement details, etc.">
+        </div>
+      </div>
+      <button class="btn" id="createBtn" onclick="createCollaboration()">Create &amp; Send Setup Emails</button>
+      <div class="msg" id="createMsg"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">All Collaborations</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Client</th><th>Physician</th><th>Total</th><th>Fee</th><th>Start</th>
+            <th>Physician Payout</th><th>Client Bank</th><th>Status</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="collabRows"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+<script>
+  async function login() {
+    const password = document.getElementById('password').value;
+    const msg = document.getElementById('loginMsg');
+    msg.textContent = '';
+    try {
+      const res = await fetch('/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ password }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('loginCard').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        loadData();
+      } else {
+        msg.textContent = data.error || 'Login failed';
+      }
+    } catch {
+      msg.textContent = 'Network error';
+    }
+  }
+
+  function money(cents) { return '$' + (cents / 100).toFixed(2); }
+
+  async function loadData() {
+    const res = await fetch('/admin/api/data', { credentials: 'include' });
+    if (res.status === 401) {
+      document.getElementById('loginCard').style.display = 'block';
+      document.getElementById('app').style.display = 'none';
+      return;
+    }
+    const data = await res.json();
+
+    const clientSelect = document.getElementById('clientSelect');
+    clientSelect.innerHTML = data.clients.map(c => `<option value="${c.id}">${c.full_name} (${c.email})</option>`).join('');
+
+    const physicianSelect = document.getElementById('physicianSelect');
+    physicianSelect.innerHTML = data.physicians.map(p => `<option value="${p.id}">${p.full_name} (${p.email})</option>`).join('');
+
+    const rows = data.collaborations.map(c => `
+      <tr>
+        <td>${c.client_name}</td>
+        <td>${c.physician_name}</td>
+        <td>${money(c.total_amount_cents)}</td>
+        <td>${money(c.platform_fee_cents)}</td>
+        <td>${c.start_date}</td>
+        <td><span class="badge ${c.transfers_active ? 'ready' : 'notready'}">${c.transfers_active ? 'Ready' : 'Pending'}</span></td>
+        <td><span class="badge ${c.client_payment_method_ready ? 'ready' : 'notready'}">${c.client_payment_method_ready ? 'Ready' : 'Pending'}</span></td>
+        <td><span class="badge ${c.status}">${c.status}</span></td>
+        <td>${c.status === 'pending_setup' ? `<button class="btn btn-small" onclick="activate(${c.id}, this)">Activate</button>` : ''}</td>
+      </tr>
+    `).join('');
+    document.getElementById('collabRows').innerHTML = rows || '<tr><td colspan="9">No collaborations yet.</td></tr>';
+  }
+
+  async function createCollaboration() {
+    const btn = document.getElementById('createBtn');
+    const msg = document.getElementById('createMsg');
+    msg.className = 'msg';
+    msg.textContent = '';
+
+    const body = {
+      clientId: Number(document.getElementById('clientSelect').value),
+      physicianId: Number(document.getElementById('physicianSelect').value),
+      totalAmountUsd: document.getElementById('totalAmount').value,
+      platformFeeUsd: document.getElementById('platformFee').value,
+      startDate: document.getElementById('startDate').value,
+      notes: document.getElementById('notes').value,
+    };
+    if (!body.clientId || !body.physicianId || !body.totalAmountUsd || !body.startDate) {
+      msg.className = 'msg err';
+      msg.textContent = 'Please fill in client, physician, amount, and start date.';
+      return;
+    }
+
+    btn.disabled = true;
+    try {
+      const res = await fetch('/admin/api/collaborations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (data.success) {
+        msg.className = 'msg ok';
+        msg.textContent = 'Collaboration created — onboarding emails sent to physician and client.';
+        loadData();
+      } else {
+        msg.className = 'msg err';
+        msg.textContent = data.error || 'Failed to create collaboration';
+      }
+    } catch {
+      msg.className = 'msg err';
+      msg.textContent = 'Network error';
+    }
+    btn.disabled = false;
+  }
+
+  async function activate(id, btn) {
+    btn.disabled = true;
+    try {
+      const res = await fetch('/admin/api/collaborations/activate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ collaborationId: id }),
+      });
+      const data = await res.json();
+      if (!data.success) alert(data.error || 'Failed to activate');
+      loadData();
+    } catch {
+      alert('Network error');
+      btn.disabled = false;
+    }
+  }
+
+  // Try loading data immediately in case a valid session cookie already exists
+  fetch('/admin/api/data', { credentials: 'include' }).then(res => {
+    if (res.ok) {
+      document.getElementById('loginCard').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      loadData();
+    }
+  });
+</script>
+</body>
+</html>

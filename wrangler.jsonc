@@ -11,5 +11,12 @@
   },
   "compatibility_flags": [
     "nodejs_compat"
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "collabmd-db",
+      "database_id": "739db1a9-3aef-4230-bb0e-274d78fe59ab"
+    }
   ]
 }
