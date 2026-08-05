@@ -4,6 +4,15 @@ export function getStripe(env) {
   return new Stripe(env.STRIPE_SECRET_KEY);
 }
 
+// Returns 'live', 'test', or 'unknown' for the configured secret key. Restricted
+// keys (rk_) carry the same mode marker as standard secret keys.
+export function stripeKeyMode(env) {
+  const key = env.STRIPE_SECRET_KEY || '';
+  if (key.startsWith('sk_live_') || key.startsWith('rk_live_')) return 'live';
+  if (key.startsWith('sk_test_') || key.startsWith('rk_test_')) return 'test';
+  return 'unknown';
+}
+
 export async function createPhysicianAccount(stripe, physician) {
   return stripe.accounts.create({
     type: 'express',
