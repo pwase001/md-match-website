@@ -38,7 +38,28 @@ export async function createPhysicianOnboardingLink(stripe, accountId, refreshUr
   return link.url;
 }
 
+// Reuses an existing Stripe customer with the same email before creating one. A
+// client invoiced by hand before being added here — the usual case when a
+// collaboration starts at a promotional rate — already has a customer record,
+// and splitting their invoice history across two of them is worse than the
+// duplicate itself.
+//
+// Uses list() rather than search(): the Search API is eventually consistent and
+// would miss a customer created moments earlier, which is exactly the window
+// this runs in.
 export async function createOrGetCustomer(stripe, client) {
+  const existing = await stripe.customers.list({ email: client.email, limit: 10 });
+  if (existing.data.length > 0) {
+    // Stripe lists newest first. Any duplicates predate this call, so prefer the
+    // most recent — it is the likeliest to carry current payment details.
+    if (existing.data.length > 1) {
+      console.warn(
+        `Multiple Stripe customers share ${client.email} (${existing.data.length} found); reusing ${existing.data[0].id}`
+      );
+    }
+    return existing.data[0].id;
+  }
+
   const customer = await stripe.customers.create({
     name: client.full_name,
     email: client.email,
