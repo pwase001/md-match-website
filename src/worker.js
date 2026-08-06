@@ -520,7 +520,7 @@ async function handleCreateCollaboration(request, env) {
       to: [client.email],
       from: 'MD-Match <noreply@md-match.com>',
       subject: 'Set Up Payment — MD-Match Collaboration',
-      html: `<p>Hi ${client.full_name},</p><p>To finalize your collaboration agreement, please connect your bank account for monthly ACH payment:</p><p><a href="${bankStartUrl}">${bankStartUrl}</a></p><p>Warm regards,<br>MD-Match</p>`,
+      html: `<p>Hi ${client.full_name.split(' ')[0]},</p><p>To finalize your collaboration agreement, please connect your bank account for monthly ACH payment:</p><p><a href="${bankStartUrl}">${bankStartUrl}</a></p><p>Warm regards,<br>MD-Match</p>`,
     });
 
     return jsonResponse({ success: true, collaboration });
