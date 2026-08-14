@@ -114,29 +114,21 @@
   .physician-note-text { font-family: 'Playfair Display', serif; font-size: 1rem; font-style: italic; color: rgba(255,255,255,0.8); line-height: 1.75; position: relative; z-index: 1; }
   .physician-note-sig { margin-top: 0.9rem; font-size: 11.5px; color: var(--gold-light); font-weight: 700; letter-spacing: 0.06em; position: relative; z-index: 1; }
 
-  /* COLLABORATION DEMANDS */
-  #collab-demands { background: var(--teal-deep); position: relative; overflow: hidden; }
-  #collab-demands::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(42,144,144,0.12) 0%, transparent 65%); }
-  #collab-demands .section-label { color: var(--gold); font-size: 12px; letter-spacing: 0.22em; }
-  #collab-demands .section-label::before { background: var(--gold); width: 32px; height: 2px; }
-  #collab-demands .section-title { color: var(--white); font-size: clamp(2rem, 4vw, 3rem); }
-  #collab-demands .section-title em { color: #7dd4d4; }
-  #collab-demands .section-intro { color: rgba(255,255,255,0.65); font-size: 1.05rem; max-width: 720px; }
-  .demand-block { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 1.8rem 2rem; margin-bottom: 1.2rem; }
-  .demand-block:last-of-type { margin-bottom: 0; }
-  .demand-block-label { font-size: 10.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 1.1rem; display: flex; align-items: center; gap: 0.6rem; }
-  .demand-block-label.high { color: #f87171; }
-  .demand-block-label.high::before { content: ''; display: block; width: 8px; height: 8px; border-radius: 50%; background: #f87171; flex-shrink: 0; }
-  .demand-block-label.med { color: var(--gold-light); }
-  .demand-block-label.med::before { content: ''; display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--gold-light); flex-shrink: 0; }
-  .state-pills-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-  .state-chip { font-size: 12.5px; font-weight: 800; padding: 0.35rem 0.75rem; border-radius: 4px; letter-spacing: 0.05em; }
-  .state-chip.hot { background: rgba(248,113,113,0.15); border: 1.5px solid rgba(248,113,113,0.4); color: #f87171; }
-  .state-chip.normal { background: rgba(255,255,255,0.07); border: 1.5px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.8); }
-  .state-chip.noted { background: rgba(255,255,255,0.07); border: 1.5px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.8); position: relative; }
-  .demand-footnotes { margin-top: 1.6rem; display: flex; flex-direction: column; gap: 0.5rem; }
-  .demand-footnote { font-size: 12px; color: rgba(255,255,255,0.45); line-height: 1.65; }
-  .demand-footnote strong { color: rgba(255,255,255,0.7); }
+  /* FAQ */
+  #faq { background: var(--off-white); }
+  #faq .section-label { color: var(--gold); }
+  #faq .section-label::before { background: var(--gold); }
+  #faq .section-title { color: var(--teal-deep); font-size: clamp(1.8rem, 3.5vw, 2.6rem); }
+  #faq .section-intro { color: var(--muted); font-size: 1.05rem; max-width: 700px; }
+  .faq-group { margin-bottom: 2.2rem; }
+  .faq-group-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--teal-deep); font-weight: 600; margin-bottom: 0.8rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border); }
+  .faq-item { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0.5rem; overflow: hidden; background: var(--white); }
+  .faq-q { width: 100%; text-align: left; background: none; border: none; padding: 1rem 1.2rem; font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700; color: var(--teal-deep); cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 1rem; line-height: 1.4; }
+  .faq-q:hover { background: #f0f7f7; }
+  .faq-q .faq-icon { font-size: 18px; color: var(--teal); flex-shrink: 0; transition: transform 0.2s; }
+  .faq-q[aria-expanded="true"] .faq-icon { transform: rotate(45deg); }
+  .faq-a { display: none; padding: 0 1.2rem 1rem; font-size: 14.5px; color: var(--muted); line-height: 1.7; border-top: 1px solid var(--border); }
+  .faq-a.open { display: block; }
   #for-nps .section-label { background: var(--teal); color: var(--gold); padding: 0.35rem 0.9rem; border-radius: 4px; display: inline-flex; font-size: 13px; font-weight: 800; letter-spacing: 0.2em; }
   #for-nps .section-label::before { background: var(--gold); }
   #for-nps .section-title { font-size: clamp(2rem, 4vw, 3rem); color: var(--teal-deep); }
@@ -221,7 +213,7 @@
     <a href="#goals">Our Goals</a>
     <a href="#for-nps">For NPs &amp; PAs</a>
     <a href="#for-physicians">For Physicians</a>
-    <a href="#collab-demands">State Demand</a>
+    <a href="#faq">FAQ</a>
     <a href="psychiatry-match-np-pa-intake.html" target="_blank" class="nav-btn">NPs and PAs get my free quote</a>
     <a href="md-match-physician-intake.html" target="_blank" class="nav-btn">Physicians join our collaboration network</a>
   </div>
@@ -235,7 +227,7 @@
   <a href="#goals" onclick="closeMenu()">Our Goals</a>
   <a href="#for-nps" onclick="closeMenu()">For NPs &amp; PAs</a>
   <a href="#for-physicians" onclick="closeMenu()">For Physicians</a>
-  <a href="#collab-demands" onclick="closeMenu()">Collaboration Demands</a>
+  <a href="#faq" onclick="closeMenu()">FAQ</a>
   <a href="psychiatry-match-np-pa-intake.html" target="_blank" onclick="closeMenu()">NPs and PAs get my free quote</a>
   <a href="md-match-physician-intake.html" target="_blank" onclick="closeMenu()">Physicians join our collaboration network</a>
 </div>
@@ -452,58 +444,130 @@
   </div>
 </section>
 
-<!-- COLLABORATION DEMANDS -->
-<section id="collab-demands">
+<!-- FAQ -->
+<section id="faq">
   <div class="section-inner">
-    <div class="section-label">State Demand Map</div>
-    <h2 class="section-title">Collaboration <em>Demand by State</em></h2>
-    <div class="divider" style="background:var(--gold);"></div>
-    <p class="section-intro">For physicians who would like to collaborate with more NPs and PAs, we recommend using the IMLC and obtaining medical licenses in the states below. States in <span style="color:#f87171; font-weight:700;">red</span> represent the highest current demand.</p>
+    <div class="section-label">Common Questions</div>
+    <h2 class="section-title">Frequently Asked Questions</h2>
+    <div class="divider"></div>
+    <p class="section-intro">Everything you need to know about working with MD-Match. Can't find your answer? Reach out at <a href="mailto:philipwasef@md-match.com" style="color:var(--teal);">philipwasef@md-match.com</a>.</p>
 
-    <div style="margin-top:2rem;">
+    <div style="margin-top:2.5rem; max-width:820px;">
 
-      <div class="demand-block">
-        <div class="demand-block-label high">Highest Demand</div>
-        <div class="state-pills-row">
-          <span class="state-chip hot">TX</span>
-          <span class="state-chip hot">AL</span>
-          <span class="state-chip hot">CA</span>
-          <span class="state-chip hot">FL</span>
-          <span class="state-chip hot">OH</span>
-          <span class="state-chip normal">NC</span>
-          <span class="state-chip normal">NY</span>
-          <span class="state-chip normal">NJ</span>
-          <span class="state-chip normal">PA</span>
-          <span class="state-chip normal">IN</span>
+      <div class="faq-group">
+        <div class="faq-group-title">About MD-Match</div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>What exactly does MD-Match do?</span><span class="faq-icon">+</span></button>
+          <div class="faq-a">MD-Match recruits board-certified, licensed physicians to serve as collaborating physicians for nurse practitioners and physician assistants. We handle the recruitment and matching process so you can focus on patient care. MD-Match does not set up medical director arrangements or physician ownership arrangements — we exclusively provide collaborating physicians for NPs and PAs.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>Will I always be matched with a physician in my specialty?</span><span class="faq-icon">+</span></button>
+          <div class="faq-a">Yes. We only reach out to physicians who practice in your specialty. For example, if you are a psychiatric NP or PA, we will connect you with a psychiatrist. We do not match across specialties.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>How quickly can I be matched with a physician?</span><span class="faq-icon">+</span></button>
+          <div class="faq-a">We typically find a compatible collaborating physician within 7 days of your request. We maintain a roster of available physicians in multiple specialties and states, allowing us to move quickly.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>How are the physicians on your roster vetted?</span><span class="faq-icon">+</span></button>
+          <div class="faq-a">Yes, every physician receives a background check. We do not include any physician who has a current or previous history within the past 5 years of any action against their license or medical malpractice claim. We can also assist with providing additional verification of state licensure on request. You will have an introductory meeting with your collaborating physician prior to signing of the collaborative agreement to personally ask any additional questions you may have.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>Are the physicians DEA-certified?</span><span class="faq-icon">+</span></button>
+          <div class="faq-a">Most of our physicians have DEAs in multiple states. We understand that in certain states a collaborating physician needs to have a state-specific DEA for the NP/PA to prescribe controlled substances, and we match accordingly.</div>
         </div>
       </div>
 
-      <div class="demand-block">
-        <div class="demand-block-label med">Less Demand — Still Very Helpful</div>
-        <div class="state-pills-row">
-          <span class="state-chip normal">TN</span>
-          <span class="state-chip normal">LA</span>
-          <span class="state-chip normal">MO</span>
-          <span class="state-chip normal">MI</span>
-          <span class="state-chip normal">IL</span>
-          <span class="state-chip normal">KY</span>
-          <span class="state-chip noted">GA *</span>
-          <span class="state-chip noted">SC *</span>
-          <span class="state-chip normal">OK</span>
-          <span class="state-chip normal">VI</span>
-          <span class="state-chip normal">AK</span>
-          <span class="state-chip noted">MS **</span>
-          <span class="state-chip noted">MO **</span>
-          <span class="state-chip normal">WV</span>
-          <span class="state-chip normal">CT</span>
-          <span class="state-chip normal">DE</span>
-          <span class="state-chip normal">WI</span>
+      <div class="faq-group">
+        <div class="faq-group-title">Physician Availability &amp; Response Times</div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>How available will my collaborating physician be?</span><span class="faq-icon">+</span></button>
+          <div class="faq-a">We require all collaborating physicians to be available for at least one meeting per month. For urgent matters, they must respond within two hours. For routine questions or chart reviews, they must respond within 24 hours. If a physician consistently fails to meet these expectations, we will terminate that arrangement and find you a replacement at no additional cost.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>What if my collaborating physician becomes unexpectedly unavailable?</span><span class="faq-icon">+</span></button>
+          <div class="faq-a">We understand how critical continuity of care is. If a physician's license is suspended, revoked, or they are charged with a felony, you have the right to terminate immediately. For any situation — including emergencies — re-matching is always free and we will work to place you with a new physician within 7 days. There are no payments owed to MD-Match during transition periods.</div>
         </div>
       </div>
 
-      <div class="demand-footnotes">
-        <div class="demand-footnote"><strong>*</strong> GA and SC have strict geographical requirements.</div>
-        <div class="demand-footnote"><strong>**</strong> MS and MO have geographical requirements, but certain NPs may be exempt.</div>
+      <div class="faq-group">
+        <div class="faq-group-title">Contract Terms &amp; Termination</div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>When do I sign my contract?</span><span class="faq-icon">+</span></button>
+          <div class="faq-a">Pending your verbal or written approval of the collaboration offer, we will send the contract for review and signature via DocuSign.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>Why is the contract for three years?</span><span class="faq-icon">+</span></button>
+          <div class="faq-a">The three-year initial term exists solely to avoid the administrative burden of renewing the contract every year — it is not meant to lock you in. Most importantly, you can terminate for any reason at any time simply by providing 30 days' written notice.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>If I stop using MD-Match early, do I owe anything additional?</span><span class="faq-icon">+</span></button>
+          <div class="faq-a">No. If you terminate with 30 days' written notice, no further monthly fees are owed after your notice period ends. The only obligation that continues is the non-solicitation / non-circumvention provision.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>What if my practice is slow and I can't justify the monthly fee?</span><span class="faq-icon">+</span></button>
+          <div class="faq-a">Simply reach out to us and we will process a termination within 30 days. Fees stop at the end of that 30-day period.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>Can I delay the start of payments if I'm still in credentialing?</span><span class="faq-icon">+</span></button>
+          <div class="faq-a">Yes. If you have not started seeing patients yet due to ongoing credentialing or onboarding, the start of your monthly payments can be delayed — provided you notify MD-Match at least 5 days before the scheduled payment start date.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>What is the non-solicitation / non-circumvention provision?</span><span class="faq-icon">+</span></button>
+          <div class="faq-a">Any physician introduced to you by MD-Match must continue to work with you exclusively through MD-Match for the duration of the agreement and for 12 months after termination. You may not hire or otherwise engage them directly outside of the MD-Match arrangement during that period.</div>
+        </div>
+      </div>
+
+      <div class="faq-group">
+        <div class="faq-group-title">Malpractice Insurance</div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>Who is responsible for malpractice insurance?</span><span class="faq-icon">+</span></button>
+          <div class="faq-a">Both parties carry coverage. Your facility is required to maintain Professional Liability / Medical Malpractice Insurance with minimum limits of $1,000,000 per claim and $3,000,000 in the annual aggregate. MD-Match requests that NPs/PAs add the collaborating physician as an additional insured under your policy. The physician also carries their own malpractice policy for their private patient care.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>Will adding the physician to my policy increase my premium?</span><span class="faq-icon">+</span></button>
+          <div class="faq-a">In most cases, there is no change to the policy premium. Insurance carriers generally understand that certain providers require collaborating services and typically ask the collaborating physician to show proof of their own malpractice insurance — this ensures your policy only covers them for their role in your clinic.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>Does MD-Match carry any insurance of its own?</span><span class="faq-icon">+</span></button>
+          <div class="faq-a">Yes. MD-Match maintains a separate group malpractice policy to provide an additional layer of coverage for all collaborating physicians. This covers rare situations in which a claim is brought solely against the collaborating physician rather than the NP, PA, or clinic.</div>
+        </div>
+      </div>
+
+      <div class="faq-group">
+        <div class="faq-group-title">Regulatory Compliance</div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>Is MD-Match responsible for ensuring I am compliant with my state's regulations?</span><span class="faq-icon">+</span></button>
+          <div class="faq-a">MD-Match assists with compliance checks and reminders for both the NP/PA and collaborating physician regarding state-specific requirements. We track compliance monthly via a direct check-in and compliance form with both parties. However, regulatory compliance — including your state's nurse practice act, physician practice act, and all applicable federal and state laws — is ultimately the sole responsibility of you and your collaborating physician.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>Does MD-Match control the clinical decisions made by my collaborating physician?</span><span class="faq-icon">+</span></button>
+          <div class="faq-a">No. MD-Match has no control over and does not direct the medical or clinical decisions of any collaborating physician or the NPs and PAs they supervise. All clinical and medical judgment remains entirely with the licensed professionals involved.</div>
+        </div>
+      </div>
+
+      <div class="faq-group">
+        <div class="faq-group-title">Fees &amp; Payments</div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>How are monthly fees structured?</span><span class="faq-icon">+</span></button>
+          <div class="faq-a">Monthly collaboration fees are billed on the first of each month via Stripe invoice (ACH transfer accepted). Monthly fees to MD-Match already include the physician's collaboration fee — no additional fee is owed directly to your collaborating physician. There may be a reduced introductory fee for the first few months, which will be specified in your agreement.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>What happens if I miss a payment?</span><span class="faq-icon">+</span></button>
+          <div class="faq-a">If any fee is not paid within 14 days of its due date, MD-Match may terminate the agreement. Please reach out proactively if you anticipate any payment difficulty — any collaboration can be terminated for any reason with 30 days' notice.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>Are previously paid fees refundable?</span><span class="faq-icon">+</span></button>
+          <div class="faq-a">No. Upon termination for any reason, amounts previously paid are non-refundable.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>What if I haven't started seeing patients yet?</span><span class="faq-icon">+</span></button>
+          <div class="faq-a">You can request a delay to your payment start date if you have not yet started seeing patients due to credentialing or onboarding. You must notify MD-Match at least 5 days before the scheduled payment start date to qualify for this extension.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false"><span>If my collaborating physician terminates, do I have to pay to find a new one?</span><span class="faq-icon">+</span></button>
+          <div class="faq-a">No. Our fees only apply to active collaborations. Re-matching is completely free for any reason. In most cases, we'll have a new collaborator lined up well before the 30-day transition window closes.</div>
+        </div>
       </div>
 
     </div>
@@ -538,6 +602,14 @@
   function closeMenu() {
     document.getElementById('mobileMenu').classList.remove('open');
   }
+  document.querySelectorAll('.faq-q').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const answer = btn.nextElementSibling;
+      const expanded = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', !expanded);
+      answer.classList.toggle('open', !expanded);
+    });
+  });
 </script>
 
 </body>
