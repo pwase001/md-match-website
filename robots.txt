@@ -1,6 +1,7 @@
 User-agent: *
 Allow: /
-
 Disallow: /admin-collaborations
 Disallow: /admin-send-licensure
 Disallow: /admin/
+
+Sitemap: https://md-match.com/sitemap.xml
