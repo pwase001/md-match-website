@@ -508,19 +508,21 @@ async function handleCreateCollaboration(request, env) {
       html: `<p>Hi Dr. ${physician.full_name.split(' ').pop()},</p><p>You've been matched with a collaborating provider. To receive your monthly collaboration payment, please complete a short payout setup with our payment processor, Stripe:</p><p><a href="${onboardStartUrl}">${onboardStartUrl}</a></p><p>Warm regards,<br>MD-Match</p>`,
     });
 
-    // Ensure the client has a Stripe Customer and send them a bank-link request
+    // Ensure the client has a Stripe Customer for the monthly invoices to bill.
+    // No payment method is collected: collaborations are invoiced rather than
+    // charged automatically, so there is nothing for the client to authorise
+    // up front.
     let stripeCustomerId = client.stripe_customer_id;
     if (!stripeCustomerId) {
       stripeCustomerId = await stripeHelpers.createOrGetCustomer(stripe, client);
       await db.setClientStripeCustomerId(env.DB, client.id, stripeCustomerId);
     }
-    const bankToken = await tokens.createMagicToken(env, { cid: collaboration.id });
-    const bankStartUrl = `${origin}/client/add-bank/start?collab=${collaboration.id}&t=${encodeURIComponent(bankToken)}`;
+    const monthlyAmount = (totalAmountCents / 100).toFixed(2);
     await sendEmail(env, {
       to: [client.email],
       from: 'MD-Match <noreply@md-match.com>',
-      subject: 'Set Up Payment — MD-Match Collaboration',
-      html: `<p>Hi ${client.full_name.split(' ')[0]},</p><p>To finalize your collaboration agreement, please connect your bank account for monthly ACH payment:</p><p><a href="${bankStartUrl}">${bankStartUrl}</a></p><p>Warm regards,<br>MD-Match</p>`,
+      subject: 'Your Collaboration Billing — MD-Match',
+      html: `<p>Hi ${client.full_name.split(' ')[0]},</p><p>Your collaboration with Dr. ${physician.full_name.split(' ').pop()} is confirmed.</p><p>Starting ${startDate}, you'll receive an invoice by email each month for $${monthlyAmount}, payable within 14 days. Nothing is charged automatically — each invoice includes a secure link to pay when you're ready.</p><p>Warm regards,<br>MD-Match</p>`,
     });
 
     return jsonResponse({ success: true, collaboration });
@@ -552,9 +554,9 @@ async function handleActivateCollaboration(request, env) {
     if (!transfersActive) {
       return jsonResponse({ success: false, error: 'Physician has not completed payout onboarding yet' }, 400);
     }
-    if (!collaboration.client_payment_method_ready) {
-      return jsonResponse({ success: false, error: 'Client has not connected a bank account yet' }, 400);
-    }
+    // No client-side gate: the subscription invoices the client rather than
+    // charging a saved payment method, so there is nothing they must complete
+    // before it can be activated.
 
     const subscription = await stripeHelpers.createCollaborationSubscription(stripe, {
       customerId: client.stripe_customer_id,

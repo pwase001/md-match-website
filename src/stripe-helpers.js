@@ -96,6 +96,10 @@ export async function attachDefaultPaymentMethodFromSetup(stripe, checkoutSessio
   return { customerId, paymentMethodId };
 }
 
+// Payment terms for the monthly invoice. Matches the net-14 terms already used on
+// invoices raised by hand.
+const INVOICE_DAYS_UNTIL_DUE = 14;
+
 // Creates the recurring collaboration subscription. The platform's cut is a flat
 // dollar amount (platformFeeCents), implemented as the percentage of totalAmountCents
 // that equals it — Stripe subscriptions only support application_fee_percent natively.
@@ -123,9 +127,20 @@ export async function createCollaborationSubscription(stripe, {
     trial_end: trialEnd,
     application_fee_percent: applicationFeePercent,
     transfer_data: { destination: physicianAccountId },
+    // Invoice the client rather than debiting a saved payment method. Asking a
+    // solo practice to pre-authorise a monthly debit to a new vendor is a large
+    // trust ask; an emailed invoice they choose to pay is not. The cost is that
+    // unpaid invoices have to be chased.
+    //
+    // collection_method and transfer_data are orthogonal -- the destination
+    // transfer is a property of the charge, and the charge happens when the
+    // client pays the hosted invoice -- so the split should still apply. That is
+    // reasoned from the docs, not observed; see the note in the commit message.
+    collection_method: 'send_invoice',
+    days_until_due: INVOICE_DAYS_UNTIL_DUE,
     payment_settings: {
+      // Governs what the hosted invoice page offers.
       payment_method_types: ['us_bank_account'],
-      save_default_payment_method: 'on_subscription',
     },
   });
 

@@ -142,7 +142,7 @@
         <thead>
           <tr>
             <th>Client</th><th>Physician</th><th>Total</th><th>Fee</th><th>Start</th>
-            <th>Physician Payout</th><th>Client Bank</th><th>Status</th><th></th>
+            <th>Physician Payout</th><th>Status</th><th></th>
           </tr>
         </thead>
         <tbody id="collabRows"></tbody>
@@ -201,12 +201,11 @@
         <td>${money(c.platform_fee_cents)}</td>
         <td>${c.start_date}</td>
         <td><span class="badge ${c.transfers_active ? 'ready' : 'notready'}">${c.transfers_active ? 'Ready' : 'Pending'}</span></td>
-        <td><span class="badge ${c.client_payment_method_ready ? 'ready' : 'notready'}">${c.client_payment_method_ready ? 'Ready' : 'Pending'}</span></td>
         <td><span class="badge ${c.status}">${c.status}</span></td>
         <td>${c.status === 'pending_setup' ? `<button class="btn btn-small" onclick="activate(${c.id}, this)">Activate</button>` : ''}</td>
       </tr>
     `).join('');
-    document.getElementById('collabRows').innerHTML = rows || '<tr><td colspan="9">No collaborations yet.</td></tr>';
+    document.getElementById('collabRows').innerHTML = rows || '<tr><td colspan="8">No collaborations yet.</td></tr>';
   }
 
   async function createCollaboration() {
