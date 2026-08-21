@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MD-Match — Compliance Reminders</title>
+<link rel="icon" type="image/svg+xml" href="/logo.svg">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f0f4f4;
+    color: #1a3333;
+    padding: 2rem 1rem 4rem;
+    font-size: 14px;
+  }
+  .page { max-width: 980px; margin: 0 auto; }
+  h1 { font-size: 1.3rem; color: #0b3535; margin-bottom: 0.3rem; }
+  .subtitle { color: #4a6b6b; font-size: 13px; margin-bottom: 2rem; }
+
+  .card {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    margin-bottom: 1.5rem;
+  }
+  .card-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #1a6b6b;
+    margin-bottom: 1rem;
+  }
+
+  input {
+    padding: 0.5rem 0.7rem;
+    border: 1.5px solid #d0e2e2;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    color: #1a3333;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.15s;
+  }
+  input:focus { border-color: #1a6b6b; }
+  label { font-size: 12px; font-weight: 600; color: #4a6b6b; display: block; margin-bottom: 0.3rem; }
+  .field { margin-bottom: 0.9rem; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+  .btn {
+    background: #0b3535;
+    color: white;
+    border: none;
+    padding: 0.7rem 1.6rem;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn:hover { background: #145050; }
+  .btn:disabled { background: #9bb3b3; cursor: not-allowed; }
+  .btn-secondary {
+    background: white;
+    color: #0b3535;
+    border: 1.5px solid #d0e2e2;
+  }
+  .btn-secondary:hover { background: #f0f4f4; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #4a6b6b;
+    border-bottom: 2px solid #e2ecec;
+    padding: 0.5rem 0.6rem;
+    white-space: nowrap;
+  }
+  td { padding: 0.6rem; border-bottom: 1px solid #eef4f4; vertical-align: top; }
+  tr.skipped { color: #8ba3a3; background: #fafcfc; }
+  .email { font-size: 12px; color: #4a6b6b; }
+  .tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 2px 7px;
+    border-radius: 20px;
+  }
+  .tag-due { background: #e2f0e6; color: #1d6b35; }
+  .tag-skip { background: #f0eae2; color: #8a6a3a; }
+  .check { width: 34px; }
+  .check input { width: 16px; height: 16px; accent-color: #0b3535; cursor: pointer; }
+
+  .msg { margin-top: 1rem; font-size: 13px; }
+  .err { color: #a3312a; }
+  .ok { color: #1d6b35; }
+  .note {
+    background: #fff8ec;
+    border: 1px solid #f0dcb8;
+    border-radius: 6px;
+    padding: 0.9rem 1.1rem;
+    font-size: 13px;
+    color: #6b5426;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+  }
+  #loginCard { max-width: 360px; margin: 4rem auto; }
+  .report { font-size: 13px; line-height: 1.7; }
+  .report li { margin-left: 1.2rem; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="card" id="loginCard">
+    <div class="card-title">Admin Login</div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input type="password" id="password" onkeydown="if(event.key==='Enter') login()">
+    </div>
+    <button class="btn" onclick="login()">Log In</button>
+    <div class="msg err" id="loginMsg"></div>
+  </div>
+
+  <div id="main" class="hidden">
+    <h1>Compliance Reminders</h1>
+    <p class="subtitle">Send the monthly compliance review to both sides of each collaboration.</p>
+
+    <div class="note">
+      Each selected pairing gets two emails: the physician receives the MD form, the NP/PA receives the NP form,
+      each naming the other. Rows are pre-selected when the collaboration has started and has not been cancelled.
+      Uncheck anything that should not go out, and add any pairing that is not in the database below.
+    </div>
+
+    <div class="card">
+      <div class="card-title">Collaborations on file — <span id="monthLabel"></span></div>
+      <table>
+        <thead>
+          <tr>
+            <th class="check"></th>
+            <th>Physician</th>
+            <th>NP / PA</th>
+            <th>Status</th>
+            <th>Started</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div class="msg" id="listMsg"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Add a pairing manually</div>
+      <div class="field-row">
+        <div class="field">
+          <label for="mPhysicianName">Physician name</label>
+          <input id="mPhysicianName" placeholder="Jane Smith, MD">
+        </div>
+        <div class="field">
+          <label for="mPhysicianEmail">Physician email</label>
+          <input id="mPhysicianEmail" type="email" placeholder="jane@example.com">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="mProviderName">NP / PA name</label>
+          <input id="mProviderName" placeholder="Robin Lee, NP">
+        </div>
+        <div class="field">
+          <label for="mProviderEmail">NP / PA email</label>
+          <input id="mProviderEmail" type="email" placeholder="robin@example.com">
+        </div>
+      </div>
+      <button class="btn btn-secondary" onclick="addManual()">Add to list</button>
+      <div class="msg err" id="manualMsg"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Send</div>
+      <p style="font-size:13px;color:#4a6b6b;margin-bottom:1rem">
+        <span id="selectedCount">0</span> pairing(s) selected — <span id="emailCount">0</span> email(s) will be sent.
+      </p>
+      <button class="btn" id="sendBtn" onclick="send()">Send reminders now</button>
+      <div class="msg" id="sendMsg"></div>
+      <div class="report" id="report"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let pairings = [];
+
+  async function login() {
+    const password = document.getElementById('password').value;
+    const msg = document.getElementById('loginMsg');
+    msg.textContent = '';
+    try {
+      const res = await fetch('/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ password }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('loginCard').classList.add('hidden');
+        document.getElementById('main').classList.remove('hidden');
+        load();
+      } else {
+        msg.textContent = data.error || 'Login failed';
+      }
+    } catch (err) {
+      msg.textContent = 'Could not reach the server.';
+    }
+  }
+
+  async function load() {
+    const msg = document.getElementById('listMsg');
+    msg.textContent = 'Loading…';
+    const res = await fetch('/admin/api/compliance-reminders/preview', { credentials: 'include' });
+    const data = await res.json();
+    if (!data.success) {
+      msg.textContent = data.error || 'Could not load collaborations.';
+      return;
+    }
+    msg.textContent = '';
+    document.getElementById('monthLabel').textContent = data.monthLabel;
+    pairings = data.pairings.map(p => ({ ...p, selected: p.due, manual: false }));
+    render();
+  }
+
+  function render() {
+    const tbody = document.getElementById('rows');
+    tbody.innerHTML = '';
+    if (pairings.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="color:#8ba3a3">No collaborations on file. Add pairings manually below.</td></tr>';
+    }
+    pairings.forEach((p, i) => {
+      const tr = document.createElement('tr');
+      if (!p.selected) tr.className = 'skipped';
+      tr.innerHTML =
+        '<td class="check"><input type="checkbox" ' + (p.selected ? 'checked' : '') + ' onchange="toggle(' + i + ', this.checked)"></td>' +
+        '<td>' + text(p.physicianName) + '<div class="email">' + text(p.physicianEmail || 'no email on file') + '</div></td>' +
+        '<td>' + text(p.providerName) + '<div class="email">' + text(p.providerEmail || 'no email on file') + '</div></td>' +
+        '<td>' + text(p.manual ? 'added by hand' : (p.status || '—')) + '</td>' +
+        '<td>' + text(p.startDate || '—') + '</td>' +
+        '<td>' + (p.manual
+          ? '<span class="tag tag-due">manual</span>'
+          : (p.due ? '<span class="tag tag-due">due</span>' : '<span class="tag tag-skip">not due</span>')) + '</td>';
+      tbody.appendChild(tr);
+    });
+    updateCounts();
+  }
+
+  function text(v) {
+    return String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  }
+
+  function toggle(i, checked) {
+    pairings[i].selected = checked;
+    render();
+  }
+
+  function updateCounts() {
+    const selected = pairings.filter(p => p.selected);
+    const emails = selected.reduce((n, p) => n + (p.physicianEmail ? 1 : 0) + (p.providerEmail ? 1 : 0), 0);
+    document.getElementById('selectedCount').textContent = selected.length;
+    document.getElementById('emailCount').textContent = emails;
+    document.getElementById('sendBtn').disabled = selected.length === 0;
+  }
+
+  function addManual() {
+    const msg = document.getElementById('manualMsg');
+    const get = id => document.getElementById(id).value.trim();
+    const entry = {
+      physicianName: get('mPhysicianName'),
+      physicianEmail: get('mPhysicianEmail'),
+      providerName: get('mProviderName'),
+      providerEmail: get('mProviderEmail'),
+    };
+    if (!entry.physicianName || !entry.physicianEmail || !entry.providerName || !entry.providerEmail) {
+      msg.textContent = 'All four fields are required.';
+      return;
+    }
+    msg.textContent = '';
+    pairings.push({ ...entry, status: null, startDate: null, due: true, selected: true, manual: true });
+    ['mPhysicianName', 'mPhysicianEmail', 'mProviderName', 'mProviderEmail'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    render();
+  }
+
+  async function send() {
+    const selected = pairings.filter(p => p.selected);
+    const emails = selected.reduce((n, p) => n + (p.physicianEmail ? 1 : 0) + (p.providerEmail ? 1 : 0), 0);
+    const month = document.getElementById('monthLabel').textContent;
+    if (!confirm('Send ' + emails + ' email(s) for ' + month + ' to ' + selected.length + ' pairing(s)?\n\nThis cannot be undone.')) return;
+
+    const btn = document.getElementById('sendBtn');
+    const msg = document.getElementById('sendMsg');
+    const report = document.getElementById('report');
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    msg.className = 'msg';
+    msg.textContent = '';
+    report.innerHTML = '';
+
+    try {
+      const res = await fetch('/admin/api/compliance-reminders/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ monthLabel: month, pairings: selected }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Send failed');
+
+      msg.className = 'msg ok';
+      msg.textContent = 'Sent ' + data.sent + ' email(s)' + (data.failed ? ', ' + data.failed + ' failed' : '') + '.';
+      report.innerHTML = data.report.map(r =>
+        '<div style="margin-top:0.8rem"><strong>' + text(r.physicianName) + ' &amp; ' + text(r.providerName) + '</strong><ul>' +
+        r.results.map(x =>
+          '<li>' + text(x.role === 'physician' ? 'MD form' : 'NP form') + ' &rarr; ' +
+          text(x.to || 'no address') + ' — ' + (x.ok ? '<span class="ok">sent</span>' : '<span class="err">failed' + (x.reason ? ' (' + text(x.reason) + ')' : '') + '</span>') +
+          '</li>').join('') +
+        '</ul></div>').join('');
+    } catch (err) {
+      msg.className = 'msg err';
+      msg.textContent = err.message || 'Send failed.';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Send reminders now';
+      updateCounts();
+    }
+  }
+
+  // Already signed in from another admin page?
+  fetch('/admin/api/compliance-reminders/preview', { credentials: 'include' }).then(res => {
+    if (res.ok) {
+      document.getElementById('loginCard').classList.add('hidden');
+      document.getElementById('main').classList.remove('hidden');
+      load();
+    }
+  });
+</script>
+</body>
+</html>

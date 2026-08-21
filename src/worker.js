@@ -72,7 +72,217 @@ export default {
     // Serve static assets for all other requests
     return env.ASSETS.fetch(request);
   },
+
+  async scheduled(event, env) {
+    const now = new Date(event.scheduledTime);
+    if (!isFourthMondayAt9amEastern(now)) return;
+    const result = await sendMonthlyComplianceReminders(env, now);
+    console.log('Monthly compliance reminders:', JSON.stringify(result));
+  },
 };
+
+// Sends only the pairings the admin selected, so the first run can be checked by
+// hand before the schedule is trusted to pick recipients on its own.
+async function handleSendComplianceReminders(request, env) {
+  try {
+    if (!env.RESEND_API_KEY) return jsonResponse({ success: false, error: 'Server misconfiguration' }, 500);
+
+    const { pairings, monthLabel } = await request.json();
+    if (!Array.isArray(pairings) || pairings.length === 0) {
+      return jsonResponse({ success: false, error: 'No recipients selected' }, 400);
+    }
+
+    const label = monthLabel || easternParts(new Date()).monthLabel;
+    const report = [];
+    for (const pairing of pairings) {
+      report.push({
+        physicianName: pairing.physicianName,
+        providerName: pairing.providerName,
+        results: await sendPairingReminders(env, pairing, label),
+      });
+    }
+
+    const sent = report.reduce((n, r) => n + r.results.filter((x) => x.ok).length, 0);
+    const failed = report.reduce((n, r) => n + r.results.filter((x) => !x.ok).length, 0);
+    console.log('Manual compliance reminders:', JSON.stringify({ label, sent, failed }));
+    return jsonResponse({ success: true, monthLabel: label, sent, failed, report });
+  } catch (err) {
+    console.error('Manual compliance reminder error:', err);
+    return jsonResponse({ success: false, error: 'Server error' }, 500);
+  }
+}
+
+// ---- Monthly compliance reminders ----
+
+const EASTERN_TZ = 'America/New_York';
+
+function easternParts(date) {
+  const parts = {};
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: EASTERN_TZ,
+    weekday: 'short',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    hour12: false,
+  });
+  for (const { type, value } of fmt.formatToParts(date)) parts[type] = value;
+  return {
+    weekday: parts.weekday,
+    day: Number(parts.day),
+    hour: Number(parts.hour) % 24,
+    monthLabel: `${parts.month} ${parts.year}`,
+  };
+}
+
+// The cron fires every Monday at both 13:00 and 14:00 UTC so that one of them is
+// always 9am in New York, on either side of daylight saving. The 4th Monday is
+// the only Monday that can land between the 22nd and the 28th.
+function isFourthMondayAt9amEastern(date) {
+  const { weekday, day, hour } = easternParts(date);
+  return weekday === 'Mon' && day >= 22 && day <= 28 && hour === 9;
+}
+
+function easternDateISO(date) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: EASTERN_TZ,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date);
+}
+
+function firstName(fullName) {
+  const parts = String(fullName || '').trim().split(/\s+/).filter(Boolean);
+  return parts[0] || 'there';
+}
+
+// Physician records carry credentials, with or without a comma ("Jane Smith, MD",
+// "Ana Maria Ruiz DO"), and a plain last-word split would greet them as "Dr. MD".
+// Returns '' when no usable surname is left, so the caller can fall back.
+const CREDENTIAL = /^(MD|DO|NP|PA|PA-C|DNP|PHD|PSYD|FNP|FNP-C|APRN|RN|MPH|MBA|FAAP|FACP|JR|SR|I{1,3})\.?$/i;
+
+function physicianSurname(fullName) {
+  const parts = String(fullName || '').replace(/,.*$/, '').trim().split(/\s+/).filter(Boolean);
+  while (parts.length && CREDENTIAL.test(parts[parts.length - 1])) parts.pop();
+  return parts.length ? parts[parts.length - 1] : '';
+}
+
+// The compliance obligation follows the clinical collaboration, not the billing
+// arrangement: a promotional collaboration invoiced by hand never reaches
+// status 'active', so gate on having started and not having been cancelled.
+function isDueForReminder(collaboration, today) {
+  if (collaboration.status === 'canceled') return false;
+  if (!collaboration.start_date) return true;
+  return collaboration.start_date <= today;
+}
+
+function reminderEmail({ greeting, counterpartLine, formUrl, monthLabel }) {
+  return `
+<div style="max-width:600px;margin:0 auto;font-family:sans-serif;font-size:15px;line-height:1.6;color:#1e2530">
+  <p>${greeting}</p>
+  <p>It's time for your ${esc(monthLabel)} collaboration compliance review. ${counterpartLine}</p>
+  <p style="margin:24px 0">
+    <a href="${formUrl}" style="background:#1a3a5c;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;display:inline-block">Complete your ${esc(monthLabel)} review</a>
+  </p>
+  <p style="font-size:13px;color:#555">The form takes about two minutes. If the button doesn't work, paste this into your browser:<br>
+    <a href="${formUrl}" style="color:#1B6CA8">${formUrl}</a>
+  </p>
+  <p>Warm regards,<br>MD-Match</p>
+</div>`;
+}
+
+// One pairing, in the shape both the scheduled run and the manual admin tool use.
+function pairingFromCollaboration(c, today) {
+  return {
+    collaborationId: c.id,
+    physicianName: c.physician_name,
+    physicianEmail: c.physician_email,
+    providerName: c.client_name,
+    providerEmail: c.client_email,
+    status: c.status,
+    startDate: c.start_date,
+    due: isDueForReminder(c, today),
+  };
+}
+
+async function listCompliancePairings(env, now) {
+  const today = easternDateISO(now);
+  const all = await db.listCollaborations(env.DB);
+  return all.map((c) => pairingFromCollaboration(c, today));
+}
+
+// Sends both halves of one pairing. Returns a result per message so the caller
+// can report exactly who was reached.
+async function sendPairingReminders(env, pairing, monthLabel) {
+  const physicianLast = physicianSurname(pairing.physicianName);
+  const providerFirst = firstName(pairing.providerName);
+  const subject = `Monthly compliance review — ${monthLabel}`;
+
+  const messages = [
+    {
+      role: 'physician',
+      to: pairing.physicianEmail,
+      html: reminderEmail({
+        greeting: physicianLast ? `Hi Dr. ${esc(physicianLast)},` : 'Hello,',
+        counterpartLine: `This one covers your collaboration with ${esc(pairing.providerName)}.`,
+        formUrl: 'https://md-match.com/md-compliance-intake',
+        monthLabel,
+      }),
+    },
+    {
+      role: 'provider',
+      to: pairing.providerEmail,
+      html: reminderEmail({
+        greeting: `Hi ${esc(providerFirst)},`,
+        counterpartLine: physicianLast
+          ? `This one covers your collaboration with Dr. ${esc(physicianLast)}.`
+          : `This one covers your collaboration with ${esc(pairing.physicianName)}.`,
+        formUrl: 'https://md-match.com/np-compliance-intake',
+        monthLabel,
+      }),
+    },
+  ];
+
+  const results = [];
+  for (const message of messages) {
+    if (!message.to) {
+      results.push({ role: message.role, to: null, ok: false, reason: 'missing_email' });
+      continue;
+    }
+    const ok = await sendEmail(env, {
+      from: 'MD-Match <noreply@md-match.com>',
+      to: [message.to],
+      subject,
+      html: message.html,
+    });
+    results.push({ role: message.role, to: message.to, ok });
+  }
+  return results;
+}
+
+async function sendMonthlyComplianceReminders(env, now) {
+  if (!env.RESEND_API_KEY) {
+    console.error('RESEND_API_KEY secret is not set; skipping compliance reminders');
+    return { error: 'missing_api_key' };
+  }
+
+  const { monthLabel } = easternParts(now);
+  const pairings = await listCompliancePairings(env, now);
+  const due = pairings.filter((p) => p.due);
+
+  let sent = 0;
+  const failures = [];
+  for (const pairing of due) {
+    for (const result of await sendPairingReminders(env, pairing, monthLabel)) {
+      if (result.ok) sent += 1;
+      else failures.push({ collaboration: pairing.collaborationId, ...result });
+    }
+  }
+
+  return { monthLabel, collaborations: pairings.length, due: due.length, sent, failed: failures.length, failures };
+}
 
 async function handleNpPaSubmit(request, env) {
   try {
@@ -624,6 +834,16 @@ async function handleAdminApi(request, env, url) {
 
   if (url.pathname === '/admin/api/collaborations/activate' && request.method === 'POST') {
     return handleActivateCollaboration(request, env);
+  }
+
+  if (url.pathname === '/admin/api/compliance-reminders/preview' && request.method === 'GET') {
+    const now = new Date();
+    const { monthLabel } = easternParts(now);
+    return jsonResponse({ success: true, monthLabel, pairings: await listCompliancePairings(env, now) });
+  }
+
+  if (url.pathname === '/admin/api/compliance-reminders/send' && request.method === 'POST') {
+    return handleSendComplianceReminders(request, env);
   }
 
   return jsonResponse({ success: false, error: 'Not found' }, 404);
