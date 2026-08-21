@@ -125,13 +125,17 @@ async function handleSendComplianceReminders(request, env) {
       return jsonResponse({ success: false, error: 'No recipients selected' }, 400);
     }
 
-    const label = monthLabel || easternParts(new Date()).monthLabel;
+    const now = new Date();
+    const label = monthLabel || easternParts(now).monthLabel;
+    const period = easternPeriod(now);
     const report = [];
     for (const pairing of pairings) {
+      const results = await sendPairingReminders(env, pairing, label);
+      await logPairingSend(env, period, pairing, results.filter((r) => r.ok).length, 'manual');
       report.push({
         physicianName: pairing.physicianName,
         providerName: pairing.providerName,
-        results: await sendPairingReminders(env, pairing, label),
+        results,
       });
     }
 
@@ -175,6 +179,12 @@ function easternParts(date) {
 function isFourthMondayAt9amEastern(date) {
   const { weekday, day, hour } = easternParts(date);
   return weekday === 'Mon' && day >= 22 && day <= 28 && hour === 9;
+}
+
+// The log is keyed by calendar month in New York, which is the unit the
+// reminder is described in ("your August review").
+function easternPeriod(date) {
+  return easternDateISO(date).slice(0, 7);
 }
 
 function easternDateISO(date) {
@@ -249,6 +259,8 @@ function pairingKey(pairing) {
 
 async function listCompliancePairings(env, now) {
   const today = easternDateISO(now);
+  const sends = await db.listReminderSends(env.DB, easternPeriod(now));
+  const sentAt = new Map(sends.map((r) => [r.pairing_key, r.sent_at]));
   const collaborations = await db.listCollaborations(env.DB);
   const pairings = collaborations.map((c) => ({ source: 'collaboration', ...pairingFromCollaboration(c, today) }));
   const seen = new Set(pairings.map(pairingKey));
@@ -270,7 +282,7 @@ async function listCompliancePairings(env, now) {
     pairings.push(pairing);
   }
 
-  return pairings;
+  return pairings.map((p) => ({ ...p, alreadySentAt: sentAt.get(pairingKey(p)) || null }));
 }
 
 // Sends both halves of one pairing. Returns a result per message so the caller
@@ -331,19 +343,49 @@ async function sendMonthlyComplianceReminders(env, now) {
   }
 
   const { monthLabel } = easternParts(now);
+  const period = easternPeriod(now);
   const pairings = await listCompliancePairings(env, now);
   const due = pairings.filter((p) => p.due);
+  // Anything already logged for this month has had its reminder, whether from an
+  // earlier firing or from a manual send.
+  const toSend = due.filter((p) => !p.alreadySentAt);
 
   let sent = 0;
   const failures = [];
-  for (const pairing of due) {
-    for (const result of await sendPairingReminders(env, pairing, monthLabel)) {
-      if (result.ok) sent += 1;
-      else failures.push({ collaboration: pairing.collaborationId, ...result });
-    }
+  for (const pairing of toSend) {
+    const results = await sendPairingReminders(env, pairing, monthLabel);
+    const ok = results.filter((r) => r.ok).length;
+    sent += ok;
+    for (const result of results) if (!result.ok) failures.push({ collaboration: pairing.collaborationId, ...result });
+    await logPairingSend(env, period, pairing, ok, 'scheduled');
   }
 
-  return { monthLabel, collaborations: pairings.length, due: due.length, sent, failed: failures.length, failures };
+  return {
+    monthLabel,
+    pairings: pairings.length,
+    due: due.length,
+    skippedAlreadySent: due.length - toSend.length,
+    sent,
+    failed: failures.length,
+    failures,
+  };
+}
+
+// Never let a logging failure look like a send failure, but say so loudly: an
+// unlogged send is one that could go out again.
+async function logPairingSend(env, period, pairing, emailsSent, trigger) {
+  try {
+    await db.recordReminderSend(env.DB, {
+      period,
+      pairingKey: pairingKey(pairing),
+      physicianEmail: pairing.physicianEmail,
+      providerEmail: pairing.providerEmail,
+      emailsSent,
+      trigger,
+    });
+  } catch (err) {
+    console.error('Failed to log reminder send:', pairingKey(pairing), err?.message || err);
+  }
 }
 
 async function handleNpPaSubmit(request, env) {
