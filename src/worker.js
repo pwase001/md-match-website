@@ -20,12 +20,17 @@ export default {
       return handlePhysicianLicensureSubmit(request, env);
     }
 
-    if (request.method === 'POST' && url.pathname === '/compliance-submit') {
-      return handleComplianceSubmit(request, env);
-    }
-
-    if (request.method === 'POST' && url.pathname === '/np-compliance-submit') {
-      return handleNpComplianceSubmit(request, env);
+    // The compliance pages are also handed to providers as a saved file, so
+    // these two answer cross-origin as well as same-origin.
+    if (url.pathname === '/compliance-submit' || url.pathname === '/np-compliance-submit') {
+      if (request.method === 'OPTIONS') {
+        return withCors(new Response(null, { status: 204 }));
+      }
+      if (request.method === 'POST') {
+        const handler =
+          url.pathname === '/compliance-submit' ? handleComplianceSubmit : handleNpComplianceSubmit;
+        return withCors(await handler(request, env));
+      }
     }
 
     if (request.method === 'POST' && url.pathname === '/send-licensure-email') {
@@ -968,6 +973,14 @@ function formatDate(str) {
   if (!y || !m || !d) return str;
   const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   return `${months[parseInt(m, 10) - 1]} ${parseInt(d, 10)}, ${y}`;
+}
+
+function withCors(response) {
+  const headers = new Headers(response.headers);
+  headers.set('Access-Control-Allow-Origin', '*');
+  headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  headers.set('Access-Control-Max-Age', '86400');
+  return new Response(response.body, { status: response.status, headers });
 }
 
 function jsonResponse(data, status = 200) {
