@@ -256,6 +256,8 @@ async function sendPairingReminders(env, pairing, monthLabel) {
       to: [message.to],
       subject,
       html: message.html,
+      // A reminder invites questions, so send them somewhere a person reads.
+      replyTo: 'philipwasef@md-match.com',
     });
     results.push({ role: message.role, to: message.to, ok });
   }
@@ -1051,11 +1053,11 @@ async function handleClientAddBankComplete(request, env, url) {
   );
 }
 
-async function sendEmail(env, { to, from, subject, html, attachments }) {
+async function sendEmail(env, { to, from, subject, html, attachments, replyTo }) {
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from, to, subject, html, attachments }),
+    body: JSON.stringify({ from, to, subject, html, attachments, reply_to: replyTo }),
   });
   if (!res.ok) {
     const errBody = await res.text();
