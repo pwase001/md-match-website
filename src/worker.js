@@ -81,6 +81,39 @@ export default {
   },
 };
 
+// Stores a pairing that is not billed through the platform so the schedule
+// reaches it every month, the same as a collaboration.
+async function handleSaveReminderPairing(request, env) {
+  try {
+    const body = await request.json();
+    const fields = {
+      physicianName: String(body.physicianName || '').trim(),
+      physicianEmail: String(body.physicianEmail || '').trim(),
+      providerName: String(body.providerName || '').trim(),
+      providerEmail: String(body.providerEmail || '').trim(),
+    };
+    if (Object.values(fields).some((v) => !v)) {
+      return jsonResponse({ success: false, error: 'All four fields are required' }, 400);
+    }
+
+    const existing = await db.listReminderPairings(env.DB);
+    const duplicate = existing.some(
+      (r) =>
+        r.physician_email.toLowerCase() === fields.physicianEmail.toLowerCase() &&
+        r.provider_email.toLowerCase() === fields.providerEmail.toLowerCase()
+    );
+    if (duplicate) {
+      return jsonResponse({ success: false, error: 'That pairing is already saved' }, 409);
+    }
+
+    const row = await db.createReminderPairing(env.DB, fields);
+    return jsonResponse({ success: true, pairing: row });
+  } catch (err) {
+    console.error('Save reminder pairing error:', err);
+    return jsonResponse({ success: false, error: 'Server error' }, 500);
+  }
+}
+
 // Sends only the pairings the admin selected, so the first run can be checked by
 // hand before the schedule is trusted to pick recipients on its own.
 async function handleSendComplianceReminders(request, env) {
@@ -207,10 +240,37 @@ function pairingFromCollaboration(c, today) {
   };
 }
 
+// A saved pairing and a collaboration can describe the same two people, so key
+// on the pair of addresses and let the collaboration win — it carries a status
+// and a start date the saved row does not.
+function pairingKey(pairing) {
+  return `${String(pairing.physicianEmail || '').toLowerCase()}|${String(pairing.providerEmail || '').toLowerCase()}`;
+}
+
 async function listCompliancePairings(env, now) {
   const today = easternDateISO(now);
-  const all = await db.listCollaborations(env.DB);
-  return all.map((c) => pairingFromCollaboration(c, today));
+  const collaborations = await db.listCollaborations(env.DB);
+  const pairings = collaborations.map((c) => ({ source: 'collaboration', ...pairingFromCollaboration(c, today) }));
+  const seen = new Set(pairings.map(pairingKey));
+
+  for (const row of await db.listReminderPairings(env.DB)) {
+    const pairing = {
+      source: 'saved',
+      reminderPairingId: row.id,
+      physicianName: row.physician_name,
+      physicianEmail: row.physician_email,
+      providerName: row.provider_name,
+      providerEmail: row.provider_email,
+      status: null,
+      startDate: null,
+      due: true,
+    };
+    if (seen.has(pairingKey(pairing))) continue;
+    seen.add(pairingKey(pairing));
+    pairings.push(pairing);
+  }
+
+  return pairings;
 }
 
 // Sends both halves of one pairing. Returns a result per message so the caller
@@ -846,6 +906,17 @@ async function handleAdminApi(request, env, url) {
 
   if (url.pathname === '/admin/api/compliance-reminders/send' && request.method === 'POST') {
     return handleSendComplianceReminders(request, env);
+  }
+
+  if (url.pathname === '/admin/api/compliance-reminders/pairings' && request.method === 'POST') {
+    return handleSaveReminderPairing(request, env);
+  }
+
+  if (url.pathname === '/admin/api/compliance-reminders/pairings/remove' && request.method === 'POST') {
+    const { id } = await request.json();
+    if (!id) return jsonResponse({ success: false, error: 'Missing id' }, 400);
+    await db.deactivateReminderPairing(env.DB, id);
+    return jsonResponse({ success: true });
   }
 
   return jsonResponse({ success: false, error: 'Not found' }, 404);
