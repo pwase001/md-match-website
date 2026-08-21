@@ -10,6 +10,12 @@
     "directory": ".",
     "binding": "ASSETS"
   },
+  // Every Monday at 13:00 and 14:00 UTC. One of the two is 9am in New York on
+  // either side of daylight saving; the handler checks the Eastern clock and
+  // ignores the other, and only proceeds on the 4th Monday of the month.
+  "triggers": {
+    "crons": ["0 13 * * 1", "0 14 * * 1"]
+  },
   "compatibility_flags": [
     "nodejs_compat"
   ],
