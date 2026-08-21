@@ -595,7 +595,14 @@
       const data = new FormData(this);
 
       try {
-        const response = await fetch('/compliance-submit', {
+        // Served from md-match.com this posts same-origin; opened as a local
+        // file or from anywhere else it falls back to the live endpoint, so a
+        // saved copy of this page still submits.
+        const endpoint = location.hostname.endsWith('md-match.com')
+          ? '/compliance-submit'
+          : 'https://md-match.com/compliance-submit';
+
+        const response = await fetch(endpoint, {
           method: 'POST',
           body: data,
         });
