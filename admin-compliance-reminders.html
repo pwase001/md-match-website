@@ -136,7 +136,7 @@
     <div class="note">
       Each selected pairing gets two emails: the physician receives the MD form, the NP/PA receives the NP form,
       each naming the other. Rows are pre-selected when the collaboration has started and has not been cancelled.
-      Uncheck anything that should not go out, and add any pairing that is not in the database below.
+      Uncheck anything that should not go out. Pairings you are not billing through the platform can be saved below, and are then included every month just like a collaboration.
     </div>
 
     <div class="card">
@@ -150,6 +150,7 @@
             <th>Status</th>
             <th>Started</th>
             <th></th>
+            <th></th>
           </tr>
         </thead>
         <tbody id="rows"></tbody>
@@ -158,7 +159,7 @@
     </div>
 
     <div class="card">
-      <div class="card-title">Add a pairing manually</div>
+      <div class="card-title">Add a pairing not billed through the platform</div>
       <div class="field-row">
         <div class="field">
           <label for="mPhysicianName">Physician name</label>
@@ -179,8 +180,13 @@
           <input id="mProviderEmail" type="email" placeholder="robin@example.com">
         </div>
       </div>
-      <button class="btn btn-secondary" onclick="addManual()">Add to list</button>
-      <div class="msg err" id="manualMsg"></div>
+      <button class="btn" onclick="savePairing()">Save &amp; send every month</button>
+      <button class="btn btn-secondary" onclick="addManual()">Add for this send only</button>
+      <div class="msg" id="manualMsg"></div>
+      <p style="font-size:12px;color:#8ba3a3;margin-top:0.8rem;line-height:1.5">
+        Saved pairings are stored and picked up by the monthly schedule. A one-off addition is used for this send
+        and forgotten when the page reloads.
+      </p>
     </div>
 
     <div class="card">
@@ -234,7 +240,8 @@
     }
     msg.textContent = '';
     document.getElementById('monthLabel').textContent = data.monthLabel;
-    pairings = data.pairings.map(p => ({ ...p, selected: p.due, manual: false }));
+    const oneOffs = pairings.filter(p => p.oneOff);
+    pairings = data.pairings.map(p => ({ ...p, selected: p.due })).concat(oneOffs);
     render();
   }
 
@@ -242,7 +249,7 @@
     const tbody = document.getElementById('rows');
     tbody.innerHTML = '';
     if (pairings.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" style="color:#8ba3a3">No collaborations on file. Add pairings manually below.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="color:#8ba3a3">No collaborations on file. Add pairings manually below.</td></tr>';
     }
     pairings.forEach((p, i) => {
       const tr = document.createElement('tr');
@@ -251,11 +258,10 @@
         '<td class="check"><input type="checkbox" ' + (p.selected ? 'checked' : '') + ' onchange="toggle(' + i + ', this.checked)"></td>' +
         '<td>' + text(p.physicianName) + '<div class="email">' + text(p.physicianEmail || 'no email on file') + '</div></td>' +
         '<td>' + text(p.providerName) + '<div class="email">' + text(p.providerEmail || 'no email on file') + '</div></td>' +
-        '<td>' + text(p.manual ? 'added by hand' : (p.status || '—')) + '</td>' +
+        '<td>' + text(p.status || (p.source === 'saved' ? 'saved pairing' : 'added by hand')) + '</td>' +
         '<td>' + text(p.startDate || '—') + '</td>' +
-        '<td>' + (p.manual
-          ? '<span class="tag tag-due">manual</span>'
-          : (p.due ? '<span class="tag tag-due">due</span>' : '<span class="tag tag-skip">not due</span>')) + '</td>';
+        '<td>' + (p.due ? '<span class="tag tag-due">due</span>' : '<span class="tag tag-skip">not due</span>') + '</td>' +
+        '<td>' + sourceCell(p, i) + '</td>';
       tbody.appendChild(tr);
     });
     updateCounts();
@@ -263,6 +269,73 @@
 
   function text(v) {
     return String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  }
+
+  function sourceCell(p, i) {
+    if (p.oneOff) return '<span class="tag tag-skip">this send only</span>';
+    if (p.source === 'saved') {
+      return '<span class="tag tag-due">every month</span> ' +
+        '<a href="#" style="font-size:11px;color:#a3312a;margin-left:6px" onclick="removeSaved(' + p.reminderPairingId + '); return false;">remove</a>';
+    }
+    return '<span class="email">collaboration</span>';
+  }
+
+  async function savePairing() {
+    const msg = document.getElementById('manualMsg');
+    const entry = readManualForm(msg);
+    if (!entry) return;
+    msg.className = 'msg';
+    msg.textContent = 'Saving…';
+    try {
+      const res = await fetch('/admin/api/compliance-reminders/pairings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(entry),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Could not save');
+      msg.className = 'msg ok';
+      msg.textContent = 'Saved. This pairing will be included every month.';
+      clearManualForm();
+      await load();
+    } catch (err) {
+      msg.className = 'msg err';
+      msg.textContent = err.message;
+    }
+  }
+
+  async function removeSaved(id) {
+    if (!confirm('Stop sending monthly reminders to this pairing?')) return;
+    await fetch('/admin/api/compliance-reminders/pairings/remove', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ id }),
+    });
+    await load();
+  }
+
+  function readManualForm(msg) {
+    const get = id => document.getElementById(id).value.trim();
+    const entry = {
+      physicianName: get('mPhysicianName'),
+      physicianEmail: get('mPhysicianEmail'),
+      providerName: get('mProviderName'),
+      providerEmail: get('mProviderEmail'),
+    };
+    if (Object.values(entry).some(v => !v)) {
+      msg.className = 'msg err';
+      msg.textContent = 'All four fields are required.';
+      return null;
+    }
+    return entry;
+  }
+
+  function clearManualForm() {
+    ['mPhysicianName', 'mPhysicianEmail', 'mProviderName', 'mProviderEmail'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
   }
 
   function toggle(i, checked) {
@@ -280,22 +353,12 @@
 
   function addManual() {
     const msg = document.getElementById('manualMsg');
-    const get = id => document.getElementById(id).value.trim();
-    const entry = {
-      physicianName: get('mPhysicianName'),
-      physicianEmail: get('mPhysicianEmail'),
-      providerName: get('mProviderName'),
-      providerEmail: get('mProviderEmail'),
-    };
-    if (!entry.physicianName || !entry.physicianEmail || !entry.providerName || !entry.providerEmail) {
-      msg.textContent = 'All four fields are required.';
-      return;
-    }
-    msg.textContent = '';
-    pairings.push({ ...entry, status: null, startDate: null, due: true, selected: true, manual: true });
-    ['mPhysicianName', 'mPhysicianEmail', 'mProviderName', 'mProviderEmail'].forEach(id => {
-      document.getElementById(id).value = '';
-    });
+    const entry = readManualForm(msg);
+    if (!entry) return;
+    msg.className = 'msg';
+    msg.textContent = 'Added for this send only.';
+    pairings.push({ ...entry, status: null, startDate: null, due: true, selected: true, oneOff: true });
+    clearManualForm();
     render();
   }
 

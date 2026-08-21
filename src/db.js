@@ -119,3 +119,30 @@ export async function setCollaborationStatus(db, id, status) {
 export async function getCollaborationBySubscriptionId(db, subscriptionId) {
   return db.prepare('SELECT * FROM collaborations WHERE stripe_subscription_id = ?').bind(subscriptionId).first();
 }
+
+// ---- Reminder-only pairings ----
+// Collaborations people have that MD-Match does not bill for. They exist purely
+// so the monthly compliance reminder reaches both sides.
+
+export async function listReminderPairings(db) {
+  const res = await db
+    .prepare('SELECT * FROM reminder_pairings WHERE active = 1 ORDER BY created_at DESC')
+    .all();
+  return res.results;
+}
+
+export async function createReminderPairing(db, { physicianName, physicianEmail, providerName, providerEmail }) {
+  return db
+    .prepare(
+      `INSERT INTO reminder_pairings (physician_name, physician_email, provider_name, provider_email)
+       VALUES (?, ?, ?, ?) RETURNING *`
+    )
+    .bind(physicianName, physicianEmail, providerName, providerEmail)
+    .first();
+}
+
+// Kept as a flag rather than a delete so a pairing can be restored, and so the
+// record of who was being reminded survives.
+export async function deactivateReminderPairing(db, id) {
+  await db.prepare('UPDATE reminder_pairings SET active = 0 WHERE id = ?').bind(id).run();
+}
