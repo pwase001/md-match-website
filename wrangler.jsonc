@@ -10,13 +10,11 @@
     "directory": ".",
     "binding": "ASSETS"
   },
-  // Scheduled compliance reminders are held until the first run has been sent by
-  // hand from /admin-compliance-reminders and the pairings confirmed. Restoring
-  // the two entries below turns the schedule on: every Monday at 13:00 and 14:00
-  // UTC, one of which is always 9am in New York across daylight saving, with the
-  // handler ignoring the other and only proceeding on the 4th Monday.
+  // Compliance reminders: every Monday at 13:00 and 14:00 UTC. One of the two is
+  // always 9am in New York across daylight saving; the handler checks the Eastern
+  // clock, ignores the other, and only proceeds on the 4th Monday of the month.
   "triggers": {
-    "crons": []
+    "crons": ["0 13 * * 1", "0 14 * * 1"]
   },
   "compatibility_flags": [
     "nodejs_compat"
