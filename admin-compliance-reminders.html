@@ -94,6 +94,7 @@
   }
   .tag-due { background: #e2f0e6; color: #1d6b35; }
   .tag-skip { background: #f0eae2; color: #8a6a3a; }
+  .tag-sent { background: #e2e8f0; color: #40566b; }
   .check { width: 34px; }
   .check input { width: 16px; height: 16px; accent-color: #0b3535; cursor: pointer; }
 
@@ -136,7 +137,7 @@
     <div class="note">
       Each selected pairing gets two emails: the physician receives the MD form, the NP/PA receives the NP form,
       each naming the other. Rows are pre-selected when the collaboration has started and has not been cancelled.
-      Uncheck anything that should not go out. Pairings you are not billing through the platform can be saved below, and are then included every month just like a collaboration.
+      Uncheck anything that should not go out. Pairings already sent this month are unchecked and marked, so re-sending one is deliberate. Pairings you are not billing through the platform can be saved below, and are then included every month just like a collaboration.
     </div>
 
     <div class="card">
@@ -241,7 +242,9 @@
     msg.textContent = '';
     document.getElementById('monthLabel').textContent = data.monthLabel;
     const oneOffs = pairings.filter(p => p.oneOff);
-    pairings = data.pairings.map(p => ({ ...p, selected: p.due })).concat(oneOffs);
+    // Already sent this month: leave it visible but unchecked, so re-sending is
+    // a deliberate act rather than the default.
+    pairings = data.pairings.map(p => ({ ...p, selected: p.due && !p.alreadySentAt })).concat(oneOffs);
     render();
   }
 
@@ -260,7 +263,9 @@
         '<td>' + text(p.providerName) + '<div class="email">' + text(p.providerEmail || 'no email on file') + '</div></td>' +
         '<td>' + text(p.status || (p.source === 'saved' ? 'saved pairing' : 'added by hand')) + '</td>' +
         '<td>' + text(p.startDate || '—') + '</td>' +
-        '<td>' + (p.due ? '<span class="tag tag-due">due</span>' : '<span class="tag tag-skip">not due</span>') + '</td>' +
+        '<td>' + (p.alreadySentAt
+          ? '<span class="tag tag-sent">sent ' + text(String(p.alreadySentAt).slice(5, 10)) + '</span>'
+          : (p.due ? '<span class="tag tag-due">due</span>' : '<span class="tag tag-skip">not due</span>')) + '</td>' +
         '<td>' + sourceCell(p, i) + '</td>';
       tbody.appendChild(tr);
     });

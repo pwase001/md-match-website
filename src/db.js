@@ -146,3 +146,26 @@ export async function createReminderPairing(db, { physicianName, physicianEmail,
 export async function deactivateReminderPairing(db, id) {
   await db.prepare('UPDATE reminder_pairings SET active = 0 WHERE id = ?').bind(id).run();
 }
+
+// ---- Reminder send log ----
+// One row per pairing per month, so a redeploy, a repeated click or a manual run
+// followed by the scheduled one cannot email the same people twice.
+
+export async function listReminderSends(db, period) {
+  const res = await db.prepare('SELECT * FROM reminder_sends WHERE period = ?').bind(period).all();
+  return res.results;
+}
+
+export async function recordReminderSend(db, { period, pairingKey, physicianEmail, providerEmail, emailsSent, trigger }) {
+  await db
+    .prepare(
+      `INSERT INTO reminder_sends (period, pairing_key, physician_email, provider_email, emails_sent, trigger)
+       VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT(period, pairing_key) DO UPDATE SET
+         emails_sent = emails_sent + excluded.emails_sent,
+         trigger = excluded.trigger,
+         sent_at = datetime('now')`
+    )
+    .bind(period, pairingKey, physicianEmail || null, providerEmail || null, emailsSent, trigger)
+    .run();
+}
