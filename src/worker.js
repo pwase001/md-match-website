@@ -81,6 +81,37 @@ export default {
   },
 };
 
+// Sends only the pairings the admin selected, so the first run can be checked by
+// hand before the schedule is trusted to pick recipients on its own.
+async function handleSendComplianceReminders(request, env) {
+  try {
+    if (!env.RESEND_API_KEY) return jsonResponse({ success: false, error: 'Server misconfiguration' }, 500);
+
+    const { pairings, monthLabel } = await request.json();
+    if (!Array.isArray(pairings) || pairings.length === 0) {
+      return jsonResponse({ success: false, error: 'No recipients selected' }, 400);
+    }
+
+    const label = monthLabel || easternParts(new Date()).monthLabel;
+    const report = [];
+    for (const pairing of pairings) {
+      report.push({
+        physicianName: pairing.physicianName,
+        providerName: pairing.providerName,
+        results: await sendPairingReminders(env, pairing, label),
+      });
+    }
+
+    const sent = report.reduce((n, r) => n + r.results.filter((x) => x.ok).length, 0);
+    const failed = report.reduce((n, r) => n + r.results.filter((x) => !x.ok).length, 0);
+    console.log('Manual compliance reminders:', JSON.stringify({ label, sent, failed }));
+    return jsonResponse({ success: true, monthLabel: label, sent, failed, report });
+  } catch (err) {
+    console.error('Manual compliance reminder error:', err);
+    return jsonResponse({ success: false, error: 'Server error' }, 500);
+  }
+}
+
 // ---- Monthly compliance reminders ----
 
 const EASTERN_TZ = 'America/New_York';
@@ -162,6 +193,75 @@ function reminderEmail({ greeting, counterpartLine, formUrl, monthLabel }) {
 </div>`;
 }
 
+// One pairing, in the shape both the scheduled run and the manual admin tool use.
+function pairingFromCollaboration(c, today) {
+  return {
+    collaborationId: c.id,
+    physicianName: c.physician_name,
+    physicianEmail: c.physician_email,
+    providerName: c.client_name,
+    providerEmail: c.client_email,
+    status: c.status,
+    startDate: c.start_date,
+    due: isDueForReminder(c, today),
+  };
+}
+
+async function listCompliancePairings(env, now) {
+  const today = easternDateISO(now);
+  const all = await db.listCollaborations(env.DB);
+  return all.map((c) => pairingFromCollaboration(c, today));
+}
+
+// Sends both halves of one pairing. Returns a result per message so the caller
+// can report exactly who was reached.
+async function sendPairingReminders(env, pairing, monthLabel) {
+  const physicianLast = physicianSurname(pairing.physicianName);
+  const providerFirst = firstName(pairing.providerName);
+  const subject = `Monthly compliance review — ${monthLabel}`;
+
+  const messages = [
+    {
+      role: 'physician',
+      to: pairing.physicianEmail,
+      html: reminderEmail({
+        greeting: physicianLast ? `Hi Dr. ${esc(physicianLast)},` : 'Hello,',
+        counterpartLine: `This one covers your collaboration with ${esc(pairing.providerName)}.`,
+        formUrl: 'https://md-match.com/md-compliance-intake',
+        monthLabel,
+      }),
+    },
+    {
+      role: 'provider',
+      to: pairing.providerEmail,
+      html: reminderEmail({
+        greeting: `Hi ${esc(providerFirst)},`,
+        counterpartLine: physicianLast
+          ? `This one covers your collaboration with Dr. ${esc(physicianLast)}.`
+          : `This one covers your collaboration with ${esc(pairing.physicianName)}.`,
+        formUrl: 'https://md-match.com/np-compliance-intake',
+        monthLabel,
+      }),
+    },
+  ];
+
+  const results = [];
+  for (const message of messages) {
+    if (!message.to) {
+      results.push({ role: message.role, to: null, ok: false, reason: 'missing_email' });
+      continue;
+    }
+    const ok = await sendEmail(env, {
+      from: 'MD-Match <noreply@md-match.com>',
+      to: [message.to],
+      subject,
+      html: message.html,
+    });
+    results.push({ role: message.role, to: message.to, ok });
+  }
+  return results;
+}
+
 async function sendMonthlyComplianceReminders(env, now) {
   if (!env.RESEND_API_KEY) {
     console.error('RESEND_API_KEY secret is not set; skipping compliance reminders');
@@ -169,59 +269,19 @@ async function sendMonthlyComplianceReminders(env, now) {
   }
 
   const { monthLabel } = easternParts(now);
-  const today = easternDateISO(now);
-  const all = await db.listCollaborations(env.DB);
-  const due = all.filter((c) => isDueForReminder(c, today));
+  const pairings = await listCompliancePairings(env, now);
+  const due = pairings.filter((p) => p.due);
 
   let sent = 0;
   const failures = [];
-
-  for (const c of due) {
-    const physicianLast = physicianSurname(c.physician_name);
-    const providerFirst = firstName(c.client_name);
-
-    const messages = [
-      {
-        to: c.physician_email,
-        subject: `Monthly compliance review — ${monthLabel}`,
-        html: reminderEmail({
-          greeting: physicianLast ? `Hi Dr. ${esc(physicianLast)},` : 'Hello,',
-          counterpartLine: `This one covers your collaboration with ${esc(c.client_name)}.`,
-          formUrl: 'https://md-match.com/md-compliance-intake',
-          monthLabel,
-        }),
-      },
-      {
-        to: c.client_email,
-        subject: `Monthly compliance review — ${monthLabel}`,
-        html: reminderEmail({
-          greeting: `Hi ${esc(providerFirst)},`,
-          counterpartLine: physicianLast
-            ? `This one covers your collaboration with Dr. ${esc(physicianLast)}.`
-            : `This one covers your collaboration with ${esc(c.physician_name)}.`,
-          formUrl: 'https://md-match.com/np-compliance-intake',
-          monthLabel,
-        }),
-      },
-    ];
-
-    for (const message of messages) {
-      if (!message.to) {
-        failures.push({ collaboration: c.id, reason: 'missing_email' });
-        continue;
-      }
-      const ok = await sendEmail(env, {
-        from: 'MD-Match <noreply@md-match.com>',
-        to: [message.to],
-        subject: message.subject,
-        html: message.html,
-      });
-      if (ok) sent += 1;
-      else failures.push({ collaboration: c.id, to: message.to });
+  for (const pairing of due) {
+    for (const result of await sendPairingReminders(env, pairing, monthLabel)) {
+      if (result.ok) sent += 1;
+      else failures.push({ collaboration: pairing.collaborationId, ...result });
     }
   }
 
-  return { monthLabel, collaborations: all.length, due: due.length, sent, failed: failures.length, failures };
+  return { monthLabel, collaborations: pairings.length, due: due.length, sent, failed: failures.length, failures };
 }
 
 async function handleNpPaSubmit(request, env) {
@@ -774,6 +834,16 @@ async function handleAdminApi(request, env, url) {
 
   if (url.pathname === '/admin/api/collaborations/activate' && request.method === 'POST') {
     return handleActivateCollaboration(request, env);
+  }
+
+  if (url.pathname === '/admin/api/compliance-reminders/preview' && request.method === 'GET') {
+    const now = new Date();
+    const { monthLabel } = easternParts(now);
+    return jsonResponse({ success: true, monthLabel, pairings: await listCompliancePairings(env, now) });
+  }
+
+  if (url.pathname === '/admin/api/compliance-reminders/send' && request.method === 'POST') {
+    return handleSendComplianceReminders(request, env);
   }
 
   return jsonResponse({ success: false, error: 'Not found' }, 404);
