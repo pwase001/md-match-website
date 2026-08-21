@@ -20,6 +20,10 @@ export default {
       return handlePhysicianLicensureSubmit(request, env);
     }
 
+    if (request.method === 'POST' && url.pathname === '/compliance-submit') {
+      return handleComplianceSubmit(request, env);
+    }
+
     if (request.method === 'POST' && url.pathname === '/send-licensure-email') {
       return handleSendLicensureEmail(request, env);
     }
@@ -422,6 +426,81 @@ async function handlePhysicianLicensureSubmit(request, env) {
   }
 }
 
+async function handleComplianceSubmit(request, env) {
+  try {
+    const formData = await request.formData();
+    const fields = {};
+    for (const [key, value] of formData.entries()) fields[key] = value;
+
+    const name = fields['Physician_Name'] || 'Unknown';
+    const month = formatMonth(fields['Submission_Month']);
+
+    if (!env.RESEND_API_KEY) return jsonResponse({ success: false, error: 'Server misconfiguration' }, 500);
+
+    const esc = (v) =>
+      String(v ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const row = (label, val) =>
+      `<tr><td style="padding:6px 12px;font-weight:600;color:#1e2530;background:#f2f4f6;width:38%;font-family:sans-serif;font-size:13px;border-bottom:1px solid #ddd">${label}</td><td style="padding:6px 12px;color:#1e2530;font-family:sans-serif;font-size:13px;border-bottom:1px solid #ddd">${esc(val) || '—'}</td></tr>`;
+    const section = (title) =>
+      `<tr><td colspan="2" style="padding:10px 12px 4px;font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.08em;color:#1B6CA8;font-family:sans-serif;border-bottom:2px solid #1B6CA8">${title}</td></tr>`;
+
+    // Only report the follow-up that matches the answer given — collapsed
+    // sub-fields still submit whatever was typed before the answer changed.
+    const followUp = (answer, yes, no) => (answer === 'Yes' ? yes : answer === 'No' ? no : '');
+
+    const html = `
+<div style="max-width:680px;margin:0 auto;font-family:sans-serif">
+  <h2 style="color:#1B6CA8;margin-bottom:4px">Monthly Compliance Review — MD-Match</h2>
+  <p style="color:#555;font-size:13px">Submitted ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</p>
+  <table style="width:100%;border-collapse:collapse;margin-top:16px">
+    ${section('Physician Information')}
+    ${row('Physician Name', name)}
+    ${row('NPI Number', fields['Physician_NPI'])}
+    ${row('Collaborator Name', fields['Collaborator_Name'])}
+    ${row('Submission Month', month)}
+    ${section('Collaboration')}
+    ${row('Collaboration State(s)', fields['Q1_States'])}
+    ${row('Patients Seen This Month', fields['Q2_PatientsSeen'])}
+    ${followUp(fields['Q2_PatientsSeen'], '', row('Why Not', fields['Q2_WhyNot']))}
+    ${row('Check-In This Month', fields['Q3_CheckIn'])}
+    ${followUp(fields['Q3_CheckIn'], row('Date of Meeting', formatDate(fields['Q3_MeetingDate'])), row('Why Not', fields['Q3_WhyNot']))}
+    ${section('Quality Assurance')}
+    ${row('QA Occurred This Month', fields['Q4_QA'])}
+    ${followUp(fields['Q4_QA'], row('QA Activities', fields['Q4_QA_Items_Selected']), row('Why Not', fields['Q4_WhyNot']))}
+    ${section('Chart Review')}
+    ${row('Charts Reviewed This Month', fields['Q5_ChartReview'])}
+    ${followUp(fields['Q5_ChartReview'], row('Number of Charts', fields['Q5_ChartCount']), row('Why Not', fields['Q5_WhyNot']))}
+    ${section('Attestation')}
+    ${row('Attested', fields['Attestation'] ? 'Yes' : 'No')}
+    ${row('Digital Signature', fields['Digital_Signature'])}
+  </table>
+  <p style="color:#aaa;font-size:11px;margin-top:24px">MD-Match.com</p>
+</div>`;
+
+    const resendRes = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'MD-Match Intake <noreply@md-match.com>',
+        to: ['philipwasef@md-match.com', 'pwase001@gmail.com'],
+        subject: `Monthly Compliance Review — ${name}${month !== '—' ? ` (${month})` : ''}`,
+        html,
+      }),
+    });
+
+    if (!resendRes.ok) {
+      const errBody = await resendRes.text();
+      console.error('Resend error:', resendRes.status, errBody);
+      return jsonResponse({ success: false, error: 'Email delivery failed' }, 500);
+    }
+
+    return jsonResponse({ success: true });
+  } catch (err) {
+    console.error('Worker error:', err);
+    return jsonResponse({ success: false, error: 'Server error' }, 500);
+  }
+}
+
 // ---- Admin ----
 
 async function handleAdminLogin(request, env) {
@@ -794,6 +873,14 @@ function buildSummary(f) {
   </table>
   <p style="color:#aaa;font-size:11px;margin-top:24px">Word document attached · MD-Match.com</p>
 </div>`;
+}
+
+function formatMonth(str) {
+  if (!str) return '—';
+  const [y, m] = str.split('-');
+  if (!y || !m) return str;
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return `${months[parseInt(m, 10) - 1]} ${y}`;
 }
 
 function formatDate(str) {
