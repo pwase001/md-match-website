@@ -75,7 +75,16 @@ export default {
 
   async scheduled(event, env) {
     const now = new Date(event.scheduledTime);
-    if (!isFourthMondayAt9amEastern(now)) return;
+    const { weekday, day, hour, monthLabel } = easternParts(now);
+    const proceeding = isFourthMondayAt9amEastern(now);
+    // Logged on every firing, not just the ones that send. A schedule pointed at
+    // the wrong day then shows up here the same week, rather than as an email
+    // nobody received a month later.
+    console.log(
+      'Compliance reminder tick:',
+      JSON.stringify({ eastern: `${weekday} ${day} ${hour}:00`, monthLabel, proceeding })
+    );
+    if (!proceeding) return;
     const result = await sendMonthlyComplianceReminders(env, now);
     console.log('Monthly compliance reminders:', JSON.stringify(result));
   },

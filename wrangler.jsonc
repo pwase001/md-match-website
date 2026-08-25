@@ -13,8 +13,12 @@
   // Compliance reminders: every Monday at 13:00 and 14:00 UTC. One of the two is
   // always 9am in New York across daylight saving; the handler checks the Eastern
   // clock, ignores the other, and only proceeds on the 4th Monday of the month.
+  //
+  // The day is named rather than numbered: Cloudflare's parser treats 1 as Sunday,
+  // so the Unix-style "* * * * 1" for Monday silently scheduled these a day early.
+  // The dashboard's Cron Triggers panel should read "on Monday".
   "triggers": {
-    "crons": ["0 13 * * 1", "0 14 * * 1"]
+    "crons": ["0 13 * * MON", "0 14 * * MON"]
   },
   "compatibility_flags": [
     "nodejs_compat"
