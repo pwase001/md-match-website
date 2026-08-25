@@ -37,6 +37,10 @@ export default {
       return handleSendLicensureEmail(request, env);
     }
 
+    if (request.method === 'POST' && url.pathname === '/resend-webhook') {
+      return handleResendWebhook(request, env);
+    }
+
     if (request.method === 'POST' && url.pathname === '/stripe-webhook') {
       return handlePlatformWebhook(request, env);
     }
@@ -268,8 +272,18 @@ function pairingKey(pairing) {
 
 async function listCompliancePairings(env, now) {
   const today = easternDateISO(now);
-  const sends = await db.listReminderSends(env.DB, easternPeriod(now));
+  const period = easternPeriod(now);
+  const sends = await db.listReminderSends(env.DB, period);
   const sentAt = new Map(sends.map((r) => [r.pairing_key, r.sent_at]));
+
+  // Bounces from this month, newest first, keyed by address. A reminder Resend
+  // accepted can still have failed at the recipient's server afterwards.
+  const bounces = await db.listEmailBouncesSince(env.DB, `${period}-01`);
+  const bounceFor = new Map();
+  for (const b of bounces) {
+    if (!bounceFor.has(b.recipient)) bounceFor.set(b.recipient, { at: b.occurred_at, reason: b.reason });
+  }
+  const bounceOf = (email) => bounceFor.get(String(email || '').toLowerCase()) || null;
   const collaborations = await db.listCollaborations(env.DB);
   const pairings = collaborations.map((c) => ({ source: 'collaboration', ...pairingFromCollaboration(c, today) }));
   const seen = new Set(pairings.map(pairingKey));
@@ -291,7 +305,12 @@ async function listCompliancePairings(env, now) {
     pairings.push(pairing);
   }
 
-  return pairings.map((p) => ({ ...p, alreadySentAt: sentAt.get(pairingKey(p)) || null }));
+  return pairings.map((p) => ({
+    ...p,
+    alreadySentAt: sentAt.get(pairingKey(p)) || null,
+    physicianBounce: bounceOf(p.physicianEmail),
+    providerBounce: bounceOf(p.providerEmail),
+  }));
 }
 
 // Sends both halves of one pairing. Returns a result per message so the caller
@@ -906,6 +925,115 @@ function emailSection(title) {
 // still submit whatever was typed before the answer changed.
 function followUp(answer, yes, no) {
   return answer === 'Yes' ? yes : answer === 'No' ? no : '';
+}
+
+// ---- Resend webhook ----
+
+// Resend signs with the Standard Webhooks scheme: HMAC-SHA256 over
+// "<id>.<timestamp>.<body>", keyed by the secret's base64 body, sent as a
+// space-separated list of "v1,<signature>". Headers arrive svix-prefixed or
+// webhook-prefixed depending on the sender, so accept either.
+const WEBHOOK_TOLERANCE_SECONDS = 5 * 60;
+
+function webhookHeader(request, name) {
+  return request.headers.get(`svix-${name}`) || request.headers.get(`webhook-${name}`);
+}
+
+function base64ToBytes(b64) {
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+function bytesToBase64(bytes) {
+  let binary = '';
+  for (const b of new Uint8Array(bytes)) binary += String.fromCharCode(b);
+  return btoa(binary);
+}
+
+// Length-independent compare, so a mismatch reveals nothing through timing.
+function safeEqual(a, b) {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i += 1) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+async function verifyResendSignature(request, env, body) {
+  const secret = env.RESEND_WEBHOOK_SECRET;
+  if (!secret) return { ok: false, status: 500, reason: 'RESEND_WEBHOOK_SECRET is not set' };
+
+  const id = webhookHeader(request, 'id');
+  const timestamp = webhookHeader(request, 'timestamp');
+  const signatureHeader = webhookHeader(request, 'signature');
+  if (!id || !timestamp || !signatureHeader) {
+    return { ok: false, status: 400, reason: 'Missing signature headers' };
+  }
+
+  const age = Math.abs(Date.now() / 1000 - Number(timestamp));
+  if (!Number.isFinite(age) || age > WEBHOOK_TOLERANCE_SECONDS) {
+    return { ok: false, status: 400, reason: 'Timestamp outside tolerance' };
+  }
+
+  const key = await crypto.subtle.importKey(
+    'raw',
+    base64ToBytes(secret.replace(/^whsec_/, '')),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const expected = bytesToBase64(
+    await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${id}.${timestamp}.${body}`))
+  );
+
+  // The header can carry several signatures during a secret rotation.
+  const provided = signatureHeader.split(' ').map((part) => part.split(',')[1]).filter(Boolean);
+  if (!provided.some((sig) => safeEqual(sig, expected))) {
+    return { ok: false, status: 401, reason: 'Signature mismatch' };
+  }
+  return { ok: true };
+}
+
+async function handleResendWebhook(request, env) {
+  try {
+    const body = await request.text();
+    const verified = await verifyResendSignature(request, env, body);
+    if (!verified.ok) {
+      console.error('Resend webhook rejected:', verified.reason);
+      return jsonResponse({ success: false, error: verified.reason }, verified.status);
+    }
+
+    const event = JSON.parse(body);
+    // Only the failures are stored. Deliveries and opens would be noise here,
+    // and Resend's own dashboard already holds them.
+    if (event.type !== 'email.bounced' && event.type !== 'email.complained') {
+      return jsonResponse({ success: true, ignored: event.type });
+    }
+
+    const data = event.data || {};
+    const recipients = Array.isArray(data.to) ? data.to : [data.to].filter(Boolean);
+    const reason =
+      data.bounce?.message || data.bounce?.subType || data.reason || (event.type === 'email.complained' ? 'Marked as spam' : null);
+    const occurredAt = event.created_at || new Date().toISOString();
+
+    for (const recipient of recipients) {
+      await db.recordEmailBounce(env.DB, {
+        eventType: event.type,
+        emailId: data.email_id,
+        recipient: String(recipient).toLowerCase(),
+        subject: data.subject,
+        reason,
+        occurredAt,
+      });
+    }
+
+    console.log('Resend webhook:', JSON.stringify({ type: event.type, recipients, reason }));
+    return jsonResponse({ success: true });
+  } catch (err) {
+    console.error('Resend webhook error:', err);
+    return jsonResponse({ success: false, error: 'Server error' }, 500);
+  }
 }
 
 // ---- Admin ----
