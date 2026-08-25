@@ -95,6 +95,7 @@
   .tag-due { background: #e2f0e6; color: #1d6b35; }
   .tag-skip { background: #f0eae2; color: #8a6a3a; }
   .tag-sent { background: #e2e8f0; color: #40566b; }
+  .bounce { font-size: 11px; color: #a3312a; font-weight: 600; margin-top: 3px; }
   .check { width: 34px; }
   .check input { width: 16px; height: 16px; accent-color: #0b3535; cursor: pointer; }
 
@@ -137,7 +138,7 @@
     <div class="note">
       Each selected pairing gets two emails: the physician receives the MD form, the NP/PA receives the NP form,
       each naming the other. Rows are pre-selected when the collaboration has started and has not been cancelled.
-      Uncheck anything that should not go out. Pairings already sent this month are unchecked and marked, so re-sending one is deliberate. Pairings you are not billing through the platform can be saved below, and are then included every month just like a collaboration.
+      Uncheck anything that should not go out. Pairings already sent this month are unchecked and marked, so re-sending one is deliberate — unless an address bounced, in which case the row stays checked and the failed address is flagged in red. Pairings you are not billing through the platform can be saved below, and are then included every month just like a collaboration.
     </div>
 
     <div class="card">
@@ -244,7 +245,11 @@
     const oneOffs = pairings.filter(p => p.oneOff);
     // Already sent this month: leave it visible but unchecked, so re-sending is
     // a deliberate act rather than the default.
-    pairings = data.pairings.map(p => ({ ...p, selected: p.due && !p.alreadySentAt })).concat(oneOffs);
+    // A bounced side means this pairing still needs attention, even though the
+    // month is logged as sent, so leave it checked.
+    pairings = data.pairings
+      .map(p => ({ ...p, selected: p.due && (!p.alreadySentAt || !!(p.physicianBounce || p.providerBounce)) }))
+      .concat(oneOffs);
     render();
   }
 
@@ -259,8 +264,8 @@
       if (!p.selected) tr.className = 'skipped';
       tr.innerHTML =
         '<td class="check"><input type="checkbox" ' + (p.selected ? 'checked' : '') + ' onchange="toggle(' + i + ', this.checked)"></td>' +
-        '<td>' + text(p.physicianName) + '<div class="email">' + text(p.physicianEmail || 'no email on file') + '</div></td>' +
-        '<td>' + text(p.providerName) + '<div class="email">' + text(p.providerEmail || 'no email on file') + '</div></td>' +
+        '<td>' + text(p.physicianName) + '<div class="email">' + text(p.physicianEmail || 'no email on file') + '</div>' + bounceNote(p.physicianBounce) + '</td>' +
+        '<td>' + text(p.providerName) + '<div class="email">' + text(p.providerEmail || 'no email on file') + '</div>' + bounceNote(p.providerBounce) + '</td>' +
         '<td>' + text(p.status || (p.source === 'saved' ? 'saved pairing' : 'added by hand')) + '</td>' +
         '<td>' + text(p.startDate || '—') + '</td>' +
         '<td>' + (p.alreadySentAt
@@ -274,6 +279,12 @@
 
   function text(v) {
     return String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  }
+
+  function bounceNote(bounce) {
+    if (!bounce) return '';
+    return '<div class="bounce">bounced ' + text(String(bounce.at).slice(5, 10)) +
+      (bounce.reason ? ' — ' + text(bounce.reason) : '') + '</div>';
   }
 
   function sourceCell(p, i) {

@@ -169,3 +169,26 @@ export async function recordReminderSend(db, { period, pairingKey, physicianEmai
     .bind(period, pairingKey, physicianEmail || null, providerEmail || null, emailsSent, trigger)
     .run();
 }
+
+// ---- Bounces and complaints ----
+// Written by the Resend webhook. A reminder that Resend accepted can still fail
+// at the recipient's server minutes later, which nothing else in the app sees.
+
+export async function recordEmailBounce(db, { eventType, emailId, recipient, subject, reason, occurredAt }) {
+  await db
+    .prepare(
+      `INSERT INTO email_bounces (event_type, email_id, recipient, subject, reason, occurred_at)
+       VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT(email_id, event_type) DO NOTHING`
+    )
+    .bind(eventType, emailId || null, recipient, subject || null, reason || null, occurredAt)
+    .run();
+}
+
+export async function listEmailBouncesSince(db, since) {
+  const res = await db
+    .prepare('SELECT * FROM email_bounces WHERE occurred_at >= ? ORDER BY occurred_at DESC')
+    .bind(since)
+    .all();
+  return res.results;
+}
