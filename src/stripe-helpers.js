@@ -96,15 +96,16 @@ export async function attachDefaultPaymentMethodFromSetup(stripe, checkoutSessio
   return { customerId, paymentMethodId };
 }
 
-// Payment terms for the monthly invoice. Matches the net-14 terms already used on
-// invoices raised by hand.
-const INVOICE_DAYS_UNTIL_DUE = 14;
+// Fallback payment terms, used when a collaboration predates the per-collaboration
+// setting. Matches the net-14 terms originally applied to every collaboration.
+export const DEFAULT_PAYMENT_TERMS_DAYS = 14;
 
 // Creates the recurring collaboration subscription. The platform's cut is a flat
 // dollar amount (platformFeeCents), implemented as the percentage of totalAmountCents
 // that equals it — Stripe subscriptions only support application_fee_percent natively.
 export async function createCollaborationSubscription(stripe, {
   customerId, physicianAccountId, totalAmountCents, applicationFeePercent, startDateISO, description,
+  paymentTermsDays,
 }) {
   const trialEnd = Math.floor(new Date(startDateISO + 'T12:00:00Z').getTime() / 1000);
 
@@ -137,7 +138,7 @@ export async function createCollaborationSubscription(stripe, {
     // client pays the hosted invoice -- so the split should still apply. That is
     // reasoned from the docs, not observed; see the note in the commit message.
     collection_method: 'send_invoice',
-    days_until_due: INVOICE_DAYS_UNTIL_DUE,
+    days_until_due: paymentTermsDays || DEFAULT_PAYMENT_TERMS_DAYS,
     payment_settings: {
       // Governs what the hosted invoice page offers.
       payment_method_types: ['us_bank_account'],

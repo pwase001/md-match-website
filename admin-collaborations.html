@@ -128,6 +128,18 @@
           <input type="date" id="startDate">
         </div>
         <div class="field">
+          <label>Payment Terms</label>
+          <select id="paymentTerms">
+            <option value="7">Net 7 — due in 7 days</option>
+            <option value="14" selected>Net 14 — due in 14 days</option>
+            <option value="30">Net 30 — due in 30 days</option>
+            <option value="45">Net 45 — due in 45 days</option>
+            <option value="60">Net 60 — due in 60 days</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
           <label>Notes (optional)</label>
           <input type="text" id="notes" placeholder="Specialty, agreement details, etc.">
         </div>
@@ -141,7 +153,7 @@
       <table>
         <thead>
           <tr>
-            <th>Client</th><th>Physician</th><th>Total</th><th>Fee</th><th>Start</th>
+            <th>Client</th><th>Physician</th><th>Total</th><th>Fee</th><th>Start</th><th>Terms</th>
             <th>Physician Payout</th><th>Status</th><th></th>
           </tr>
         </thead>
@@ -200,12 +212,13 @@
         <td>${money(c.total_amount_cents)}</td>
         <td>${money(c.platform_fee_cents)}</td>
         <td>${c.start_date}</td>
+        <td>Net ${c.payment_terms_days ?? 14}</td>
         <td><span class="badge ${c.transfers_active ? 'ready' : 'notready'}">${c.transfers_active ? 'Ready' : 'Pending'}</span></td>
         <td><span class="badge ${c.status}">${c.status}</span></td>
         <td>${c.status === 'pending_setup' ? `<button class="btn btn-small" onclick="activate(${c.id}, this)">Activate</button>` : ''}</td>
       </tr>
     `).join('');
-    document.getElementById('collabRows').innerHTML = rows || '<tr><td colspan="8">No collaborations yet.</td></tr>';
+    document.getElementById('collabRows').innerHTML = rows || '<tr><td colspan="9">No collaborations yet.</td></tr>';
   }
 
   async function createCollaboration() {
@@ -220,6 +233,7 @@
       totalAmountUsd: document.getElementById('totalAmount').value,
       platformFeeUsd: document.getElementById('platformFee').value,
       startDate: document.getElementById('startDate').value,
+      paymentTermsDays: Number(document.getElementById('paymentTerms').value),
       notes: document.getElementById('notes').value,
     };
     if (!body.clientId || !body.physicianId || !body.totalAmountUsd || !body.startDate) {

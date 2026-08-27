@@ -1103,12 +1103,21 @@ async function handleAdminApi(request, env, url) {
 
 async function handleCreateCollaboration(request, env) {
   try {
-    const { clientId, physicianId, totalAmountUsd, platformFeeUsd, startDate, notes } = await request.json();
+    const { clientId, physicianId, totalAmountUsd, platformFeeUsd, startDate, paymentTermsDays, notes } =
+      await request.json();
 
     const totalAmountCents = Math.round(Number(totalAmountUsd) * 100);
     const platformFeeCents = Math.round(Number(platformFeeUsd || 200) * 100);
     if (!totalAmountCents || totalAmountCents <= platformFeeCents) {
       return jsonResponse({ success: false, error: 'Invalid amount' }, 400);
+    }
+
+    // Stripe requires days_until_due to be a non-negative integer. Validate here
+    // rather than at activation, which happens days later and would surface the
+    // problem long after the value was entered.
+    const termsDays = Math.round(Number(paymentTermsDays ?? stripeHelpers.DEFAULT_PAYMENT_TERMS_DAYS));
+    if (!Number.isFinite(termsDays) || termsDays < 0 || termsDays > 365) {
+      return jsonResponse({ success: false, error: 'Payment terms must be between 0 and 365 days' }, 400);
     }
     // Stripe's application_fee_percent accepts at most 2 decimal places, so the flat
     // platform fee can be off by a cent or two — acceptable for this fee structure.
@@ -1121,7 +1130,8 @@ async function handleCreateCollaboration(request, env) {
     }
 
     const collaboration = await db.createCollaboration(env.DB, {
-      clientId, physicianId, totalAmountCents, platformFeeCents, applicationFeePercent, startDate, notes,
+      clientId, physicianId, totalAmountCents, platformFeeCents, applicationFeePercent, startDate,
+      paymentTermsDays: termsDays, notes,
     });
 
     const stripe = stripeHelpers.getStripe(env);
@@ -1157,7 +1167,7 @@ async function handleCreateCollaboration(request, env) {
       to: [client.email],
       from: 'MD-Match <noreply@md-match.com>',
       subject: 'Your Collaboration Billing — MD-Match',
-      html: `<p>Hi ${client.full_name.split(' ')[0]},</p><p>Your collaboration with Dr. ${physician.full_name.split(' ').pop()} is confirmed.</p><p>Starting ${startDate}, you'll receive an invoice by email each month for $${monthlyAmount}, payable within 14 days. Nothing is charged automatically — each invoice includes a secure link to pay when you're ready.</p><p>Warm regards,<br>MD-Match</p>`,
+      html: `<p>Hi ${client.full_name.split(' ')[0]},</p><p>Your collaboration with Dr. ${physician.full_name.split(' ').pop()} is confirmed.</p><p>Starting ${startDate}, you'll receive an invoice by email each month for $${monthlyAmount}, payable within ${termsDays} days. Nothing is charged automatically — each invoice includes a secure link to pay when you're ready.</p><p>Warm regards,<br>MD-Match</p>`,
     });
 
     return jsonResponse({ success: true, collaboration });
@@ -1200,6 +1210,7 @@ async function handleActivateCollaboration(request, env) {
       applicationFeePercent: collaboration.application_fee_percent,
       startDateISO: collaboration.start_date,
       description: `Collaboration services — ${physician.full_name}`,
+      paymentTermsDays: collaboration.payment_terms_days,
     });
 
     await db.activateCollaboration(env.DB, collaboration.id, subscription.id);
