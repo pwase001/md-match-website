@@ -1077,6 +1077,10 @@ async function handleAdminApi(request, env, url) {
     return handleActivateCollaboration(request, env);
   }
 
+  if (url.pathname === '/admin/api/collaborations/cancel' && request.method === 'POST') {
+    return handleCancelCollaboration(request, env);
+  }
+
   if (url.pathname === '/admin/api/collaborations/resend-onboarding' && request.method === 'POST') {
     return handleResendOnboarding(request, env);
   }
@@ -1188,6 +1192,41 @@ async function handleCreateCollaboration(request, env) {
   } catch (err) {
     console.error('Create collaboration error:', err);
     return jsonResponse({ success: false, error: 'Server error' }, 500);
+  }
+}
+
+// Ends a collaboration. The Stripe subscription is cancelled before the row is
+// marked, and a Stripe failure aborts without touching the database: a row that
+// reads cancelled while Stripe keeps issuing invoices would bill the client every
+// month with nothing in the app showing it.
+async function handleCancelCollaboration(request, env) {
+  try {
+    const { collaborationId } = await request.json();
+    const collaboration = await db.getCollaboration(env.DB, collaborationId);
+    if (!collaboration) return jsonResponse({ success: false, error: 'Not found' }, 404);
+
+    if (collaboration.status === 'canceled') {
+      return jsonResponse({ success: false, error: 'This collaboration is already cancelled' }, 400);
+    }
+
+    // pending_setup collaborations have no subscription, so there is nothing in
+    // Stripe to unwind and this is a database-only change.
+    let subscriptionCancelled = false;
+    if (collaboration.stripe_subscription_id) {
+      const stripe = stripeHelpers.getStripe(env);
+      await stripeHelpers.cancelCollaborationSubscription(stripe, collaboration.stripe_subscription_id);
+      subscriptionCancelled = true;
+    }
+
+    await db.setCollaborationStatus(env.DB, collaboration.id, 'canceled');
+    return jsonResponse({ success: true, subscriptionCancelled });
+  } catch (err) {
+    console.error('Cancel collaboration error:', err);
+    return jsonResponse({
+      success: false,
+      error: 'Could not cancel the Stripe subscription — the collaboration was left unchanged',
+      detail: err?.message || String(err),
+    }, 500);
   }
 }
 

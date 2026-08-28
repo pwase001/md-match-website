@@ -100,6 +100,16 @@ export async function attachDefaultPaymentMethodFromSetup(stripe, checkoutSessio
 // setting. Matches the net-14 terms originally applied to every collaboration.
 export const DEFAULT_PAYMENT_TERMS_DAYS = 14;
 
+// Stops a collaboration billing. Cancels immediately rather than at period end:
+// ending a collaboration should not leave one more invoice queued behind it.
+// Already-issued invoices are unaffected -- work delivered before the end is
+// still owed, and Stripe leaves those open.
+export async function cancelCollaborationSubscription(stripe, subscriptionId) {
+  const existing = await stripe.subscriptions.retrieve(subscriptionId);
+  if (existing.status === 'canceled') return existing;
+  return stripe.subscriptions.cancel(subscriptionId);
+}
+
 // Creates the recurring collaboration subscription. The platform's cut is a flat
 // dollar amount (platformFeeCents), implemented as the percentage of totalAmountCents
 // that equals it — Stripe subscriptions only support application_fee_percent natively.

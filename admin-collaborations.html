@@ -217,7 +217,8 @@
         <td><span class="badge ${c.status}">${c.status}</span></td>
         <td>
           ${c.status === 'pending_setup' ? `<button class="btn btn-small" onclick="activate(${c.id}, this)">Activate</button>` : ''}
-          ${!c.transfers_active ? `<button class="btn btn-small" onclick="resendOnboarding(${c.id}, this)" title="Email this physician a fresh payout setup link">Resend link</button>` : ''}
+          ${!c.transfers_active && c.status !== 'canceled' ? `<button class="btn btn-small" onclick="resendOnboarding(${c.id}, this)" title="Email this physician a fresh payout setup link">Resend link</button>` : ''}
+          ${c.status !== 'canceled' ? `<button class="btn btn-small" onclick="cancelCollaboration(${c.id}, ${!!c.stripe_subscription_id}, this)" title="End this collaboration">Cancel</button>` : ''}
         </td>
       </tr>
     `).join('');
@@ -267,6 +268,37 @@
       msg.textContent = 'Network error';
     }
     btn.disabled = false;
+  }
+
+  async function cancelCollaboration(id, hasSubscription, btn) {
+    // An activated collaboration is billing someone, so say so plainly rather
+    // than asking a generic "are you sure".
+    const warning = hasSubscription
+      ? 'This will cancel the Stripe subscription and stop all future invoices.\n\nAlready-issued invoices stay open and remain payable.'
+      : 'This collaboration was never activated, so nothing is billing. It will be marked cancelled.';
+    if (!confirm(warning + '\n\nContinue?')) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Cancelling...';
+    try {
+      const res = await fetch('/admin/api/collaborations/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ collaborationId: id }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        alert((data.error || 'Failed to cancel') + (data.detail ? '\n\n' + data.detail : ''));
+        btn.disabled = false;
+        btn.textContent = 'Cancel';
+      }
+      loadData();
+    } catch {
+      alert('Network error');
+      btn.disabled = false;
+      btn.textContent = 'Cancel';
+    }
   }
 
   async function resendOnboarding(id, btn) {
