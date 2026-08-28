@@ -215,7 +215,10 @@
         <td>Net ${c.payment_terms_days ?? 14}</td>
         <td><span class="badge ${c.transfers_active ? 'ready' : 'notready'}">${c.transfers_active ? 'Ready' : 'Pending'}</span></td>
         <td><span class="badge ${c.status}">${c.status}</span></td>
-        <td>${c.status === 'pending_setup' ? `<button class="btn btn-small" onclick="activate(${c.id}, this)">Activate</button>` : ''}</td>
+        <td>
+          ${c.status === 'pending_setup' ? `<button class="btn btn-small" onclick="activate(${c.id}, this)">Activate</button>` : ''}
+          ${!c.transfers_active ? `<button class="btn btn-small" onclick="resendOnboarding(${c.id}, this)" title="Email this physician a fresh payout setup link">Resend link</button>` : ''}
+        </td>
       </tr>
     `).join('');
     document.getElementById('collabRows').innerHTML = rows || '<tr><td colspan="9">No collaborations yet.</td></tr>';
@@ -264,6 +267,33 @@
       msg.textContent = 'Network error';
     }
     btn.disabled = false;
+  }
+
+  async function resendOnboarding(id, btn) {
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    try {
+      const res = await fetch('/admin/api/collaborations/resend-onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ collaborationId: id }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        btn.textContent = 'Sent';
+        alert('Payout setup link re-sent to ' + data.email);
+      } else {
+        btn.textContent = original;
+        btn.disabled = false;
+        alert((data.error || 'Failed to resend') + (data.detail ? '\n\n' + data.detail : ''));
+      }
+    } catch {
+      btn.textContent = original;
+      btn.disabled = false;
+      alert('Network error');
+    }
   }
 
   async function activate(id, btn) {

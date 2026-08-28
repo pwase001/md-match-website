@@ -1077,6 +1077,10 @@ async function handleAdminApi(request, env, url) {
     return handleActivateCollaboration(request, env);
   }
 
+  if (url.pathname === '/admin/api/collaborations/resend-onboarding' && request.method === 'POST') {
+    return handleResendOnboarding(request, env);
+  }
+
   if (url.pathname === '/admin/api/compliance-reminders/preview' && request.method === 'GET') {
     const now = new Date();
     const { monthLabel } = easternParts(now);
@@ -1099,6 +1103,23 @@ async function handleAdminApi(request, env, url) {
   }
 
   return jsonResponse({ success: false, error: 'Not found' }, 404);
+}
+
+// Shared by collaboration creation and the resend action so the two cannot drift.
+// The token is minted fresh on every send: an earlier link may have expired, and
+// a physician chasing a missing email should not be given a dead one.
+async function sendPhysicianOnboardingEmail(env, origin, physician) {
+  const onboardToken = await tokens.createMagicToken(env, { pid: physician.id });
+  const onboardStartUrl = `${origin}/physician-onboard/start?pid=${physician.id}&t=${encodeURIComponent(onboardToken)}`;
+  return sendEmail(env, {
+    to: [physician.email],
+    from: 'MD-Match <noreply@md-match.com>',
+    // Someone who replies asking why they cannot find this email should reach a
+    // person rather than the unmonitored sending address.
+    replyTo: 'philipwasef@md-match.com',
+    subject: 'Set Up Payouts — MD-Match Collaboration',
+    html: `<p>Hi Dr. ${physician.full_name.split(' ').pop()},</p><p>You've been matched with a collaborating provider. To receive your monthly collaboration payment, please complete a short payout setup with our payment processor, Stripe:</p><p><a href="${onboardStartUrl}">${onboardStartUrl}</a></p><p>Warm regards,<br>MD-Match</p>`,
+  });
 }
 
 async function handleCreateCollaboration(request, env) {
@@ -1144,14 +1165,7 @@ async function handleCreateCollaboration(request, env) {
       stripeAccountId = account.id;
       await db.setPhysicianStripeAccountId(env.DB, physician.id, stripeAccountId);
     }
-    const onboardToken = await tokens.createMagicToken(env, { pid: physician.id });
-    const onboardStartUrl = `${origin}/physician-onboard/start?pid=${physician.id}&t=${encodeURIComponent(onboardToken)}`;
-    await sendEmail(env, {
-      to: [physician.email],
-      from: 'MD-Match <noreply@md-match.com>',
-      subject: 'Set Up Payouts — MD-Match Collaboration',
-      html: `<p>Hi Dr. ${physician.full_name.split(' ').pop()},</p><p>You've been matched with a collaborating provider. To receive your monthly collaboration payment, please complete a short payout setup with our payment processor, Stripe:</p><p><a href="${onboardStartUrl}">${onboardStartUrl}</a></p><p>Warm regards,<br>MD-Match</p>`,
-    });
+    await sendPhysicianOnboardingEmail(env, origin, physician);
 
     // Ensure the client has a Stripe Customer for the monthly invoices to bill.
     // No payment method is collected: collaborations are invoiced rather than
@@ -1174,6 +1188,40 @@ async function handleCreateCollaboration(request, env) {
   } catch (err) {
     console.error('Create collaboration error:', err);
     return jsonResponse({ success: false, error: 'Server error' }, 500);
+  }
+}
+
+// Re-sends the payout onboarding email for a collaboration that already exists.
+// Without this the only way to get a physician another link was to create a second
+// collaboration, which would bill the client twice.
+async function handleResendOnboarding(request, env) {
+  try {
+    const { collaborationId } = await request.json();
+    const collaboration = await db.getCollaboration(env.DB, collaborationId);
+    if (!collaboration) return jsonResponse({ success: false, error: 'Not found' }, 404);
+
+    const physician = await db.getPhysician(env.DB, collaboration.physician_id);
+    if (!physician) return jsonResponse({ success: false, error: 'Physician not found' }, 404);
+
+    // The account is created when the collaboration is, so a missing one means
+    // that step failed rather than that the physician has not finished onboarding.
+    if (!physician.stripe_account_id) {
+      return jsonResponse({
+        success: false,
+        error: 'This physician has no Stripe account yet — the collaboration may not have been created successfully',
+      }, 400);
+    }
+
+    const origin = new URL(request.url).origin;
+    const sent = await sendPhysicianOnboardingEmail(env, origin, physician);
+    if (!sent) {
+      return jsonResponse({ success: false, error: 'Email delivery failed — check the Resend logs' }, 502);
+    }
+
+    return jsonResponse({ success: true, email: physician.email });
+  } catch (err) {
+    console.error('Resend onboarding error:', err);
+    return jsonResponse({ success: false, error: 'Server error', detail: err?.message || String(err) }, 500);
   }
 }
 
