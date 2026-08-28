@@ -1085,6 +1085,10 @@ async function handleAdminApi(request, env, url) {
     return handleResendOnboarding(request, env);
   }
 
+  if (url.pathname === '/admin/api/collaborations/resend-client-email' && request.method === 'POST') {
+    return handleResendClientEmail(request, env);
+  }
+
   if (url.pathname === '/admin/api/compliance-reminders/preview' && request.method === 'GET') {
     const now = new Date();
     const { monthLabel } = easternParts(now);
@@ -1107,6 +1111,21 @@ async function handleAdminApi(request, env, url) {
   }
 
   return jsonResponse({ success: false, error: 'Not found' }, 404);
+}
+
+// Shared by collaboration creation and the resend action. Reads the figures from
+// the stored collaboration rather than the creation request, so a resend months
+// later still describes the arrangement as it actually stands.
+async function sendClientBillingEmail(env, collaboration, client, physician) {
+  const monthlyAmount = (collaboration.total_amount_cents / 100).toFixed(2);
+  const termsDays = collaboration.payment_terms_days || stripeHelpers.DEFAULT_PAYMENT_TERMS_DAYS;
+  return sendEmail(env, {
+    to: [client.email],
+    from: 'MD-Match <noreply@md-match.com>',
+    replyTo: 'philipwasef@md-match.com',
+    subject: 'Your Collaboration Billing — MD-Match',
+    html: `<p>Hi ${client.full_name.split(' ')[0]},</p><p>Your collaboration with Dr. ${physician.full_name.split(' ').pop()} is confirmed.</p><p>Starting ${collaboration.start_date}, you'll receive an invoice by email each month for $${monthlyAmount}, payable within ${termsDays} days. Nothing is charged automatically — each invoice includes a secure link to pay when you're ready.</p><p>Warm regards,<br>MD-Match</p>`,
+  });
 }
 
 // Shared by collaboration creation and the resend action so the two cannot drift.
@@ -1180,13 +1199,7 @@ async function handleCreateCollaboration(request, env) {
       stripeCustomerId = await stripeHelpers.createOrGetCustomer(stripe, client);
       await db.setClientStripeCustomerId(env.DB, client.id, stripeCustomerId);
     }
-    const monthlyAmount = (totalAmountCents / 100).toFixed(2);
-    await sendEmail(env, {
-      to: [client.email],
-      from: 'MD-Match <noreply@md-match.com>',
-      subject: 'Your Collaboration Billing — MD-Match',
-      html: `<p>Hi ${client.full_name.split(' ')[0]},</p><p>Your collaboration with Dr. ${physician.full_name.split(' ').pop()} is confirmed.</p><p>Starting ${startDate}, you'll receive an invoice by email each month for $${monthlyAmount}, payable within ${termsDays} days. Nothing is charged automatically — each invoice includes a secure link to pay when you're ready.</p><p>Warm regards,<br>MD-Match</p>`,
-    });
+    await sendClientBillingEmail(env, collaboration, client, physician);
 
     return jsonResponse({ success: true, collaboration });
   } catch (err) {
@@ -1227,6 +1240,33 @@ async function handleCancelCollaboration(request, env) {
       error: 'Could not cancel the Stripe subscription — the collaboration was left unchanged',
       detail: err?.message || String(err),
     }, 500);
+  }
+}
+
+// Re-sends the client's billing confirmation. Nothing depends on the client
+// reading it, but a bounced one leaves them unaware of what they will be invoiced
+// and when, which is how a first invoice turns into a surprise.
+async function handleResendClientEmail(request, env) {
+  try {
+    const { collaborationId } = await request.json();
+    const collaboration = await db.getCollaboration(env.DB, collaborationId);
+    if (!collaboration) return jsonResponse({ success: false, error: 'Not found' }, 404);
+
+    const client = await db.getClient(env.DB, collaboration.client_id);
+    const physician = await db.getPhysician(env.DB, collaboration.physician_id);
+    if (!client || !physician) {
+      return jsonResponse({ success: false, error: 'Client or physician not found' }, 404);
+    }
+
+    const sent = await sendClientBillingEmail(env, collaboration, client, physician);
+    if (!sent) {
+      return jsonResponse({ success: false, error: 'Email delivery failed — check the Resend logs' }, 502);
+    }
+
+    return jsonResponse({ success: true, email: client.email });
+  } catch (err) {
+    console.error('Resend client email error:', err);
+    return jsonResponse({ success: false, error: 'Server error', detail: err?.message || String(err) }, 500);
   }
 }
 

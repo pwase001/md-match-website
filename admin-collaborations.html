@@ -66,6 +66,12 @@
   .btn:disabled { background: #aaa; cursor: default; }
   .btn-small { padding: 0.4rem 0.9rem; font-size: 12px; }
 
+  /* Action cells stack their buttons so each column reads as a short list
+     rather than one long wrapping row. */
+  td.actions { white-space: nowrap; vertical-align: top; }
+  td.actions .btn { display: block; width: 100%; margin-bottom: 0.3rem; }
+  td.actions .btn:last-child { margin-bottom: 0; }
+
   table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
   th, td { text-align: left; padding: 0.5rem 0.6rem; border-bottom: 1px solid #eef2f2; }
   th { color: #4a6b6b; text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; }
@@ -154,7 +160,7 @@
         <thead>
           <tr>
             <th>Client</th><th>Physician</th><th>Total</th><th>Fee</th><th>Start</th><th>Terms</th>
-            <th>Physician Payout</th><th>Status</th><th></th>
+            <th>Physician Payout</th><th>Status</th><th>Actions</th><th>Resend</th>
           </tr>
         </thead>
         <tbody id="collabRows"></tbody>
@@ -215,14 +221,17 @@
         <td>Net ${c.payment_terms_days ?? 14}</td>
         <td><span class="badge ${c.transfers_active ? 'ready' : 'notready'}">${c.transfers_active ? 'Ready' : 'Pending'}</span></td>
         <td><span class="badge ${c.status}">${c.status}</span></td>
-        <td>
+        <td class="actions">
           ${c.status === 'pending_setup' ? `<button class="btn btn-small" onclick="activate(${c.id}, this)">Activate</button>` : ''}
-          ${!c.transfers_active && c.status !== 'canceled' ? `<button class="btn btn-small" onclick="resendOnboarding(${c.id}, this)" title="Email this physician a fresh payout setup link">Resend link</button>` : ''}
           ${c.status !== 'canceled' ? `<button class="btn btn-small" onclick="cancelCollaboration(${c.id}, ${!!c.stripe_subscription_id}, this)" title="End this collaboration">Cancel</button>` : ''}
+        </td>
+        <td class="actions">
+          ${!c.transfers_active && c.status !== 'canceled' ? `<button class="btn btn-small" onclick="resendOnboarding(${c.id}, this)" title="Email the physician a fresh payout setup link">Resend Link Physician</button>` : ''}
+          ${c.status !== 'canceled' ? `<button class="btn btn-small" onclick="resendClientEmail(${c.id}, this)" title="Re-send the client their billing confirmation">Resend Link Client</button>` : ''}
         </td>
       </tr>
     `).join('');
-    document.getElementById('collabRows').innerHTML = rows || '<tr><td colspan="9">No collaborations yet.</td></tr>';
+    document.getElementById('collabRows').innerHTML = rows || '<tr><td colspan="10">No collaborations yet.</td></tr>';
   }
 
   async function createCollaboration() {
@@ -270,6 +279,37 @@
     btn.disabled = false;
   }
 
+  async function resendClientEmail(id, btn) {
+    await resendEmail('/admin/api/collaborations/resend-client-email', id, btn, 'Billing confirmation re-sent to ');
+  }
+
+  async function resendEmail(endpoint, id, btn, successPrefix) {
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ collaborationId: id }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        btn.textContent = 'Sent';
+        alert(successPrefix + data.email);
+      } else {
+        btn.textContent = original;
+        btn.disabled = false;
+        alert((data.error || 'Failed to resend') + (data.detail ? '\n\n' + data.detail : ''));
+      }
+    } catch {
+      btn.textContent = original;
+      btn.disabled = false;
+      alert('Network error');
+    }
+  }
+
   async function cancelCollaboration(id, hasSubscription, btn) {
     // An activated collaboration is billing someone, so say so plainly rather
     // than asking a generic "are you sure".
@@ -302,30 +342,7 @@
   }
 
   async function resendOnboarding(id, btn) {
-    const original = btn.textContent;
-    btn.disabled = true;
-    btn.textContent = 'Sending...';
-    try {
-      const res = await fetch('/admin/api/collaborations/resend-onboarding', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ collaborationId: id }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        btn.textContent = 'Sent';
-        alert('Payout setup link re-sent to ' + data.email);
-      } else {
-        btn.textContent = original;
-        btn.disabled = false;
-        alert((data.error || 'Failed to resend') + (data.detail ? '\n\n' + data.detail : ''));
-      }
-    } catch {
-      btn.textContent = original;
-      btn.disabled = false;
-      alert('Network error');
-    }
+    await resendEmail('/admin/api/collaborations/resend-onboarding', id, btn, 'Payout setup link re-sent to ');
   }
 
   async function activate(id, btn) {
