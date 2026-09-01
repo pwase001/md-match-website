@@ -22,14 +22,21 @@ export default {
 
     // The compliance pages are also handed to providers as a saved file, so
     // these two answer cross-origin as well as same-origin.
-    if (url.pathname === '/compliance-submit' || url.pathname === '/np-compliance-submit') {
+    if (
+      url.pathname === '/compliance-submit' ||
+      url.pathname === '/np-compliance-submit' ||
+      url.pathname === '/physician-survey-submit'
+    ) {
       if (request.method === 'OPTIONS') {
         return withCors(new Response(null, { status: 204 }));
       }
       if (request.method === 'POST') {
-        const handler =
-          url.pathname === '/compliance-submit' ? handleComplianceSubmit : handleNpComplianceSubmit;
-        return withCors(await handler(request, env));
+        const handlers = {
+          '/compliance-submit': handleComplianceSubmit,
+          '/np-compliance-submit': handleNpComplianceSubmit,
+          '/physician-survey-submit': handlePhysicianSurveySubmit,
+        };
+        return withCors(await handlers[url.pathname](request, env));
       }
     }
 
@@ -925,6 +932,66 @@ function emailSection(title) {
 // still submit whatever was typed before the answer changed.
 function followUp(answer, yes, no) {
   return answer === 'Yes' ? yes : answer === 'No' ? no : '';
+}
+
+// ---- Physician interest and experience survey ----
+
+// Sent to physicians already on file, so it asks for a name and nothing else
+// that a previous intake already captured.
+const SURVEY_AREAS = [
+  ['Q4_HRT', 'Hormone Replacement Therapy (HRT)'],
+  ['Q5_TRT', 'Testosterone Replacement Therapy (TRT)'],
+  ['Q6_WeightLoss', 'Weight loss treatment'],
+  ['Q7_Aesthetics', 'Aesthetic services'],
+  ['Q8_IVHydration', 'IV hydration'],
+  ['Q9_PeptideTherapy', 'Peptide therapy'],
+  ['Q10_SexualHealth', "Sexual health / men's health"],
+  ['Q11_FunctionalLongevity', 'Functional / longevity medicine'],
+  ['Q12_RegenerativeMedicine', 'Regenerative medicine (PRP, stem cells)'],
+];
+
+async function handlePhysicianSurveySubmit(request, env) {
+  try {
+    const formData = await request.formData();
+    const fields = {};
+    for (const [key, value] of formData.entries()) fields[key] = value;
+
+    const name = fields['Physician_Name'] || 'Unknown';
+    if (!env.RESEND_API_KEY) return jsonResponse({ success: false, error: 'Server misconfiguration' }, 500);
+
+    const areas = SURVEY_AREAS.map(([key, label]) => emailRow(label, fields[key])).join('\n    ');
+    const yesCount = SURVEY_AREAS.filter(([key]) => fields[key] === 'Yes').length;
+
+    const html = `
+<div style="max-width:680px;margin:0 auto;font-family:sans-serif">
+  <h2 style="color:#1B6CA8;margin-bottom:4px">Physician Interest &amp; Experience Survey — MD-Match</h2>
+  <p style="color:#555;font-size:13px">Submitted ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</p>
+  <table style="width:100%;border-collapse:collapse;margin-top:16px">
+    ${emailSection('Physician')}
+    ${emailRow('Name', name)}
+    ${emailSection('Opportunities')}
+    ${emailRow('Open to Medical Director Roles', fields['Q1_MedicalDirectorInterest'])}
+    ${emailRow('Open to Physician-Owned Arrangements', fields['Q2_PhysicianOwnedInterest'])}
+    ${emailRow('Current Medical Director Roles', fields['Q3_CurrentMedicalDirectorRoles'])}
+    ${emailSection(`Clinical Areas — ${yesCount} of ${SURVEY_AREAS.length}`)}
+    ${areas}
+  </table>
+  <p style="color:#aaa;font-size:11px;margin-top:24px">MD-Match.com</p>
+</div>`;
+
+    const ok = await sendEmail(env, {
+      from: 'MD-Match Intake <noreply@md-match.com>',
+      to: ['philipwasef@md-match.com', 'pwase001@gmail.com'],
+      subject: `Physician Survey — ${name}`,
+      html,
+    });
+    if (!ok) return jsonResponse({ success: false, error: 'Email delivery failed' }, 500);
+
+    return jsonResponse({ success: true });
+  } catch (err) {
+    console.error('Physician survey error:', err);
+    return jsonResponse({ success: false, error: 'Server error' }, 500);
+  }
 }
 
 // ---- Resend webhook ----
