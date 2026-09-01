@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MD-Match — Send Survey Invites</title>
+<link rel="icon" type="image/svg+xml" href="/logo.svg">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f0f4f4;
+    color: #1a3333;
+    padding: 2rem 1rem 4rem;
+    font-size: 14px;
+  }
+  .page { max-width: 760px; margin: 0 auto; }
+
+  h1 { font-size: 1.3rem; color: #0b3535; margin-bottom: 0.3rem; }
+  .subtitle { color: #4a6b6b; font-size: 13px; margin-bottom: 2rem; }
+
+  .card {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    margin-bottom: 1.5rem;
+  }
+  .card-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #1a6b6b;
+    margin-bottom: 1rem;
+  }
+  .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .card-head .card-title { margin-bottom: 0; }
+
+  input[type="text"], input[type="email"], input[type="password"] {
+    padding: 0.5rem 0.7rem;
+    border: 1.5px solid #d0e2e2;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    color: #1a3333;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.15s;
+  }
+  input:focus { border-color: #1a6b6b; }
+  label { font-size: 12px; font-weight: 600; color: #4a6b6b; display: block; margin-bottom: 0.3rem; }
+
+  /* Physicians on file */
+  .rows { display: flex; flex-direction: column; }
+  .row {
+    display: grid;
+    grid-template-columns: 26px 1fr 1.4fr;
+    gap: 0.6rem;
+    align-items: center;
+    padding: 0.55rem 0.2rem;
+    border-top: 1px solid #eef4f4;
+    font-size: 13px;
+  }
+  .row:first-child { border-top: none; }
+  .row input[type="checkbox"] { width: 16px; height: 16px; accent-color: #0b3535; cursor: pointer; }
+  .row .email { color: #4a6b6b; font-size: 12.5px; word-break: break-all; }
+  .row.sent { color: #8ba3a3; }
+  .muted { color: #8ba3a3; font-size: 13px; }
+
+  .link-btn {
+    background: none;
+    border: none;
+    color: #1a6b6b;
+    font-size: 12px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+  }
+  .link-btn:hover { text-decoration: underline; }
+
+  /* Extra recipients */
+  .recipient-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 2fr auto;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.6rem;
+  }
+  .col-labels {
+    display: grid;
+    grid-template-columns: 1fr 1fr 2fr auto;
+    gap: 0.5rem;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #4a6b6b;
+    margin-bottom: 0.3rem;
+  }
+  .btn-remove {
+    background: none; border: none; color: #aaa; cursor: pointer;
+    font-size: 18px; line-height: 1; padding: 0 4px; transition: color 0.15s;
+  }
+  .btn-remove:hover { color: #c0392b; }
+  .btn-add {
+    background: none;
+    border: 1.5px dashed #d0e2e2;
+    border-radius: 6px;
+    padding: 0.45rem 1rem;
+    cursor: pointer;
+    color: #4a6b6b;
+    font-size: 13px;
+    font-family: inherit;
+    width: 100%;
+    transition: all 0.15s;
+  }
+  .btn-add:hover { border-color: #1a6b6b; color: #1a6b6b; background: #f0f7f7; }
+
+  .preview {
+    background: #f8fbfb;
+    border: 1px solid #d0e2e2;
+    border-radius: 6px;
+    padding: 1rem 1.2rem;
+    font-size: 13px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    color: #1a3333;
+  }
+  .preview-note { font-size: 11px; color: #4a6b6b; margin-bottom: 0.5rem; }
+
+  .send-area { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .btn-send {
+    background: #0b3535;
+    color: white;
+    border: none;
+    padding: 0.8rem 2rem;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-send:hover { background: #1a6b6b; }
+  .btn-send:disabled { background: #aaa; cursor: default; }
+
+  .log { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 1rem; }
+  .log-item {
+    font-size: 12.5px;
+    padding: 0.4rem 0.8rem;
+    border-radius: 5px;
+  }
+  .log-item.sending { background: #f0f7f7; color: #1a6b6b; }
+  .log-item.ok { background: #f0faf0; color: #1a7a1a; }
+  .log-item.err { background: #fdf5f3; color: #c0392b; }
+
+  .note {
+    background: #fff8ec;
+    border: 1px solid #f0dcb8;
+    border-radius: 6px;
+    padding: 0.9rem 1.1rem;
+    font-size: 13px;
+    color: #6b5426;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+  }
+  #loginCard { max-width: 360px; margin: 4rem auto; }
+  .hidden { display: none; }
+  .msg { margin-top: 1rem; font-size: 13px; }
+  .err { color: #a3312a; }
+
+  @media (max-width: 560px) {
+    .row { grid-template-columns: 26px 1fr; }
+    .row .email { grid-column: 2; }
+    .recipient-row { grid-template-columns: 1fr 1fr; }
+    .recipient-row input[type="email"] { grid-column: 1 / -1; }
+    .col-labels { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="card" id="loginCard">
+    <div class="card-title">Admin Login</div>
+    <div style="margin-bottom:0.9rem">
+      <label for="password">Password</label>
+      <input type="password" id="password" onkeydown="if(event.key==='Enter') login()">
+    </div>
+    <button class="btn-send" onclick="login()">Log In</button>
+    <div class="msg err" id="loginMsg"></div>
+  </div>
+
+  <div id="main" class="hidden">
+    <h1>Send Survey Invites</h1>
+    <p class="subtitle">Invites the physician interest &amp; experience survey. Sends from <strong>philipwasef@md-match.com</strong>, so replies come to you.</p>
+
+    <div class="note">
+      Everyone ticked below gets one email with their own name in the greeting. Sending twice sends two emails —
+      nothing here tracks who has already been invited, so untick anyone you have already sent to.
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Physicians on file</div>
+        <div>
+          <button class="link-btn" onclick="setAll(true)">Select all</button>
+          &nbsp;·&nbsp;
+          <button class="link-btn" onclick="setAll(false)">Select none</button>
+        </div>
+      </div>
+      <div class="rows" id="physicianRows"></div>
+      <div class="msg" id="listMsg"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Anyone not on file</div>
+      <p style="font-size:12.5px;color:#4a6b6b;margin-bottom:0.6rem;line-height:1.5">
+        Paste a list — one per line, in any of these shapes: <code>Jane Smith, MD &lt;jane@x.com&gt;</code>,
+        <code>Jane Smith, jane@x.com</code>, or just <code>jane@x.com</code>. Lines without an address are skipped.
+      </p>
+      <textarea id="pasteBox" rows="4" placeholder="Jane Smith, MD &lt;jane@example.com&gt;"
+        style="width:100%;padding:0.6rem 0.7rem;border:1.5px solid #d0e2e2;border-radius:6px;font-size:13px;font-family:inherit;color:#1a3333;outline:none;resize:vertical"></textarea>
+      <div style="margin:0.6rem 0 1.2rem">
+        <button class="btn-add" style="width:auto;padding:0.45rem 1.2rem" onclick="importPaste()">Add pasted list</button>
+        <span id="pasteMsg" style="font-size:12.5px;color:#4a6b6b;margin-left:0.7rem"></span>
+      </div>
+
+      <div class="col-labels">
+        <span>First Name</span><span>Last Name</span><span>Email</span><span></span>
+      </div>
+      <div id="extraList"></div>
+      <button class="btn-add" onclick="addRow()">+ Add a recipient</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Email Preview</div>
+      <p class="preview-note">Each physician receives this with their own surname in the greeting.</p>
+      <div class="preview">Subject: Quick question about the work you're open to
+
+Hi Dr. [Last Name],
+
+We're expanding the kinds of opportunities we bring to physicians in the MD-Match network — medical director roles and physician-owned arrangements alongside the collaborations you already know us for.
+
+To match you with the right ones, it helps to know two things: what you're open to, and which clinical areas you practice in or have supervised.
+
+[ Take the two-minute survey ]  →  https://md-match.com/physician-survey
+
+Twelve questions, most of them yes or no. The only thing we ask you to type is your name — we already have everything else on file.
+
+No obligation attached to any answer. Saying you're open to something just means we'll bring you the opportunity when it comes up.
+
+Thank you,
+Philip Wasef, MD
+MD-Match</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Send</div>
+      <div class="send-area">
+        <button class="btn-send" id="sendBtn" onclick="sendAll()">Send invites →</button>
+        <span id="sendStatus" style="font-size:13px;color:#4a6b6b;"></span>
+      </div>
+      <div class="log" id="log"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let physicians = [];
+
+  async function login() {
+    const password = document.getElementById('password').value;
+    const msg = document.getElementById('loginMsg');
+    msg.textContent = '';
+    try {
+      const res = await fetch('/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ password }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showMain();
+      } else {
+        msg.textContent = data.error || 'Login failed';
+      }
+    } catch {
+      msg.textContent = 'Could not reach the server.';
+    }
+  }
+
+  function showMain() {
+    document.getElementById('loginCard').classList.add('hidden');
+    document.getElementById('main').classList.remove('hidden');
+    load();
+    if (!document.querySelector('.recipient-row')) addRow();
+  }
+
+  function text(v) {
+    return String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  }
+
+  async function load() {
+    const msg = document.getElementById('listMsg');
+    msg.textContent = 'Loading…';
+    const res = await fetch('/admin/api/data', { credentials: 'include' });
+    const data = await res.json();
+    if (!data.success) { msg.textContent = data.error || 'Could not load physicians.'; return; }
+    msg.textContent = '';
+
+    // Only those with an address; anyone else can be typed in below.
+    physicians = (data.physicians || []).filter(p => p.email);
+    const rows = document.getElementById('physicianRows');
+    rows.innerHTML = '';
+    if (!physicians.length) {
+      rows.innerHTML = '<div class="muted">No physicians with an email address on file.</div>';
+      return;
+    }
+    physicians.forEach((p, i) => {
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.innerHTML =
+        '<input type="checkbox" checked onchange="updateCount()" class="p-check" data-i="' + i + '">' +
+        '<span>' + text(p.full_name || '—') + '</span>' +
+        '<span class="email">' + text(p.email) + '</span>';
+      rows.appendChild(row);
+    });
+    updateCount();
+  }
+
+  function setAll(checked) {
+    document.querySelectorAll('.p-check').forEach(c => { c.checked = checked; });
+    updateCount();
+  }
+
+  function addRow() {
+    const row = document.createElement('div');
+    row.className = 'recipient-row';
+    row.innerHTML =
+      '<input type="text" placeholder="First Name" class="r-first">' +
+      '<input type="text" placeholder="Last Name" class="r-last">' +
+      '<input type="email" placeholder="doctor@example.com" class="r-email" oninput="updateCount()">' +
+      '<button class="btn-remove" onclick="removeRow(this)" title="Remove">×</button>';
+    document.getElementById('extraList').appendChild(row);
+  }
+
+  // Accepts "Name <email>", "Name, email", or a bare address. The name is
+  // whatever is left once the address and its brackets are removed, so a
+  // credential after a comma survives and is stripped later by the greeting.
+  function importPaste() {
+    const box = document.getElementById('pasteBox');
+    const msg = document.getElementById('pasteMsg');
+    const lines = box.value.split(/[\n;]+/).map(l => l.trim()).filter(Boolean);
+    let added = 0, skipped = 0;
+
+    for (const line of lines) {
+      const found = line.match(/[^\s<>,;"]+@[^\s<>,;"]+\.[^\s<>,;"]+/);
+      if (!found) { skipped++; continue; }
+      const email = found[0];
+      const name = line.replace(email, '').replace(/[<>"]/g, '').replace(/[,\s]+$/, '').trim();
+      const { first, last } = splitName(name.replace(/,\s*(MD|DO|NP|PA-C|PA|DNP|PhD|PsyD)\.?$/i, '').trim());
+      addRow();
+      const row = document.getElementById('extraList').lastElementChild;
+      row.querySelector('.r-first').value = first;
+      row.querySelector('.r-last').value = last;
+      row.querySelector('.r-email').value = email;
+      added++;
+    }
+
+    box.value = '';
+    msg.textContent = added
+      ? `Added ${added}${skipped ? `, skipped ${skipped} line(s) with no address` : ''}.`
+      : 'No email addresses found in that text.';
+    updateCount();
+  }
+
+  function removeRow(btn) {
+    btn.closest('.recipient-row').remove();
+    updateCount();
+  }
+
+  // A physician record holds one full name; the endpoint takes first and last,
+  // so split on the last word and let it strip any credential.
+  function splitName(fullName) {
+    const parts = String(fullName || '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return { first: '', last: '' };
+    return { first: parts.slice(0, -1).join(' '), last: parts[parts.length - 1] };
+  }
+
+  function getRecipients() {
+    const chosen = [...document.querySelectorAll('.p-check')]
+      .filter(c => c.checked)
+      .map(c => {
+        const p = physicians[Number(c.dataset.i)];
+        return { ...splitName(p.full_name), email: p.email, label: p.full_name || p.email };
+      });
+
+    const extras = [...document.querySelectorAll('.recipient-row')].map(row => {
+      const first = row.querySelector('.r-first').value.trim();
+      const last = row.querySelector('.r-last').value.trim();
+      const email = row.querySelector('.r-email').value.trim();
+      return { first, last, email, label: [first, last].filter(Boolean).join(' ') || email };
+    }).filter(r => r.email);
+
+    // Someone typed in by hand who is also on file should get one email, not two.
+    const seen = new Set();
+    return [...chosen, ...extras].filter(r => {
+      const key = r.email.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  function updateCount() {
+    const n = getRecipients().length;
+    document.getElementById('sendStatus').textContent = n ? `${n} recipient${n > 1 ? 's' : ''} selected.` : '';
+    document.getElementById('sendBtn').disabled = n === 0;
+  }
+
+  function logItem(msg, type) {
+    const el = document.createElement('div');
+    el.className = 'log-item ' + type;
+    el.textContent = msg;
+    document.getElementById('log').appendChild(el);
+    return el;
+  }
+
+  async function sendAll() {
+    const recipients = getRecipients();
+    if (!recipients.length) return;
+    if (!confirm('Send the survey invite to ' + recipients.length + ' recipient(s)?\n\nThis cannot be undone.')) return;
+
+    const btn = document.getElementById('sendBtn');
+    btn.disabled = true;
+    document.getElementById('log').innerHTML = '';
+    document.getElementById('sendStatus').textContent = `Sending ${recipients.length} email${recipients.length > 1 ? 's' : ''}…`;
+
+    let ok = 0, fail = 0;
+    for (const r of recipients) {
+      const item = logItem(`Sending to ${r.label} (${r.email})…`, 'sending');
+      try {
+        const res = await fetch('/admin/api/survey-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ first: r.first, last: r.last, email: r.email }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.success) {
+          item.textContent = `✓ Sent to ${r.label} (${r.email})`;
+          item.className = 'log-item ok';
+          ok++;
+        } else {
+          item.textContent = `✗ Failed for ${r.label} (${r.email})${data.error ? ' — ' + data.error : ''}`;
+          item.className = 'log-item err';
+          fail++;
+        }
+      } catch {
+        item.textContent = `✗ Network error for ${r.label} (${r.email})`;
+        item.className = 'log-item err';
+        fail++;
+      }
+    }
+
+    document.getElementById('sendStatus').textContent = `Done — ${ok} sent${fail ? `, ${fail} failed` : ''}.`;
+    btn.disabled = false;
+  }
+
+  // Already signed in from another admin page?
+  fetch('/admin/api/data', { credentials: 'include' }).then(res => { if (res.ok) showMain(); });
+</script>
+</body>
+</html>
