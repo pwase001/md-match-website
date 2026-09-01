@@ -223,6 +223,17 @@
 
     <div class="card">
       <div class="card-title">Anyone not on file</div>
+      <p style="font-size:12.5px;color:#4a6b6b;margin-bottom:0.6rem;line-height:1.5">
+        Paste a list — one per line, in any of these shapes: <code>Jane Smith, MD &lt;jane@x.com&gt;</code>,
+        <code>Jane Smith, jane@x.com</code>, or just <code>jane@x.com</code>. Lines without an address are skipped.
+      </p>
+      <textarea id="pasteBox" rows="4" placeholder="Jane Smith, MD &lt;jane@example.com&gt;"
+        style="width:100%;padding:0.6rem 0.7rem;border:1.5px solid #d0e2e2;border-radius:6px;font-size:13px;font-family:inherit;color:#1a3333;outline:none;resize:vertical"></textarea>
+      <div style="margin:0.6rem 0 1.2rem">
+        <button class="btn-add" style="width:auto;padding:0.45rem 1.2rem" onclick="importPaste()">Add pasted list</button>
+        <span id="pasteMsg" style="font-size:12.5px;color:#4a6b6b;margin-left:0.7rem"></span>
+      </div>
+
       <div class="col-labels">
         <span>First Name</span><span>Last Name</span><span>Email</span><span></span>
       </div>
@@ -342,6 +353,36 @@ MD-Match</div>
       '<input type="email" placeholder="doctor@example.com" class="r-email" oninput="updateCount()">' +
       '<button class="btn-remove" onclick="removeRow(this)" title="Remove">×</button>';
     document.getElementById('extraList').appendChild(row);
+  }
+
+  // Accepts "Name <email>", "Name, email", or a bare address. The name is
+  // whatever is left once the address and its brackets are removed, so a
+  // credential after a comma survives and is stripped later by the greeting.
+  function importPaste() {
+    const box = document.getElementById('pasteBox');
+    const msg = document.getElementById('pasteMsg');
+    const lines = box.value.split(/[\n;]+/).map(l => l.trim()).filter(Boolean);
+    let added = 0, skipped = 0;
+
+    for (const line of lines) {
+      const found = line.match(/[^\s<>,;"]+@[^\s<>,;"]+\.[^\s<>,;"]+/);
+      if (!found) { skipped++; continue; }
+      const email = found[0];
+      const name = line.replace(email, '').replace(/[<>"]/g, '').replace(/[,\s]+$/, '').trim();
+      const { first, last } = splitName(name.replace(/,\s*(MD|DO|NP|PA-C|PA|DNP|PhD|PsyD)\.?$/i, '').trim());
+      addRow();
+      const row = document.getElementById('extraList').lastElementChild;
+      row.querySelector('.r-first').value = first;
+      row.querySelector('.r-last').value = last;
+      row.querySelector('.r-email').value = email;
+      added++;
+    }
+
+    box.value = '';
+    msg.textContent = added
+      ? `Added ${added}${skipped ? `, skipped ${skipped} line(s) with no address` : ''}.`
+      : 'No email addresses found in that text.';
+    updateCount();
   }
 
   function removeRow(btn) {
