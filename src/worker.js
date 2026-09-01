@@ -236,6 +236,7 @@ function physicianSurname(fullName) {
 // arrangement: a promotional collaboration invoiced by hand never reaches
 // status 'active', so gate on having started and not having been cancelled.
 function isDueForReminder(collaboration, today) {
+  if (collaboration.reminders_muted) return false;
   if (collaboration.status === 'canceled') return false;
   if (!collaboration.start_date) return true;
   return collaboration.start_date <= today;
@@ -266,6 +267,7 @@ function pairingFromCollaboration(c, today) {
     providerEmail: c.client_email,
     status: c.status,
     startDate: c.start_date,
+    muted: !!c.reminders_muted,
     due: isDueForReminder(c, today),
   };
 }
@@ -1215,6 +1217,13 @@ async function handleAdminApi(request, env, url) {
 
   if (url.pathname === '/admin/api/compliance-reminders/pairings' && request.method === 'POST') {
     return handleSaveReminderPairing(request, env);
+  }
+
+  if (url.pathname === '/admin/api/compliance-reminders/mute' && request.method === 'POST') {
+    const { collaborationId, muted } = await request.json();
+    if (!collaborationId) return jsonResponse({ success: false, error: 'Missing collaborationId' }, 400);
+    await db.setCollaborationRemindersMuted(env.DB, collaborationId, muted);
+    return jsonResponse({ success: true });
   }
 
   if (url.pathname === '/admin/api/compliance-reminders/pairings/remove' && request.method === 'POST') {

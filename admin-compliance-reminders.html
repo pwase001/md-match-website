@@ -138,7 +138,7 @@
     <div class="note">
       Each selected pairing gets two emails: the physician receives the MD form, the NP/PA receives the NP form,
       each naming the other. Rows are pre-selected when the collaboration has started and has not been cancelled.
-      Uncheck anything that should not go out. Pairings already sent this month are unchecked and marked, so re-sending one is deliberate — unless an address bounced, in which case the row stays checked and the failed address is flagged in red. Pairings you are not billing through the platform can be saved below, and are then included every month just like a collaboration.
+      Uncheck anything that should not go out. Pairings already sent this month are unchecked and marked, so re-sending one is deliberate — unless an address bounced, in which case the row stays checked and the failed address is flagged in red. A collaboration cannot be removed from this list because it is billing data, so mute it instead — that stops its reminder and leaves billing alone. Pairings you are not billing through the platform can be saved below, and are then included every month just like a collaboration.
     </div>
 
     <div class="card">
@@ -268,9 +268,11 @@
         '<td>' + text(p.providerName) + '<div class="email">' + text(p.providerEmail || 'no email on file') + '</div>' + bounceNote(p.providerBounce) + '</td>' +
         '<td>' + text(p.status || (p.source === 'saved' ? 'saved pairing' : 'added by hand')) + '</td>' +
         '<td>' + text(p.startDate || '—') + '</td>' +
-        '<td>' + (p.alreadySentAt
-          ? '<span class="tag tag-sent">sent ' + text(String(p.alreadySentAt).slice(5, 10)) + '</span>'
-          : (p.due ? '<span class="tag tag-due">due</span>' : '<span class="tag tag-skip">not due</span>')) + '</td>' +
+        '<td>' + (p.muted
+          ? '<span class="tag tag-skip">muted</span>'
+          : (p.alreadySentAt
+            ? '<span class="tag tag-sent">sent ' + text(String(p.alreadySentAt).slice(5, 10)) + '</span>'
+            : (p.due ? '<span class="tag tag-due">due</span>' : '<span class="tag tag-skip">not due</span>'))) + '</td>' +
         '<td>' + sourceCell(p, i) + '</td>';
       tbody.appendChild(tr);
     });
@@ -293,7 +295,23 @@
       return '<span class="tag tag-due">every month</span> ' +
         '<a href="#" style="font-size:11px;color:#a3312a;margin-left:6px" onclick="removeSaved(' + p.reminderPairingId + '); return false;">remove</a>';
     }
-    return '<span class="email">collaboration</span>';
+    // A collaboration cannot be removed from the list -- it is billing data --
+    // so it is muted instead, which only stops the reminder.
+    return '<span class="email">collaboration</span>' +
+      '<a href="#" style="font-size:11px;margin-left:8px;color:' + (p.muted ? '#1d6b35' : '#a3312a') + '"' +
+      ' onclick="setMuted(' + p.collaborationId + ',' + (p.muted ? 'false' : 'true') + '); return false;">' +
+      (p.muted ? 'unmute' : 'mute') + '</a>';
+  }
+
+  async function setMuted(collaborationId, muted) {
+    if (muted && !confirm('Stop sending monthly reminders for this collaboration?\n\nBilling is unaffected — this only stops the reminder emails.')) return;
+    await fetch('/admin/api/compliance-reminders/mute', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ collaborationId, muted }),
+    });
+    await load();
   }
 
   async function savePairing() {
