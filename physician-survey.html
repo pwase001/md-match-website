@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Physician Interest &amp; Experience Survey — MD-Match</title>
+  <link rel="icon" type="image/svg+xml" href="/logo.svg">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f4f6f9;
+      color: #1a1a2e;
+      min-height: 100vh;
+      padding: 40px 16px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+      max-width: 720px;
+      margin: 0 auto;
+      overflow: hidden;
+    }
+
+    .card-header {
+      background: #1a3a5c;
+      color: #ffffff;
+      padding: 32px 40px;
+    }
+
+    .card-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.3px;
+    }
+
+    .card-header p {
+      font-size: 0.95rem;
+      opacity: 0.85;
+      line-height: 1.5;
+    }
+
+    .card-body { padding: 36px 40px; }
+
+    .section-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #1a3a5c;
+      margin-bottom: 14px;
+    }
+
+    .field-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #444;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: #1a1a2e;
+      background: #fafafa;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      font-family: inherit;
+    }
+
+    input[type="text"]:focus, textarea:focus {
+      outline: none;
+      border-color: #1a3a5c;
+      box-shadow: 0 0 0 3px rgba(26, 58, 92, 0.1);
+      background: #fff;
+    }
+
+    textarea { resize: vertical; min-height: 80px; }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #e5e7eb;
+      margin: 28px 0;
+    }
+
+    .question-block { margin-bottom: 28px; }
+    .question-block:last-child { margin-bottom: 0; }
+
+    .question-label {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      line-height: 1.4;
+      color: #1a1a2e;
+    }
+
+    .question-number {
+      display: inline-block;
+      background: #1a3a5c;
+      color: #fff;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-align: center;
+      line-height: 24px;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+
+    .radio-group { display: flex; gap: 24px; }
+
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      color: #333;
+    }
+
+    .radio-option input[type="radio"] {
+      accent-color: #1a3a5c;
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    /* Clinical areas: one row per area, Yes/No on the right. */
+    .matrix { border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; }
+
+    .matrix-head {
+      display: grid;
+      grid-template-columns: 1fr 62px 62px;
+      align-items: center;
+      background: #f0f4f8;
+      padding: 10px 16px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #1a3a5c;
+    }
+
+    .matrix-head span:not(:first-child),
+    .matrix-row .opt { text-align: center; }
+
+    .matrix-row {
+      display: grid;
+      grid-template-columns: 1fr 62px 62px;
+      align-items: center;
+      padding: 12px 16px;
+      border-top: 1px solid #eef1f5;
+      font-size: 0.9rem;
+      color: #333;
+      line-height: 1.35;
+    }
+
+    .matrix-row:nth-child(even) { background: #fcfdfe; }
+    .matrix-row .opt input { accent-color: #1a3a5c; width: 16px; height: 16px; cursor: pointer; }
+    .matrix-row label.area { cursor: default; }
+
+    .helper {
+      font-size: 0.8rem;
+      color: #6b7c8c;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .submit-section { margin-top: 36px; text-align: center; }
+
+    button[type="submit"] {
+      background: #1a3a5c;
+      color: #fff;
+      border: none;
+      padding: 14px 48px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    button[type="submit"]:hover { background: #15304e; }
+    button[type="submit"]:active { transform: scale(0.98); }
+    button[type="submit"]:disabled { background: #93a3b3; cursor: not-allowed; }
+
+    .required-note { font-size: 0.8rem; color: #888; margin-top: 10px; }
+
+    @media (max-width: 560px) {
+      .card-header, .card-body { padding-left: 22px; padding-right: 22px; }
+      .matrix-head, .matrix-row { grid-template-columns: 1fr 52px 52px; padding-left: 12px; padding-right: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="card-header">
+      <h1>Physician Interest &amp; Experience Survey</h1>
+      <p>A short survey to help us match you with the right opportunities. Roughly two minutes, and we only ask for your name — everything else we already have on file.</p>
+    </div>
+
+    <div class="card-body">
+      <!-- Success message -->
+      <div id="success-msg" style="display:none; background:#e6f4ea; border:1px solid #a8d5b5; border-radius:10px; padding:24px; text-align:center;">
+        <div style="font-size:2rem; margin-bottom:8px;">✅</div>
+        <div style="font-size:1.1rem; font-weight:700; color:#1a3a5c; margin-bottom:6px;">Thank you</div>
+        <div style="font-size:0.9rem; color:#444;">Your responses have been received. We'll be in touch as matching opportunities come up.</div>
+      </div>
+
+      <form id="survey-form">
+
+        <div class="section-label">Your Name</div>
+        <div style="margin-bottom: 28px;">
+          <label class="field-label" for="physician_name">Full name <span style="color:#c0392b">*</span></label>
+          <input type="text" id="physician_name" name="Physician_Name" placeholder="First Last, MD/DO" required />
+        </div>
+
+        <hr class="divider" />
+
+        <div class="section-label">Opportunities</div>
+
+        <div class="question-block">
+          <div class="question-label">
+            <span class="question-number">1</span>
+            Are you open to taking on medical director roles?
+          </div>
+          <div class="radio-group">
+            <label class="radio-option"><input type="radio" name="Q1_MedicalDirectorInterest" value="Yes" required /> Yes</label>
+            <label class="radio-option"><input type="radio" name="Q1_MedicalDirectorInterest" value="No" /> No</label>
+          </div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">
+            <span class="question-number">2</span>
+            Are you open to being set up in physician-owned arrangements?
+          </div>
+          <div class="radio-group">
+            <label class="radio-option"><input type="radio" name="Q2_PhysicianOwnedInterest" value="Yes" required /> Yes</label>
+            <label class="radio-option"><input type="radio" name="Q2_PhysicianOwnedInterest" value="No" /> No</label>
+          </div>
+        </div>
+
+        <div class="question-block">
+          <div class="question-label">
+            <span class="question-number">3</span>
+            How many medical director roles are you currently serving in, and in which states?
+          </div>
+          <textarea name="Q3_CurrentMedicalDirectorRoles" placeholder="e.g. Two — Texas and Florida. Enter “None” if not currently serving in any."></textarea>
+        </div>
+
+        <hr class="divider" />
+
+        <div class="section-label">Clinical Areas</div>
+        <p class="helper">
+          For each area below, indicate whether you are <strong>actively practicing</strong> in it <strong>or have supervisory
+          experience</strong> with it. Either one counts as Yes.
+        </p>
+
+        <div class="matrix">
+          <div class="matrix-head">
+            <span>Area</span><span>Yes</span><span>No</span>
+          </div>
+
+          <div class="matrix-row">
+            <label class="area">Hormone Replacement Therapy (HRT)</label>
+            <span class="opt"><input type="radio" name="Q4_HRT" value="Yes" required /></span>
+            <span class="opt"><input type="radio" name="Q4_HRT" value="No" /></span>
+          </div>
+
+          <div class="matrix-row">
+            <label class="area">Testosterone Replacement Therapy (TRT)</label>
+            <span class="opt"><input type="radio" name="Q5_TRT" value="Yes" required /></span>
+            <span class="opt"><input type="radio" name="Q5_TRT" value="No" /></span>
+          </div>
+
+          <div class="matrix-row">
+            <label class="area">Weight loss treatment</label>
+            <span class="opt"><input type="radio" name="Q6_WeightLoss" value="Yes" required /></span>
+            <span class="opt"><input type="radio" name="Q6_WeightLoss" value="No" /></span>
+          </div>
+
+          <div class="matrix-row">
+            <label class="area">Aesthetic services</label>
+            <span class="opt"><input type="radio" name="Q7_Aesthetics" value="Yes" required /></span>
+            <span class="opt"><input type="radio" name="Q7_Aesthetics" value="No" /></span>
+          </div>
+
+          <div class="matrix-row">
+            <label class="area">IV hydration</label>
+            <span class="opt"><input type="radio" name="Q8_IVHydration" value="Yes" required /></span>
+            <span class="opt"><input type="radio" name="Q8_IVHydration" value="No" /></span>
+          </div>
+
+          <div class="matrix-row">
+            <label class="area">Peptide therapy</label>
+            <span class="opt"><input type="radio" name="Q9_PeptideTherapy" value="Yes" required /></span>
+            <span class="opt"><input type="radio" name="Q9_PeptideTherapy" value="No" /></span>
+          </div>
+
+          <div class="matrix-row">
+            <label class="area">Sexual health / men's health (ED, low libido)</label>
+            <span class="opt"><input type="radio" name="Q10_SexualHealth" value="Yes" required /></span>
+            <span class="opt"><input type="radio" name="Q10_SexualHealth" value="No" /></span>
+          </div>
+
+          <div class="matrix-row">
+            <label class="area">Functional / longevity medicine</label>
+            <span class="opt"><input type="radio" name="Q11_FunctionalLongevity" value="Yes" required /></span>
+            <span class="opt"><input type="radio" name="Q11_FunctionalLongevity" value="No" /></span>
+          </div>
+
+          <div class="matrix-row">
+            <label class="area">Regenerative medicine (PRP, stem cells)</label>
+            <span class="opt"><input type="radio" name="Q12_RegenerativeMedicine" value="Yes" required /></span>
+            <span class="opt"><input type="radio" name="Q12_RegenerativeMedicine" value="No" /></span>
+          </div>
+        </div>
+
+        <div class="submit-section">
+          <button type="submit" id="submit-btn">Submit</button>
+          <p class="required-note">Your response will be sent securely upon submission.</p>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('survey-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      const data = new FormData(this);
+
+      try {
+        // Served from md-match.com this posts same-origin; opened as a local file
+        // or from anywhere else it falls back to the live endpoint, so a saved
+        // copy of this page still submits.
+        const endpoint = location.hostname.endsWith('md-match.com')
+          ? '/physician-survey-submit'
+          : 'https://md-match.com/physician-survey-submit';
+
+        const response = await fetch(endpoint, { method: 'POST', body: data });
+        const result = await response.json().catch(() => ({}));
+
+        if (response.ok && result.success) {
+          document.getElementById('survey-form').style.display = 'none';
+          document.getElementById('success-msg').style.display = 'block';
+          window.scrollTo(0, 0);
+        } else {
+          throw new Error('Submission failed');
+        }
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = 'Submit';
+        alert('There was a problem submitting the form. Please try again.');
+      }
+    });
+  </script>
+</body>
+</html>
