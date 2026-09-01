@@ -204,13 +204,14 @@
     <p class="subtitle">Invites the physician interest &amp; experience survey. Sends from <strong>philipwasef@md-match.com</strong>, so replies come to you.</p>
 
     <div class="note">
-      Everyone ticked below gets one email with their own name in the greeting. Sending twice sends two emails —
-      nothing here tracks who has already been invited, so untick anyone you have already sent to.
+      <strong>Nothing is selected until you select it.</strong> The list below is every physician in the database,
+      of every specialty — it is not filtered. Tick the ones you mean, or paste a list further down, and check the
+      count before sending. Sending twice sends two emails: nothing here tracks who has already been invited.
     </div>
 
     <div class="card">
       <div class="card-head">
-        <div class="card-title">Physicians on file</div>
+        <div class="card-title">Physicians on file — <span id="physCount">0</span></div>
         <div>
           <button class="link-btn" onclick="setAll(true)">Select all</button>
           &nbsp;·&nbsp;
@@ -331,11 +332,12 @@ MD-Match</div>
       const row = document.createElement('div');
       row.className = 'row';
       row.innerHTML =
-        '<input type="checkbox" checked onchange="updateCount()" class="p-check" data-i="' + i + '">' +
+        '<input type="checkbox" onchange="updateCount()" class="p-check" data-i="' + i + '">' +
         '<span>' + text(p.full_name || '—') + '</span>' +
         '<span class="email">' + text(p.email) + '</span>';
       rows.appendChild(row);
     });
+    document.getElementById('physCount').textContent = physicians.length;
     updateCount();
   }
 
