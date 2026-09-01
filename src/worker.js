@@ -936,6 +936,49 @@ function followUp(answer, yes, no) {
 
 // ---- Physician interest and experience survey ----
 
+// Invites one physician to the survey. Behind the admin gate: it sends mail as
+// philipwasef@md-match.com to an address of the caller's choosing, which is not
+// something an anonymous request should be able to do.
+async function handleSendSurveyEmail(request, env) {
+  try {
+    const { first, last, email } = await request.json();
+    if (!email) return jsonResponse({ success: false, error: 'Missing email' }, 400);
+    if (!env.RESEND_API_KEY) return jsonResponse({ success: false, error: 'Server misconfiguration' }, 500);
+
+    const surname = physicianSurname([first, last].filter(Boolean).join(' '));
+    const salutation = surname ? `Dr. ${esc(surname)}` : 'Doctor';
+    const link = 'https://md-match.com/physician-survey';
+
+    const html = `
+<div style="max-width:600px;margin:0 auto;font-family:sans-serif;font-size:15px;line-height:1.7;color:#1a3333">
+  <p>Hi ${salutation},</p>
+  <p>We're expanding the kinds of opportunities we bring to physicians in the MD-Match network — medical director roles and physician-owned arrangements alongside the collaborations you already know us for.</p>
+  <p>To match you with the right ones, it helps to know two things: what you're open to, and which clinical areas you practice in or have supervised.</p>
+  <p style="margin:24px 0">
+    <a href="${link}" style="background:#0b3535;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;display:inline-block">Take the two-minute survey</a>
+  </p>
+  <p style="font-size:13px;color:#4a6b6b">Twelve questions, most of them yes or no. The only thing we ask you to type is your name — we already have everything else on file. If the button doesn't work, paste this into your browser:<br>
+    <a href="${link}" style="color:#1a6b6b">${link}</a>
+  </p>
+  <p>No obligation attached to any answer. Saying you're open to something just means we'll bring you the opportunity when it comes up.</p>
+  <p>Thank you,<br><strong>Philip Wasef, MD</strong><br>MD-Match</p>
+</div>`;
+
+    const ok = await sendEmail(env, {
+      from: 'Philip Wasef, MD <philipwasef@md-match.com>',
+      to: [email],
+      subject: "Quick question about the work you're open to",
+      html,
+    });
+    if (!ok) return jsonResponse({ success: false, error: 'Email delivery failed' }, 500);
+
+    return jsonResponse({ success: true });
+  } catch (err) {
+    console.error('Survey invite error:', err);
+    return jsonResponse({ success: false, error: 'Server error' }, 500);
+  }
+}
+
 // Sent to physicians already on file, so it asks for a name and nothing else
 // that a previous intake already captured.
 const SURVEY_AREAS = [
@@ -1164,6 +1207,10 @@ async function handleAdminApi(request, env, url) {
 
   if (url.pathname === '/admin/api/compliance-reminders/send' && request.method === 'POST') {
     return handleSendComplianceReminders(request, env);
+  }
+
+  if (url.pathname === '/admin/api/survey-email' && request.method === 'POST') {
+    return handleSendSurveyEmail(request, env);
   }
 
   if (url.pathname === '/admin/api/compliance-reminders/pairings' && request.method === 'POST') {
