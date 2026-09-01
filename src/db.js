@@ -195,3 +195,13 @@ export async function listEmailBouncesSince(db, since) {
     .all();
   return res.results;
 }
+
+// A collaboration can be excluded from the monthly reminder without being
+// cancelled: cancelling ends the Stripe subscription, which is a billing
+// decision, not a reminder one.
+export async function setCollaborationRemindersMuted(db, id, muted) {
+  await db
+    .prepare("UPDATE collaborations SET reminders_muted = ?, updated_at = datetime('now') WHERE id = ?")
+    .bind(muted ? 1 : 0, id)
+    .run();
+}
