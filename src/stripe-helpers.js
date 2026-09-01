@@ -117,7 +117,20 @@ export async function createCollaborationSubscription(stripe, {
   customerId, physicianAccountId, totalAmountCents, applicationFeePercent, startDateISO, description,
   paymentTermsDays,
 }) {
-  const trialEnd = Math.floor(new Date(startDateISO + 'T12:00:00Z').getTime() / 1000);
+  // trial_end exists only to hold the first invoice until a start date that has
+  // not arrived yet. Once that date is here, the collaboration should bill now --
+  // and Stripe rejects a trial_end in the past outright, which would otherwise
+  // make a collaboration unactivatable from its own start date onward.
+  //
+  // Omitting trial_end starts the subscription immediately: the first invoice
+  // issues right away and the monthly cycle anchors to activation. A start date
+  // further in the past is deliberately not back-billed -- months nobody invoiced
+  // for at the time are not owed retroactively.
+  //
+  // The 60s margin absorbs clock skew between here and Stripe; without it a start
+  // date landing within the same minute could still be rejected as past.
+  const startTs = Math.floor(new Date(startDateISO + 'T12:00:00Z').getTime() / 1000);
+  const deferToStartDate = startTs > Math.floor(Date.now() / 1000) + 60;
 
   // Subscription price_data requires an existing product — unlike Checkout Session
   // line_items.price_data, it does not accept inline product_data.
@@ -135,7 +148,7 @@ export async function createCollaborationSubscription(stripe, {
         },
       },
     ],
-    trial_end: trialEnd,
+    ...(deferToStartDate ? { trial_end: startTs } : {}),
     application_fee_percent: applicationFeePercent,
     transfer_data: { destination: physicianAccountId },
     // Invoice the client rather than debiting a saved payment method. Asking a
