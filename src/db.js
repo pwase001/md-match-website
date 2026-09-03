@@ -65,17 +65,18 @@ export async function setPhysicianTransfersActive(db, stripeAccountId, active) {
 
 export async function createCollaboration(db, {
   clientId, physicianId, totalAmountCents, platformFeeCents, applicationFeePercent, startDate,
-  paymentTermsDays, providerName, promoPayoutCents, promoEndDate, notes,
+  paymentTermsDays, providerName, promoPayoutCents, promoTotalCents, promoEndDate, notes,
 }) {
   const res = await db
     .prepare(
       `INSERT INTO collaborations
         (client_id, physician_id, total_amount_cents, platform_fee_cents, application_fee_percent, start_date,
-         payment_terms_days, provider_name, promo_payout_cents, promo_end_date, notes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+         payment_terms_days, provider_name, promo_payout_cents, promo_total_cents, promo_end_date, notes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
     )
     .bind(clientId, physicianId, totalAmountCents, platformFeeCents, applicationFeePercent, startDate,
-      paymentTermsDays, providerName || null, promoPayoutCents ?? null, promoEndDate || null, notes || null)
+      paymentTermsDays, providerName || null, promoPayoutCents ?? null, promoTotalCents ?? null,
+      promoEndDate || null, notes || null)
     .first();
   return res;
 }

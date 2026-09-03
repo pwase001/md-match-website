@@ -1239,20 +1239,39 @@ async function handleAdminApi(request, env, url) {
 // Shared by collaboration creation and the resend action. Reads the figures from
 // the stored collaboration rather than the creation request, so a resend months
 // later still describes the arrangement as it actually stands.
+function usd(cents) {
+  return '$' + (cents / 100).toFixed(2);
+}
+
+const RATE_RAIL = 'margin:0 0 16px;padding:2px 0 2px 14px;border-left:2px solid #d0d7d4';
+
 async function sendClientBillingEmail(env, collaboration, client, physician) {
-  const monthlyAmount = (collaboration.total_amount_cents / 100).toFixed(2);
   const termsDays = collaboration.payment_terms_days || stripeHelpers.DEFAULT_PAYMENT_TERMS_DAYS;
+  const standard = usd(collaboration.total_amount_cents);
+  // A promotion is marked by its end date; the client's promotional figure is stored
+  // separately from the physician's because the two move independently.
+  const isPromo = !!collaboration.promo_end_date && collaboration.promo_total_cents != null;
+
+  const scheduleHtml = isPromo
+    ? `<div style="${RATE_RAIL}">`
+      + `<p style="margin:0 0 4px">Through ${collaboration.promo_end_date}: <strong>${usd(collaboration.promo_total_cents)}</strong> / month</p>`
+      + `<p style="margin:0">From ${collaboration.promo_end_date}: <strong>${standard}</strong> / month</p>`
+      + `</div>`
+      + `<p>There is nothing to set up. You'll receive an invoice by email each month with a secure link to pay by bank transfer, ${termsDays}-day terms. Nothing is ever charged automatically — you pay each invoice when you're ready.</p>`
+    : `<p>There is nothing to set up. Starting ${collaboration.start_date}, you'll receive an invoice by email each month for <strong>${standard}</strong>, with a secure link to pay by bank transfer. Payment terms are ${termsDays} days.</p>`
+      + `<p>Nothing is ever charged automatically — no card or bank details held on file, no surprise debits. You review each invoice and pay it when you're ready.</p>`;
+
   return sendEmail(env, {
     to: [client.email],
     from: 'MD-Match <noreply@md-match.com>',
     replyTo: 'philipwasef@md-match.com',
-    subject: 'Your Collaboration Billing — MD-Match',
-    html: `<p>Hi ${client.full_name.split(' ')[0]},</p><p>Your collaboration with Dr. ${physician.full_name.split(' ').pop()} is confirmed.</p><p>Starting ${collaboration.start_date}, you'll receive an invoice by email each month for $${monthlyAmount}, payable within ${termsDays} days. Nothing is charged automatically — each invoice includes a secure link to pay when you're ready.</p><p>Warm regards,<br>MD-Match</p>`,
+    subject: isPromo ? 'Your billing schedule' : 'How your monthly billing works',
+    html: `<p>Hi ${client.full_name.split(' ')[0]},</p>`
+      + `<p>A quick note on billing so you know what to expect.</p>`
+      + scheduleHtml
+      + `<p>Any questions, just reply here.</p>`
+      + `<p>Best,<br>Philip</p>`,
   });
-}
-
-function usd(cents) {
-  return '$' + (cents / 100).toFixed(2);
 }
 
 // Tells a physician that a new collaboration exists and what it pays.
@@ -1327,17 +1346,54 @@ async function sendCollaborationNoticeEmail(env, { collaboration, client, physic
 // Shared by collaboration creation and the resend action so the two cannot drift.
 // The token is minted fresh on every send: an earlier link may have expired, and
 // a physician chasing a missing email should not be given a dead one.
-async function sendPhysicianOnboardingEmail(env, origin, physician) {
+// Carries the payout link and what the physician will be paid, in one email rather
+// than two. The hand-written version of this told them a setup link was arriving
+// separately and was legitimate; now that the link is in the same message, the
+// reassurance is about Stripe rather than about a second email that no longer
+// exists -- promising one that never arrives is worse than not reassuring at all.
+//
+// Takes the collaboration so it can state the rate. When called from the resend
+// action months later that comes from the stored row, so a resent link describes
+// the arrangement as it stands rather than as it was first typed.
+async function sendPhysicianOnboardingEmail(env, origin, physician, collaboration) {
   const onboardToken = await tokens.createMagicToken(env, { pid: physician.id });
   const onboardStartUrl = `${origin}/physician-onboard/start?pid=${physician.id}&t=${encodeURIComponent(onboardToken)}`;
+  const lastName = physician.full_name.split(' ').pop();
+
+  const standardPayout = collaboration
+    ? usd(collaboration.total_amount_cents - collaboration.platform_fee_cents)
+    : null;
+  const isPromo = !!(collaboration && collaboration.promo_end_date && collaboration.promo_payout_cents != null);
+
+  let scheduleHtml = '';
+  if (isPromo) {
+    scheduleHtml =
+      `<p>Your payment schedule:</p>`
+      + `<div style="${RATE_RAIL}">`
+      + `<p style="margin:0 0 4px">Through ${collaboration.promo_end_date}: <strong>${usd(collaboration.promo_payout_cents)}</strong> / month</p>`
+      + `<p style="margin:0">From ${collaboration.promo_end_date}: <strong>${standardPayout}</strong> / month</p>`
+      + `</div>`
+      + `<p>The provider is on an introductory rate until ${collaboration.promo_end_date}.</p>`
+      + `<p>Please complete the setup now even though the first standard payment is not until ${collaboration.start_date}, so there is no delay when payments begin. You will receive the introductory rate in the interim.</p>`;
+  } else if (standardPayout) {
+    scheduleHtml =
+      `<p>You'll receive <strong>${standardPayout}</strong> per month, sent automatically once the provider's monthly invoice is settled — nothing to invoice or chase on your end.</p>`;
+  }
+
   return sendEmail(env, {
     to: [physician.email],
     from: 'MD-Match <noreply@md-match.com>',
     // Someone who replies asking why they cannot find this email should reach a
     // person rather than the unmonitored sending address.
     replyTo: 'philipwasef@md-match.com',
-    subject: 'Set Up Payouts — MD-Match Collaboration',
-    html: `<p>Hi Dr. ${physician.full_name.split(' ').pop()},</p><p>You've been matched with a collaborating provider. To receive your monthly collaboration payment, please complete a short payout setup with our payment processor, Stripe:</p><p><a href="${onboardStartUrl}">${onboardStartUrl}</a></p><p>Warm regards,<br>MD-Match</p>`,
+    subject: 'Setting up your payouts (5 minutes)',
+    html: `<p>Hi Dr. ${lastName},</p>`
+      + `<p>To receive your monthly collaboration payment, please complete a short payout setup with Stripe, the payment processor we use to pay you directly:</p>`
+      + `<p><a href="${onboardStartUrl}">${onboardStartUrl}</a></p>`
+      + `<p>Stripe will ask for your legal name, date of birth, the last 4 of your SSN, and the bank account you'd like to be paid into. That's their legal requirement for anyone receiving payouts through the platform, not something we're asking for ourselves. It takes about five minutes.</p>`
+      + scheduleHtml
+      + `<p>Any questions, just reply here.</p>`
+      + `<p>Best,<br>Philip</p>`,
   });
 }
 
@@ -1345,7 +1401,7 @@ async function handleCreateCollaboration(request, env) {
   try {
     const {
       clientId, physicianId, totalAmountUsd, platformFeeUsd, startDate, paymentTermsDays,
-      providerName, promoPayoutUsd, promoEndDate, notes,
+      providerName, promoPayoutUsd, promoTotalUsd, promoEndDate, notes,
     } = await request.json();
 
     const totalAmountCents = Math.round(Number(totalAmountUsd) * 100);
@@ -1368,19 +1424,29 @@ async function handleCreateCollaboration(request, env) {
     // An introductory rate is the two fields together or neither. Half of it would
     // produce a notice quoting a promotional rate with no end date, or an end date
     // with no rate -- worse than not offering the option at all.
-    const promoPayoutCents = promoPayoutUsd === '' || promoPayoutUsd == null
-      ? null
-      : Math.round(Number(promoPayoutUsd) * 100);
+    const toCents = (v) => (v === '' || v == null ? null : Math.round(Number(v) * 100));
+    const promoPayoutCents = toCents(promoPayoutUsd);
+    const promoTotalCents = toCents(promoTotalUsd);
     const promoEnd = promoEndDate || null;
-    if ((promoPayoutCents === null) !== (promoEnd === null)) {
+    const promoParts = [promoPayoutCents, promoTotalCents, promoEnd];
+    if (promoParts.some((p) => p === null) && promoParts.some((p) => p !== null)) {
       return jsonResponse({
         success: false,
-        error: 'An introductory rate needs both the monthly payout and the date it ends',
+        error: 'An introductory rate needs the client amount, the physician payout, and the date it ends',
       }, 400);
     }
     if (promoPayoutCents !== null) {
-      if (!Number.isFinite(promoPayoutCents) || promoPayoutCents <= 0) {
-        return jsonResponse({ success: false, error: 'Introductory payout must be greater than zero' }, 400);
+      if (!Number.isFinite(promoPayoutCents) || promoPayoutCents <= 0
+        || !Number.isFinite(promoTotalCents) || promoTotalCents <= 0) {
+        return jsonResponse({ success: false, error: 'Introductory amounts must be greater than zero' }, 400);
+      }
+      // The physician cannot be paid more than the client is invoiced, or the
+      // promotion would cost more to run than it brings in.
+      if (promoPayoutCents > promoTotalCents) {
+        return jsonResponse({
+          success: false,
+          error: 'Introductory payout cannot exceed what the client pays during the introductory period',
+        }, 400);
       }
       // The promotional payout is what the physician receives instead of the full
       // amount, so a figure at or above the standard payout is a typo rather than a
@@ -1409,7 +1475,8 @@ async function handleCreateCollaboration(request, env) {
 
     const collaboration = await db.createCollaboration(env.DB, {
       clientId, physicianId, totalAmountCents, platformFeeCents, applicationFeePercent, startDate,
-      paymentTermsDays: termsDays, providerName, promoPayoutCents, promoEndDate: promoEnd, notes,
+      paymentTermsDays: termsDays, providerName, promoPayoutCents, promoTotalCents,
+      promoEndDate: promoEnd, notes,
     });
 
     const stripe = stripeHelpers.getStripe(env);
@@ -1445,15 +1512,16 @@ async function handleCreateCollaboration(request, env) {
         console.error(`Could not read payout status for ${stripeAccountId}; sending onboarding email anyway:`, err);
       }
     }
-    // The notice goes to everyone, including a physician onboarding for the first
-    // time: what they are paid is worth stating plainly, and the onboarding link
-    // has never said it. Sent before the link so the context arrives ahead of the
-    // task rather than after it.
-    await sendCollaborationNoticeEmail(env, {
-      collaboration, client, physician, previous, alreadyOnboarded: !needsOnboarding,
-    });
+    // Exactly one physician email, never both. The payout email now states the rate
+    // itself, so sending the notice alongside it would repeat the figure in two
+    // messages arriving together and leave the physician working out whether they
+    // are two arrangements or one.
     if (needsOnboarding) {
-      await sendPhysicianOnboardingEmail(env, origin, physician);
+      await sendPhysicianOnboardingEmail(env, origin, physician, collaboration);
+    } else {
+      await sendCollaborationNoticeEmail(env, {
+        collaboration, client, physician, previous, alreadyOnboarded: true,
+      });
     }
 
     // Ensure the client has a Stripe Customer for the monthly invoices to bill.
@@ -1558,7 +1626,7 @@ async function handleResendOnboarding(request, env) {
     }
 
     const origin = new URL(request.url).origin;
-    const sent = await sendPhysicianOnboardingEmail(env, origin, physician);
+    const sent = await sendPhysicianOnboardingEmail(env, origin, physician, collaboration);
     if (!sent) {
       return jsonResponse({ success: false, error: 'Email delivery failed — check the Resend logs' }, 502);
     }
