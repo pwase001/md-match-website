@@ -171,8 +171,12 @@
       </div>
       <div class="field-row" id="promoFields" style="display:none">
         <div class="field">
+          <label>Client Pays During Intro (USD/month)</label>
+          <input type="number" id="promoTotal" placeholder="350" step="0.01">
+        </div>
+        <div class="field">
           <label>Physician Payout During Intro (USD/month)</label>
-          <input type="number" id="promoPayout" placeholder="100" step="0.01">
+          <input type="number" id="promoPayout" placeholder="250" step="0.01">
         </div>
         <div class="field">
           <label>Intro Rate Ends</label>
@@ -251,7 +255,7 @@
         <td>${c.physician_name}</td>
         <td>${money(c.total_amount_cents)}</td>
         <td>${money(c.platform_fee_cents)}</td>
-        <td>${c.start_date}${c.promo_end_date ? `<div style="font-size:11px;opacity:.7">${money(c.promo_payout_cents)}/mo intro until ${c.promo_end_date}</div>` : ''}</td>
+        <td>${c.start_date}${c.promo_end_date ? `<div style="font-size:11px;opacity:.7">intro until ${c.promo_end_date}: client ${money(c.promo_total_cents)}, physician ${money(c.promo_payout_cents)}</div>` : ''}</td>
         <td>Net ${c.payment_terms_days ?? 14}</td>
         <td><span class="badge ${c.transfers_active ? 'ready' : 'notready'}">${c.transfers_active ? 'Ready' : 'Pending'}</span></td>
         <td><span class="badge ${c.status}">${c.status}</span></td>
@@ -287,11 +291,12 @@
     // Sent only when the box is ticked, so clearing it discards whatever was typed
     // rather than quietly applying an introductory rate nobody meant to set.
     if (document.getElementById('hasPromo').checked) {
+      body.promoTotalUsd = document.getElementById('promoTotal').value;
       body.promoPayoutUsd = document.getElementById('promoPayout').value;
       body.promoEndDate = document.getElementById('promoEndDate').value;
-      if (!body.promoPayoutUsd || !body.promoEndDate) {
+      if (!body.promoTotalUsd || !body.promoPayoutUsd || !body.promoEndDate) {
         msg.className = 'msg err';
-        msg.textContent = 'Introductory rate needs both a monthly payout and an end date.';
+        msg.textContent = 'Introductory rate needs the client amount, the physician payout, and an end date.';
         return;
       }
     }
