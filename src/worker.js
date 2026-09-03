@@ -1304,14 +1304,39 @@ async function handleCreateCollaboration(request, env) {
     const stripe = stripeHelpers.getStripe(env);
     const origin = new URL(request.url).origin;
 
-    // Ensure the physician has a Connect account and send them an onboarding link
+    // Ensure the physician has a Connect account, and send the onboarding link only
+    // to someone who still needs it. A physician on their second collaboration is
+    // already connected, and mailing them a setup link they have to be told to
+    // ignore teaches them that mail from us can be ignored.
     let stripeAccountId = physician.stripe_account_id;
+    let needsOnboarding = true;
     if (!stripeAccountId) {
       const account = await stripeHelpers.createPhysicianAccount(stripe, physician);
       stripeAccountId = account.id;
       await db.setPhysicianStripeAccountId(env.DB, physician.id, stripeAccountId);
+    } else {
+      // Read live rather than trusting transfers_active: that column is maintained by
+      // the account.updated webhook, which is a convenience for the admin UI rather
+      // than a source of truth, and a stale 1 would withhold the link from someone
+      // who still needs it.
+      //
+      // Any failure here falls through to sending. The two mistakes are not
+      // symmetric: a duplicate email costs an explanation, while a missing one
+      // leaves a physician unable to be paid with nothing telling them why.
+      try {
+        const account = await stripe.accounts.retrieve(stripeAccountId);
+        const transfersActive = account.capabilities?.transfers === 'active';
+        if (transfersActive !== !!physician.transfers_active) {
+          await db.setPhysicianTransfersActive(env.DB, stripeAccountId, transfersActive);
+        }
+        needsOnboarding = !transfersActive;
+      } catch (err) {
+        console.error(`Could not read payout status for ${stripeAccountId}; sending onboarding email anyway:`, err);
+      }
     }
-    await sendPhysicianOnboardingEmail(env, origin, physician);
+    if (needsOnboarding) {
+      await sendPhysicianOnboardingEmail(env, origin, physician);
+    }
 
     // Ensure the client has a Stripe Customer for the monthly invoices to bill.
     // No payment method is collected: collaborations are invoiced rather than
