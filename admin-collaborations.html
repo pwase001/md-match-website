@@ -154,8 +154,29 @@
       </div>
       <div class="field-row">
         <div class="field">
+          <label>NP/PA Name (optional)</label>
+          <input type="text" id="providerName" placeholder="Who the physician is collaborating with">
+        </div>
+        <div class="field">
           <label>Notes (optional)</label>
           <input type="text" id="notes" placeholder="Specialty, agreement details, etc.">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label style="font-weight:normal">
+            <input type="checkbox" id="hasPromo" onchange="togglePromo()"> Introductory rate for an opening period
+          </label>
+        </div>
+      </div>
+      <div class="field-row" id="promoFields" style="display:none">
+        <div class="field">
+          <label>Physician Payout During Intro (USD/month)</label>
+          <input type="number" id="promoPayout" placeholder="100" step="0.01">
+        </div>
+        <div class="field">
+          <label>Intro Rate Ends</label>
+          <input type="date" id="promoEndDate">
         </div>
       </div>
       <button class="btn" id="createBtn" onclick="createCollaboration()">Create &amp; Send Setup Emails</button>
@@ -204,6 +225,11 @@
 
   function money(cents) { return '$' + (cents / 100).toFixed(2); }
 
+  function togglePromo() {
+    const on = document.getElementById('hasPromo').checked;
+    document.getElementById('promoFields').style.display = on ? 'flex' : 'none';
+  }
+
   async function loadData() {
     const res = await fetch('/admin/api/data', { credentials: 'include' });
     if (res.status === 401) {
@@ -225,7 +251,7 @@
         <td>${c.physician_name}</td>
         <td>${money(c.total_amount_cents)}</td>
         <td>${money(c.platform_fee_cents)}</td>
-        <td>${c.start_date}</td>
+        <td>${c.start_date}${c.promo_end_date ? `<div style="font-size:11px;opacity:.7">${money(c.promo_payout_cents)}/mo intro until ${c.promo_end_date}</div>` : ''}</td>
         <td>Net ${c.payment_terms_days ?? 14}</td>
         <td><span class="badge ${c.transfers_active ? 'ready' : 'notready'}">${c.transfers_active ? 'Ready' : 'Pending'}</span></td>
         <td><span class="badge ${c.status}">${c.status}</span></td>
@@ -255,8 +281,20 @@
       platformFeeUsd: document.getElementById('platformFee').value,
       startDate: document.getElementById('startDate').value,
       paymentTermsDays: Number(document.getElementById('paymentTerms').value),
+      providerName: document.getElementById('providerName').value,
       notes: document.getElementById('notes').value,
     };
+    // Sent only when the box is ticked, so clearing it discards whatever was typed
+    // rather than quietly applying an introductory rate nobody meant to set.
+    if (document.getElementById('hasPromo').checked) {
+      body.promoPayoutUsd = document.getElementById('promoPayout').value;
+      body.promoEndDate = document.getElementById('promoEndDate').value;
+      if (!body.promoPayoutUsd || !body.promoEndDate) {
+        msg.className = 'msg err';
+        msg.textContent = 'Introductory rate needs both a monthly payout and an end date.';
+        return;
+      }
+    }
     if (!body.clientId || !body.physicianId || !body.totalAmountUsd || !body.startDate) {
       msg.className = 'msg err';
       msg.textContent = 'Please fill in client, physician, amount, and start date.';

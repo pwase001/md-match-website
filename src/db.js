@@ -65,19 +65,38 @@ export async function setPhysicianTransfersActive(db, stripeAccountId, active) {
 
 export async function createCollaboration(db, {
   clientId, physicianId, totalAmountCents, platformFeeCents, applicationFeePercent, startDate,
-  paymentTermsDays, notes,
+  paymentTermsDays, providerName, promoPayoutCents, promoEndDate, notes,
 }) {
   const res = await db
     .prepare(
       `INSERT INTO collaborations
         (client_id, physician_id, total_amount_cents, platform_fee_cents, application_fee_percent, start_date,
-         payment_terms_days, notes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+         payment_terms_days, provider_name, promo_payout_cents, promo_end_date, notes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
     )
     .bind(clientId, physicianId, totalAmountCents, platformFeeCents, applicationFeePercent, startDate,
-      paymentTermsDays, notes || null)
+      paymentTermsDays, providerName || null, promoPayoutCents ?? null, promoEndDate || null, notes || null)
     .first();
   return res;
+}
+
+// The physician's most recent other collaboration, used to describe a new one in
+// terms of what they already have -- whether the rate is a step up, a step down,
+// or unchanged. Cancelled collaborations are excluded: an arrangement that has
+// ended is not a rate anyone is still comparing against.
+//
+// Returns null for a physician's first collaboration, which the notice reads as
+// "nothing to compare to" rather than "same as before".
+export async function getPreviousCollaborationForPhysician(db, physicianId, excludeId) {
+  return db
+    .prepare(
+      `SELECT * FROM collaborations
+       WHERE physician_id = ? AND id != ? AND status != 'canceled'
+       ORDER BY created_at DESC, id DESC
+       LIMIT 1`
+    )
+    .bind(physicianId, excludeId)
+    .first();
 }
 
 export async function getCollaboration(db, id) {

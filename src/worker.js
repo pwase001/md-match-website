@@ -1251,6 +1251,79 @@ async function sendClientBillingEmail(env, collaboration, client, physician) {
   });
 }
 
+function usd(cents) {
+  return '$' + (cents / 100).toFixed(2);
+}
+
+// Tells a physician that a new collaboration exists and what it pays.
+//
+// Nothing else in the app did this. The payout onboarding link was doubling as the
+// announcement, so once it was suppressed for physicians who are already connected,
+// they had no word at all -- they would have found out when money arrived.
+//
+// The wording turns on two things: whether this collaboration is promotional, and
+// whether the physician's previous one was. What a physician needs told is the
+// change, not the number. A rate below the one they are used to has to say so
+// plainly; a rate identical to it is better off saying that nothing has changed
+// than restating the arrangement as though it were news.
+async function sendCollaborationNoticeEmail(env, { collaboration, client, physician, previous, alreadyOnboarded }) {
+  const firstName = physician.full_name.split(' ')[0];
+  const practice = client.full_name;
+  // The provider is who the physician actually collaborates with; the client is who
+  // pays. Rows created before provider_name existed have none, so fall back to
+  // naming the practice alone rather than printing an empty phrase.
+  const withWhom = collaboration.provider_name
+    ? `${collaboration.provider_name} at ${practice}`
+    : practice;
+  const standardPayout = usd(collaboration.total_amount_cents - collaboration.platform_fee_cents);
+
+  const newIsPromo = !!collaboration.promo_end_date;
+  const prevIsPromo = !!(previous && previous.promo_end_date);
+  const rail = 'margin:0 0 16px;padding:2px 0 2px 14px;border-left:2px solid #d0d7d4';
+
+  let rateHtml;
+  if (newIsPromo) {
+    const rates =
+      `<p style="margin:0 0 4px">Through ${collaboration.promo_end_date}: <strong>${usd(collaboration.promo_payout_cents)}</strong> per month</p>`
+      + `<p style="margin:0">From ${collaboration.promo_end_date}: <strong>${standardPayout}</strong> per month</p>`;
+    if (prevIsPromo) {
+      rateHtml = `<p>This one also starts on an introductory rate, on its own timeline:</p>`
+        + `<div style="${rail}">${rates}</div>`
+        + `<p>That date is independent of your other collaboration — each one steps up to its full rate on its own schedule.</p>`;
+    } else if (previous) {
+      rateHtml = `<p>One difference from your existing collaboration worth flagging: ${practice} is starting on an introductory rate, so this one pays less to begin with.</p>`
+        + `<div style="${rail}">${rates}</div>`
+        + `<p>Your existing collaboration is unaffected and continues at its current rate.</p>`;
+    } else {
+      rateHtml = `<p>This collaboration starts on an introductory rate:</p><div style="${rail}">${rates}</div>`;
+    }
+  } else if (prevIsPromo) {
+    rateHtml = `<p>Unlike your existing collaboration, this one has no introductory period. It pays <strong>${standardPayout}</strong> per month from ${collaboration.start_date}.</p>`;
+  } else if (previous) {
+    rateHtml = `<p>Nothing changes in how you're paid. This one runs at <strong>${standardPayout}</strong> per month, on the same terms as your existing collaboration.</p>`;
+  } else {
+    rateHtml = `<p>It pays <strong>${standardPayout}</strong> per month.</p>`;
+  }
+
+  return sendEmail(env, {
+    to: [physician.email],
+    from: 'MD-Match <noreply@md-match.com>',
+    replyTo: 'philipwasef@md-match.com',
+    subject: newIsPromo
+      ? `Your new collaboration with ${withWhom} — introductory rate`
+      : `Your new collaboration with ${withWhom}`,
+    html: `<p>Hi ${firstName},</p>`
+      + `<p>You're set up for a new collaboration with ${withWhom}, starting ${collaboration.start_date}.</p>`
+      + rateHtml
+      + `<p>The transfer goes out once ${practice} pays their monthly invoice.</p>`
+      // Only true for someone already connected. A physician who still has to
+      // onboard is getting the setup link alongside this, and telling them there
+      // is nothing to do would contradict it.
+      + (alreadyOnboarded ? `<p>No action needed on your end; your payout account is already connected.</p>` : '')
+      + `<p>Best,<br>Philip</p>`,
+  });
+}
+
 // Shared by collaboration creation and the resend action so the two cannot drift.
 // The token is minted fresh on every send: an earlier link may have expired, and
 // a physician chasing a missing email should not be given a dead one.
@@ -1270,8 +1343,10 @@ async function sendPhysicianOnboardingEmail(env, origin, physician) {
 
 async function handleCreateCollaboration(request, env) {
   try {
-    const { clientId, physicianId, totalAmountUsd, platformFeeUsd, startDate, paymentTermsDays, notes } =
-      await request.json();
+    const {
+      clientId, physicianId, totalAmountUsd, platformFeeUsd, startDate, paymentTermsDays,
+      providerName, promoPayoutUsd, promoEndDate, notes,
+    } = await request.json();
 
     const totalAmountCents = Math.round(Number(totalAmountUsd) * 100);
     const platformFeeCents = Math.round(Number(platformFeeUsd || 200) * 100);
@@ -1290,15 +1365,51 @@ async function handleCreateCollaboration(request, env) {
     // platform fee can be off by a cent or two — acceptable for this fee structure.
     const applicationFeePercent = Math.round((platformFeeCents / totalAmountCents) * 100 * 100) / 100;
 
+    // An introductory rate is the two fields together or neither. Half of it would
+    // produce a notice quoting a promotional rate with no end date, or an end date
+    // with no rate -- worse than not offering the option at all.
+    const promoPayoutCents = promoPayoutUsd === '' || promoPayoutUsd == null
+      ? null
+      : Math.round(Number(promoPayoutUsd) * 100);
+    const promoEnd = promoEndDate || null;
+    if ((promoPayoutCents === null) !== (promoEnd === null)) {
+      return jsonResponse({
+        success: false,
+        error: 'An introductory rate needs both the monthly payout and the date it ends',
+      }, 400);
+    }
+    if (promoPayoutCents !== null) {
+      if (!Number.isFinite(promoPayoutCents) || promoPayoutCents <= 0) {
+        return jsonResponse({ success: false, error: 'Introductory payout must be greater than zero' }, 400);
+      }
+      // The promotional payout is what the physician receives instead of the full
+      // amount, so a figure at or above the standard payout is a typo rather than a
+      // generous promotion -- and the notice would tell them their rate improves
+      // when the promotion ends.
+      if (promoPayoutCents >= totalAmountCents - platformFeeCents) {
+        return jsonResponse({
+          success: false,
+          error: 'Introductory payout must be less than the standard payout',
+        }, 400);
+      }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(promoEnd)) {
+        return jsonResponse({ success: false, error: 'Introductory end date must be a valid date' }, 400);
+      }
+    }
+
     const client = await db.getClient(env.DB, clientId);
     const physician = await db.getPhysician(env.DB, physicianId);
     if (!client || !physician) {
       return jsonResponse({ success: false, error: 'Client or physician not found' }, 404);
     }
 
+    // Read before the new row exists so it cannot match itself, and so a physician's
+    // first collaboration is correctly seen as having no predecessor.
+    const previous = await db.getPreviousCollaborationForPhysician(env.DB, physicianId, 0);
+
     const collaboration = await db.createCollaboration(env.DB, {
       clientId, physicianId, totalAmountCents, platformFeeCents, applicationFeePercent, startDate,
-      paymentTermsDays: termsDays, notes,
+      paymentTermsDays: termsDays, providerName, promoPayoutCents, promoEndDate: promoEnd, notes,
     });
 
     const stripe = stripeHelpers.getStripe(env);
@@ -1334,6 +1445,13 @@ async function handleCreateCollaboration(request, env) {
         console.error(`Could not read payout status for ${stripeAccountId}; sending onboarding email anyway:`, err);
       }
     }
+    // The notice goes to everyone, including a physician onboarding for the first
+    // time: what they are paid is worth stating plainly, and the onboarding link
+    // has never said it. Sent before the link so the context arrives ahead of the
+    // task rather than after it.
+    await sendCollaborationNoticeEmail(env, {
+      collaboration, client, physician, previous, alreadyOnboarded: !needsOnboarding,
+    });
     if (needsOnboarding) {
       await sendPhysicianOnboardingEmail(env, origin, physician);
     }
