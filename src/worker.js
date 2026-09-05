@@ -2065,7 +2065,9 @@ async function handleNpPaIntakeStep2(request, env) {
       'Controlled Substances': controlledMap[fields['controlled']] || fields['controlled'] || '—',
       'Stimulants Frequency': fields['stimulants_frequency'] || '',
       'Benzodiazepines Frequency': fields['benzo_frequency'] || '',
-      'MAT Services': yesNoMap[fields['mat_clinical']] || fields['mat_clinical'] || '—',
+      'Buprenorphine / Suboxone': yesNoMap[fields['buprenorphine']] || fields['buprenorphine'] || '—',
+      'IV Ketamine': yesNoMap[fields['iv_ketamine']] || fields['iv_ketamine'] || '—',
+      'IM Ketamine': yesNoMap[fields['im_ketamine']] || fields['im_ketamine'] || '—',
       'Intranasal Ketamine': yesNoMap[fields['intranasal_ketamine']] || fields['intranasal_ketamine'] || '—',
       'TMS': yesNoMap[fields['tms_clinical']] || fields['tms_clinical'] || '—',
       'Additional Information': fields['Anything Else We Should Know'] || '',
@@ -2150,7 +2152,9 @@ function buildStep2Summary(f) {
     ${row('Controlled Substances', f['Controlled Substances'])}
     ${f['Stimulants Frequency'] ? row('Stimulants (Frequency)', f['Stimulants Frequency']) : ''}
     ${f['Benzodiazepines Frequency'] ? row('Benzodiazepines (Frequency)', f['Benzodiazepines Frequency']) : ''}
-    ${row('MAT (Opioid Use Disorder)', f['MAT Services'])}
+    ${row('Buprenorphine / Suboxone', f['Buprenorphine / Suboxone'])}
+    ${row('IV Ketamine', f['IV Ketamine'])}
+    ${row('IM Ketamine', f['IM Ketamine'])}
     ${row('Intranasal Ketamine', f['Intranasal Ketamine'])}
     ${row('TMS Therapy', f['TMS'])}
     ${section('Additional Information')}
