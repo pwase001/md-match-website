@@ -1,4 +1,4 @@
-import { generateDocx, generatePhysicianDocx } from './docx-generator.js';
+import { generateDocx, generatePhysicianDocx, generateNpPaIntakeDocx } from './docx-generator.js';
 import * as db from './db.js';
 import * as tokens from './tokens.js';
 import * as stripeHelpers from './stripe-helpers.js';
@@ -10,6 +10,14 @@ export default {
 
     if (request.method === 'POST' && url.pathname === '/np-pa-submit') {
       return handleNpPaSubmit(request, env);
+    }
+
+    if (request.method === 'POST' && url.pathname === '/np-pa-intake-step1') {
+      return handleNpPaIntakeStep1(request, env);
+    }
+
+    if (request.method === 'POST' && url.pathname === '/np-pa-intake-step2') {
+      return handleNpPaIntakeStep2(request, env);
     }
 
     if (request.method === 'POST' && url.pathname === '/physician-submit') {
@@ -1891,6 +1899,262 @@ function buildSummary(f) {
     ${row('Additional Information', f['Additional Information'])}
     ${section('Referral')}
     ${row('How Did You Hear About Us', f['How Did You Hear About MD-Match'])}
+    ${f['Referred By'] ? row('Referred By', f['Referred By']) : ''}
+  </table>
+  <p style="color:#aaa;font-size:11px;margin-top:24px">Word document attached · MD-Match.com</p>
+</div>`;
+}
+
+async function handleNpPaIntakeStep1(request, env) {
+  try {
+    const formData = await request.formData();
+    const fields = {};
+    for (const [key, value] of formData.entries()) {
+      if (key in fields) {
+        fields[key] = fields[key] + ', ' + value;
+      } else {
+        fields[key] = value;
+      }
+    }
+
+    const id = crypto.randomUUID();
+
+    // Persist step 1 data in D1
+    try {
+      await env.DB.exec(`CREATE TABLE IF NOT EXISTS intake_drafts (id TEXT PRIMARY KEY, data TEXT, created_at INTEGER)`);
+      await env.DB.prepare(`INSERT INTO intake_drafts (id, data, created_at) VALUES (?, ?, ?)`)
+        .bind(id, JSON.stringify(fields), Date.now())
+        .run();
+    } catch (dbErr) {
+      console.error('DB error saving intake draft:', dbErr?.message || dbErr);
+      return jsonResponse({ success: false, error: 'Failed to save draft' }, 500);
+    }
+
+    // Also create a client record for admin matching
+    const fullName = [fields['First Name'], fields['Last Name']].filter(Boolean).join(' ');
+    const email = fields['Professional Email'] || '';
+    try {
+      if (email) {
+        const existing = await db.getClientByEmail(env.DB, email);
+        if (!existing) {
+          await db.createClient(env.DB, { fullName, email, phone: fields['Phone Number'] || null });
+        }
+      }
+    } catch (dbErr) {
+      console.error('DB error saving client:', dbErr?.message || dbErr);
+    }
+
+    // Send step-1 notification email (no docx — just contact details)
+    if (!env.RESEND_API_KEY) {
+      console.error('RESEND_API_KEY not set');
+      return jsonResponse({ success: false, error: 'Server misconfiguration' }, 500);
+    }
+
+    const statesList = fields['States of Practice'] || fields['States Needing Collaboration'] || '—';
+    const providerType = fields['Provider Type'] === 'np' ? 'NP' : fields['Provider Type'] === 'pa' ? 'PA' : fields['Provider Type'] || '—';
+    const nameDisplay = fullName || 'Unknown';
+    const stateDisplay = statesList;
+
+    const step1Html = `
+<div style="max-width:600px;margin:0 auto;font-family:sans-serif">
+  <h2 style="color:#1B6CA8">New intake started — ${nameDisplay}</h2>
+  <p style="color:#555;font-size:13px">Step 1 complete. This provider has NOT yet submitted clinical details (Step 2).</p>
+  <table style="width:100%;border-collapse:collapse;margin-top:16px">
+    <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;width:38%;font-size:13px;border-bottom:1px solid #ddd">Name</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${nameDisplay}</td></tr>
+    <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Credential</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${providerType}</td></tr>
+    <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Email</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${email || '—'}</td></tr>
+    <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Phone</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Phone Number'] || '—'}</td></tr>
+    <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">State(s)</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${statesList}</td></tr>
+    <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Specialty</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Specialty'] || '—'}</td></tr>
+    <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Practice Setting</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['practice_setting_step1'] || '—'}</td></tr>
+    <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Timeline</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['timeline'] || '—'}</td></tr>
+    <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Has Collaborator</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['has_collaborator'] || '—'}</td></tr>
+    ${fields['Referred By'] ? `<tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Referred By</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Referred By']}</td></tr>` : ''}
+  </table>
+  <p style="color:#aaa;font-size:11px;margin-top:24px">Submission ID: ${id} · MD-Match.com</p>
+</div>`;
+
+    const resendPayload = {
+      from: 'MD-Match Intake <noreply@md-match.com>',
+      to: ['philipwasef@md-match.com', 'pwase001@gmail.com'],
+      reply_to: email || undefined,
+      subject: `New intake started — ${nameDisplay}, ${stateDisplay}`,
+      html: step1Html,
+    };
+
+    const resendRes = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(resendPayload),
+    });
+
+    if (!resendRes.ok) {
+      const errBody = await resendRes.text();
+      console.error('Resend error (step1):', resendRes.status, errBody);
+      // Don't fail — the draft is saved, return the id so the user can proceed
+    }
+
+    return jsonResponse({ success: true, id });
+  } catch (err) {
+    console.error('handleNpPaIntakeStep1 error:', err);
+    return jsonResponse({ success: false, error: 'Server error' }, 500);
+  }
+}
+
+async function handleNpPaIntakeStep2(request, env) {
+  try {
+    const formData = await request.formData();
+    const fields = {};
+    for (const [key, value] of formData.entries()) {
+      if (key in fields) {
+        fields[key] = fields[key] + ', ' + value;
+      } else {
+        fields[key] = value;
+      }
+    }
+
+    const submissionId = fields['submission_id'];
+    if (!submissionId) {
+      return jsonResponse({ success: false, error: 'Missing submission ID' }, 400);
+    }
+
+    // Look up step 1 data
+    let step1Fields = {};
+    try {
+      const row = await env.DB.prepare(`SELECT data FROM intake_drafts WHERE id = ?`).bind(submissionId).first();
+      if (row) {
+        step1Fields = JSON.parse(row.data);
+      }
+    } catch (dbErr) {
+      console.error('DB error fetching draft:', dbErr?.message || dbErr);
+    }
+
+    // Merge step 1 + step 2 fields
+    const providerTypeMap = { 'np': 'Nurse Practitioner (NP / APRN)', 'pa': 'Physician Assistant (PA)' };
+    const practiceSettingMap = {
+      'solo': 'Solo Practice',
+      'group': 'Group Practice',
+      'telehealth': 'Telehealth',
+      'med-spa': 'Med Spa',
+      'other': 'Other',
+    };
+    const timelineMap = {
+      'immediately': 'Immediately',
+      '1-3-months': '1–3 months',
+      'exploring': 'Just exploring',
+    };
+    const controlledMap = { 'yes': 'Yes', 'no': 'No', 'unsure': 'Unsure / Not yet' };
+    const yesNoMap = { 'yes': 'Yes', 'no': 'No', 'planning': 'Planning to' };
+
+    const fullName = [step1Fields['First Name'], step1Fields['Last Name']].filter(Boolean).join(' ') || '—';
+    const email = step1Fields['Professional Email'] || '—';
+    const statesList = step1Fields['States of Practice'] || '—';
+
+    const f = {
+      'Full Name': fullName,
+      'Email': email,
+      'Phone': step1Fields['Phone Number'] || '—',
+      'Provider Type': providerTypeMap[step1Fields['Provider Type']] || step1Fields['Provider Type'] || '—',
+      'Specialty': step1Fields['Specialty'] || '—',
+      'States Needing Collaboration': statesList,
+      'Practice Setting': practiceSettingMap[step1Fields['practice_setting_step1']] || step1Fields['practice_setting_step1'] || '—',
+      'Timeline': timelineMap[step1Fields['timeline']] || step1Fields['timeline'] || '—',
+      'Has Collaborator': step1Fields['has_collaborator'] || '—',
+      'Referred By': step1Fields['Referred By'] || '',
+      // Step 2 clinical fields
+      'Controlled Substances': controlledMap[fields['controlled']] || fields['controlled'] || '—',
+      'Stimulants Frequency': fields['stimulants_frequency'] || '',
+      'Benzodiazepines Frequency': fields['benzo_frequency'] || '',
+      'MAT Services': yesNoMap[fields['mat_clinical']] || fields['mat_clinical'] || '—',
+      'Intranasal Ketamine': yesNoMap[fields['intranasal_ketamine']] || fields['intranasal_ketamine'] || '—',
+      'TMS': yesNoMap[fields['tms_clinical']] || fields['tms_clinical'] || '—',
+      'Additional Information': fields['Anything Else We Should Know'] || '',
+    };
+
+    // Generate merged Word document
+    let docxResult;
+    try {
+      docxResult = await generateNpPaIntakeDocx(f);
+    } catch (docxErr) {
+      console.error('DOCX generation error (step2):', docxErr?.message || docxErr);
+      return jsonResponse({ success: false, error: 'Document generation failed' }, 500);
+    }
+
+    const providerName = fullName !== '—' ? fullName : 'Unknown';
+    const filename = `NP-PA-Profile-${providerName.replace(/[^a-zA-Z0-9]/g, '-')}.docx`;
+
+    if (!env.RESEND_API_KEY) {
+      return jsonResponse({ success: false, error: 'Server misconfiguration' }, 500);
+    }
+
+    const summaryHtml = buildStep2Summary(f);
+
+    const resendPayload = {
+      from: 'MD-Match Intake <noreply@md-match.com>',
+      to: ['philipwasef@md-match.com', 'pwase001@gmail.com'],
+      reply_to: email !== '—' ? email : undefined,
+      subject: `New NP/PA Application — ${providerName}`,
+      html: summaryHtml,
+      attachments: [{ filename, content: docxResult.base64 }],
+    };
+
+    const resendRes = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(resendPayload),
+    });
+
+    if (!resendRes.ok) {
+      const errBody = await resendRes.text();
+      console.error('Resend error (step2):', resendRes.status, errBody);
+      return jsonResponse({ success: false, error: 'Email delivery failed', detail: errBody }, 500);
+    }
+
+    // Clean up draft record
+    try {
+      await env.DB.prepare(`DELETE FROM intake_drafts WHERE id = ?`).bind(submissionId).run();
+    } catch (dbErr) {
+      console.error('DB cleanup error:', dbErr?.message || dbErr);
+    }
+
+    return jsonResponse({ success: true });
+  } catch (err) {
+    console.error('handleNpPaIntakeStep2 error:', err);
+    return jsonResponse({ success: false, error: 'Server error' }, 500);
+  }
+}
+
+function buildStep2Summary(f) {
+  const row = (label, val) =>
+    `<tr><td style="padding:6px 12px;font-weight:600;color:#1e2530;background:#f2f4f6;width:38%;font-family:sans-serif;font-size:13px;border-bottom:1px solid #ddd">${label}</td><td style="padding:6px 12px;color:#1e2530;font-family:sans-serif;font-size:13px;border-bottom:1px solid #ddd">${val || '—'}</td></tr>`;
+  const section = (title) =>
+    `<tr><td colspan="2" style="padding:10px 12px 4px;font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.08em;color:#1B6CA8;font-family:sans-serif;border-bottom:2px solid #1B6CA8">${title}</td></tr>`;
+
+  return `
+<div style="max-width:680px;margin:0 auto;font-family:sans-serif">
+  <h2 style="color:#1B6CA8;margin-bottom:4px">NP / PA Application — MD-Match</h2>
+  <p style="color:#555;font-size:13px">Submitted ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</p>
+  <table style="width:100%;border-collapse:collapse;margin-top:16px">
+    ${section('Provider Information')}
+    ${row('Full Name', f['Full Name'])}
+    ${row('Email', f['Email'])}
+    ${row('Phone', f['Phone'])}
+    ${row('Provider Type', f['Provider Type'])}
+    ${row('Specialty', f['Specialty'])}
+    ${section('Collaboration & Practice')}
+    ${row('States Needing Collaboration', f['States Needing Collaboration'])}
+    ${row('Practice Setting', f['Practice Setting'])}
+    ${row('Timeline', f['Timeline'])}
+    ${row('Has Current Collaborator', f['Has Collaborator'])}
+    ${section('Clinical Services')}
+    ${row('Controlled Substances', f['Controlled Substances'])}
+    ${f['Stimulants Frequency'] ? row('Stimulants (Frequency)', f['Stimulants Frequency']) : ''}
+    ${f['Benzodiazepines Frequency'] ? row('Benzodiazepines (Frequency)', f['Benzodiazepines Frequency']) : ''}
+    ${row('MAT (Opioid Use Disorder)', f['MAT Services'])}
+    ${row('Intranasal Ketamine', f['Intranasal Ketamine'])}
+    ${row('TMS Therapy', f['TMS'])}
+    ${section('Additional Information')}
+    ${row('Additional Notes', f['Additional Information'] || 'None provided')}
     ${f['Referred By'] ? row('Referred By', f['Referred By']) : ''}
   </table>
   <p style="color:#aaa;font-size:11px;margin-top:24px">Word document attached · MD-Match.com</p>

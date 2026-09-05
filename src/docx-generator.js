@@ -199,6 +199,73 @@ export async function generateDocx(f) {
   return { base64, bytes };
 }
 
+export async function generateNpPaIntakeDocx(f) {
+  const clinicalRows = [
+    labelRow('Controlled Substances', f['Controlled Substances']),
+    ...(f['Stimulants Frequency'] ? [labelRow('Stimulants (Frequency)', f['Stimulants Frequency'])] : []),
+    ...(f['Benzodiazepines Frequency'] ? [labelRow('Benzodiazepines (Frequency)', f['Benzodiazepines Frequency'])] : []),
+    labelRow('MAT (Opioid Use Disorder)', f['MAT Services']),
+    labelRow('Intranasal Ketamine', f['Intranasal Ketamine']),
+    labelRow('TMS Therapy', f['TMS']),
+  ];
+
+  const doc = new Document({
+    styles: { default: { document: { run: { font: 'Calibri', size: 20, color: DARK } } } },
+    sections: [{
+      properties: { page: { margin: { top: convertInchesToTwip(1), bottom: convertInchesToTwip(1), left: convertInchesToTwip(1.1), right: convertInchesToTwip(1.1) } } },
+      children: [
+        new Paragraph({
+          spacing: { after: 60 },
+          children: [new TextRun({ text: 'NP / PA PROVIDER PROFILE', bold: true, size: 32, color: TEAL, font: 'Calibri' })],
+        }),
+        new Paragraph({
+          spacing: { after: 200 },
+          border: { bottom: { style: BorderStyle.SINGLE, size: 12, color: TEAL } },
+          children: [
+            new TextRun({ text: 'Monthly compensation for collaborative physician to help this provider: $', size: 20, color: DARK, font: 'Calibri' }),
+            new TextRun({ text: 'xxx', size: 20, color: '999999', font: 'Calibri', underline: { type: UnderlineType.SINGLE } }),
+            new TextRun({ text: '/month', size: 20, color: DARK, font: 'Calibri' }),
+          ],
+        }),
+        sectionHeader('Provider Information'),
+        dataTable([
+          labelRow('Full Name', f['Full Name']),
+          labelRow('Email', f['Email']),
+          labelRow('Phone', f['Phone']),
+          labelRow('Provider Type', f['Provider Type']),
+          labelRow('Specialty', f['Specialty']),
+        ]),
+        sectionHeader('Collaboration & Practice'),
+        dataTable([
+          labelRow('States Needing Collaboration', f['States Needing Collaboration']),
+          labelRow('Practice Setting', f['Practice Setting']),
+          labelRow('Timeline', f['Timeline']),
+          labelRow('Has Current Collaborator', f['Has Collaborator']),
+        ]),
+        sectionHeader('Clinical Services'),
+        dataTable(clinicalRows),
+        sectionHeader('Additional Information'),
+        new Paragraph({
+          spacing: { before: 80, after: 240 },
+          children: [new TextRun({ text: f['Additional Information'] || 'None provided.', size: 20, color: f['Additional Information'] ? DARK : '999999', font: 'Calibri' })],
+        }),
+        new Paragraph({
+          spacing: { before: 200 },
+          border: { top: { style: BorderStyle.SINGLE, size: 4, color: 'DDDDDD' } },
+          children: [new TextRun({ text: `Submitted via MD-Match.com  ·  ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, size: 16, color: '888888', font: 'Calibri', italics: true })],
+        }),
+        ...(f['Referred By'] ? [new Paragraph({ children: [new TextRun({ text: `Referral source: ${f['Referred By']}`, size: 16, color: '888888', font: 'Calibri', italics: true })] })] : []),
+      ],
+    }],
+  });
+
+  const base64 = await Packer.toBase64String(doc);
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return { base64, bytes };
+}
+
 export async function generatePhysicianDocx(f) {
   const doc = new Document({
     styles: {

@@ -5,5 +5,6 @@ Disallow: /admin-send-licensure
 Disallow: /admin-compliance-reminders
 Disallow: /admin-send-survey
 Disallow: /admin/
+Disallow: /np-pa-intake-clinical
 
 Sitemap: https://md-match.com/sitemap.xml
