@@ -241,8 +241,8 @@ export async function generateNpPaIntakeDocx(f) {
         dataTable([
           labelRow('States Needing Collaboration', f['States Needing Collaboration']),
           labelRow('Practice Setting', f['Practice Setting']),
-          labelRow('Timeline', f['Timeline']),
-          labelRow('Has Current Collaborator', f['Has Collaborator']),
+          labelRow('Ideal Start Date', f['Ideal Start Date']),
+          labelRow('First Patient Timeline', f['First Patient Timeline']),
         ]),
         sectionHeader('Clinical Services'),
         dataTable(clinicalRows),

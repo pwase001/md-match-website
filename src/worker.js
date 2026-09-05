@@ -1967,8 +1967,8 @@ async function handleNpPaIntakeStep1(request, env) {
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">State(s)</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${statesList}</td></tr>
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Specialty</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Specialty'] || '—'}</td></tr>
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Practice Setting</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['practice_setting_step1'] || '—'}</td></tr>
-    <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Timeline</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['timeline'] || '—'}</td></tr>
-    <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Has Collaborator</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['has_collaborator'] || '—'}</td></tr>
+    <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Ideal Start Date</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Ideal Start Date'] || '—'}</td></tr>
+    <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">First Patient Timeline</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['First Patient Timeline'] || '—'}</td></tr>
     ${fields['Referred By'] ? `<tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Referred By</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Referred By']}</td></tr>` : ''}
   </table>
   <p style="color:#aaa;font-size:11px;margin-top:24px">Submission ID: ${id} · MD-Match.com</p>
@@ -2058,13 +2058,13 @@ async function handleNpPaIntakeStep2(request, env) {
       'Specialty': step1Fields['Specialty'] || '—',
       'States Needing Collaboration': statesList,
       'Practice Setting': practiceSettingMap[step1Fields['practice_setting_step1']] || step1Fields['practice_setting_step1'] || '—',
-      'Timeline': timelineMap[step1Fields['timeline']] || step1Fields['timeline'] || '—',
-      'Has Collaborator': step1Fields['has_collaborator'] || '—',
+      'Ideal Start Date': step1Fields['Ideal Start Date'] || '—',
+      'First Patient Timeline': step1Fields['First Patient Timeline'] || '—',
       'Referred By': step1Fields['Referred By'] || '',
       // Step 2 clinical fields
       'Controlled Substances': controlledMap[fields['controlled']] || fields['controlled'] || '—',
-      'Stimulants Frequency': fields['stimulants_frequency'] || '',
-      'Benzodiazepines Frequency': fields['benzo_frequency'] || '',
+      'Stimulants Frequency': fields['Stimulants Frequency'] || '',
+      'Benzodiazepines Frequency': fields['Benzodiazepines Frequency'] || '',
       'Buprenorphine / Suboxone': yesNoMap[fields['buprenorphine']] || fields['buprenorphine'] || '—',
       'IV Ketamine': yesNoMap[fields['iv_ketamine']] || fields['iv_ketamine'] || '—',
       'IM Ketamine': yesNoMap[fields['im_ketamine']] || fields['im_ketamine'] || '—',
@@ -2146,8 +2146,8 @@ function buildStep2Summary(f) {
     ${section('Collaboration & Practice')}
     ${row('States Needing Collaboration', f['States Needing Collaboration'])}
     ${row('Practice Setting', f['Practice Setting'])}
-    ${row('Timeline', f['Timeline'])}
-    ${row('Has Current Collaborator', f['Has Collaborator'])}
+    ${row('Ideal Start Date', f['Ideal Start Date'])}
+    ${row('First Patient Timeline', f['First Patient Timeline'])}
     ${section('Clinical Services')}
     ${row('Controlled Substances', f['Controlled Substances'])}
     ${f['Stimulants Frequency'] ? row('Stimulants (Frequency)', f['Stimulants Frequency']) : ''}
