@@ -209,6 +209,7 @@ export async function generateNpPaIntakeDocx(f) {
     labelRow('IM Ketamine', f['IM Ketamine']),
     labelRow('Intranasal Ketamine', f['Intranasal Ketamine']),
     labelRow('TMS Therapy', f['TMS']),
+    ...(f['Family Medicine Services'] ? [labelRow('Family Medicine Services', f['Family Medicine Services'])] : []),
   ];
 
   const doc = new Document({
@@ -241,6 +242,7 @@ export async function generateNpPaIntakeDocx(f) {
         dataTable([
           labelRow('States Needing Collaboration', f['States Needing Collaboration']),
           labelRow('Practice Setting', f['Practice Setting']),
+          labelRow('Patient Population', f['Patient Population']),
           labelRow('Ideal Start Date', f['Ideal Start Date']),
           labelRow('First Patient Timeline', f['First Patient Timeline']),
         ]),

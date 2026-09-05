@@ -353,7 +353,8 @@
   }
 
   .radio-row label:hover { border-color: var(--teal-light); background: #f0f7f7; }
-  .radio-row input[type="radio"] { accent-color: var(--teal); width: 13px; height: 13px; cursor: pointer; }
+  .radio-row input[type="radio"], .radio-row input[type="checkbox"] { accent-color: var(--teal); width: 13px; height: 13px; cursor: pointer; }
+  .radio-row label:has(input[type="checkbox"]:checked) { border-color: var(--teal); background: #eaf4f4; color: var(--teal); }
 
   .radio-row label:has(input:checked) {
     border-color: var(--teal);
@@ -508,11 +509,18 @@
     <div class="why-row" style="margin-bottom:1.4rem">
       <div class="why-label">Practice setting <span class="req">*</span></div>
       <div class="radio-row">
-        <label><input type="radio" name="practice_setting_step1" value="Solo private practice" required> <span>Solo private practice</span></label>
-        <label><input type="radio" name="practice_setting_step1" value="Group practice"> <span>Group practice</span></label>
-        <label><input type="radio" name="practice_setting_step1" value="Telehealth"> <span>Telehealth</span></label>
-        <label><input type="radio" name="practice_setting_step1" value="Med spa"> <span>Med spa</span></label>
-        <label><input type="radio" name="practice_setting_step1" value="Other"> <span>Other</span></label>
+        <label><input type="radio" name="practice_setting_step1" value="In Person" required> <span>In Person</span></label>
+        <label><input type="radio" name="practice_setting_step1" value="Virtual"> <span>Virtual</span></label>
+        <label><input type="radio" name="practice_setting_step1" value="Both"> <span>Both</span></label>
+      </div>
+    </div>
+
+    <div class="why-row" style="margin-bottom:1.4rem">
+      <div class="why-label">Patient population (select all that apply)</div>
+      <div class="radio-row">
+        <label><input type="checkbox" name="Patient Population" value="Children and Adolescents"> <span>Children and Adolescents</span></label>
+        <label><input type="checkbox" name="Patient Population" value="Adults"> <span>Adults</span></label>
+        <label><input type="checkbox" name="Patient Population" value="Geriatrics"> <span>Geriatrics</span></label>
       </div>
     </div>
 
