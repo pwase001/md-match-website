@@ -750,37 +750,24 @@
         <div class="conditional-field" id="controlled-detail">
           <div style="display:flex;flex-direction:column;gap:1.2rem;margin-top:0.4rem;">
 
-            <div>
-              <label style="font-weight:600;display:block;margin-bottom:0.4rem;">How often do you prescribe — or plan to prescribe — Schedule II stimulants (e.g., Adderall, Vyvanse)?</label>
-              <div class="radio-row" style="flex-direction:column;gap:0.3rem;">
-                <label><input type="radio" name="Stimulants Frequency" value="Never"> <span>Never</span></label>
-                <label><input type="radio" name="Stimulants Frequency" value="Rarely (1–2 scripts/month or less)"> <span>Rarely — 1–2 scripts per month or less</span></label>
-                <label><input type="radio" name="Stimulants Frequency" value="Sometimes (1–2 scripts/week)"> <span>Sometimes — 1–2 scripts per week</span></label>
-                <label><input type="radio" name="Stimulants Frequency" value="Often (3–5 scripts/week)"> <span>Often — 3–5 scripts per week</span></label>
-                <label><input type="radio" name="Stimulants Frequency" value="Frequently (almost daily / routine)"> <span>Frequently — almost daily / routinely prescribed for my patient population</span></label>
-              </div>
+            <div class="field">
+              <label>Schedule of controlled substances you prescribe (or plan to prescribe)</label>
+              <select name="controlled_substance_scope">
+                <option value="">— Select —</option>
+                <option value="sched_3_5">Schedule III–V only</option>
+                <option value="sched_2">Including Schedule II</option>
+                <option value="unsure">Not sure yet</option>
+              </select>
             </div>
 
-            <div>
-              <label style="font-weight:600;display:block;margin-bottom:0.4rem;">How often do you prescribe — or plan to prescribe — benzodiazepines (e.g., Xanax, Klonopin, Valium)?</label>
-              <div class="radio-row" style="flex-direction:column;gap:0.3rem;">
-                <label><input type="radio" name="Benzodiazepines Frequency" value="Never"> <span>Never</span></label>
-                <label><input type="radio" name="Benzodiazepines Frequency" value="Rarely (1–2 scripts/month or less)"> <span>Rarely — 1–2 scripts per month or less</span></label>
-                <label><input type="radio" name="Benzodiazepines Frequency" value="Sometimes (1–2 scripts/week)"> <span>Sometimes — 1–2 scripts per week</span></label>
-                <label><input type="radio" name="Benzodiazepines Frequency" value="Often (3–5 scripts/week)"> <span>Often — 3–5 scripts per week</span></label>
-                <label><input type="radio" name="Benzodiazepines Frequency" value="Frequently (almost daily / routine)"> <span>Frequently — almost daily / routinely prescribed for my patient population</span></label>
-              </div>
-            </div>
-
-            <div>
-              <label style="font-weight:600;display:block;margin-bottom:0.4rem;">How often do you prescribe — or plan to prescribe — MAT for substance use (e.g., buprenorphine / Suboxone)?</label>
-              <div class="radio-row" style="flex-direction:column;gap:0.3rem;">
-                <label><input type="radio" name="MAT Frequency" value="Never"> <span>Never</span></label>
-                <label><input type="radio" name="MAT Frequency" value="Rarely (1–2 scripts/month or less)"> <span>Rarely — 1–2 scripts per month or less</span></label>
-                <label><input type="radio" name="MAT Frequency" value="Sometimes (1–2 scripts/week)"> <span>Sometimes — 1–2 scripts per week</span></label>
-                <label><input type="radio" name="MAT Frequency" value="Often (3–5 scripts/week)"> <span>Often — 3–5 scripts per week</span></label>
-                <label><input type="radio" name="MAT Frequency" value="Frequently (almost daily / routine)"> <span>Frequently — almost daily / routinely prescribed for my patient population</span></label>
-              </div>
+            <div class="field">
+              <label>Do you provide medication-assisted treatment (MAT) for substance use disorder?</label>
+              <select name="mat_services">
+                <option value="">— Select —</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+                <option value="planning">Planning to</option>
+              </select>
             </div>
 
           </div>
@@ -817,39 +804,39 @@
 
   <!-- 03 · Licensure, Collaboration Needed & DEA -->
 
-  <!-- 03 · Ketamine & TMS -->
+  <!-- 03 · Interventional & Infusion Treatments -->
   <div class="section">
     <div class="section-header">
       <span class="section-number">03</span>
-      <span class="section-title">Ketamine &amp; TMS Services</span>
+      <span class="section-title">Interventional &amp; Infusion Treatments</span>
       <span class="section-subtitle">Advanced Treatments</span>
     </div>
 
     <div class="why-block">
 
       <div class="why-row">
-        <div class="why-label">Are you currently prescribing or planning to prescribe Esketamine (intranasal / Spravato)?</div>
+        <div class="why-label">Do you currently offer or plan to offer intranasal REMS-program psychiatric treatments?</div>
         <div class="radio-row">
-          <label><input type="radio" name="esketamine" value="Yes — currently prescribing" onchange="handleEsketamineChange(this)"> <span>Yes — currently prescribing</span></label>
-          <label><input type="radio" name="esketamine" value="Yes — planning to prescribe" onchange="handleEsketamineChange(this)"> <span>Yes — planning to prescribe</span></label>
-          <label><input type="radio" name="esketamine" value="No" onchange="handleEsketamineChange(this)"> <span>No</span></label>
+          <label><input type="radio" name="intranasal_rems" value="Yes — currently prescribing" onchange="handleIntranasal REMSChange(this)"> <span>Yes — currently offering</span></label>
+          <label><input type="radio" name="intranasal_rems" value="Yes — planning to prescribe" onchange="handleIntranasal REMSChange(this)"> <span>Yes — planning to offer</span></label>
+          <label><input type="radio" name="intranasal_rems" value="No" onchange="handleIntranasal REMSChange(this)"> <span>No</span></label>
         </div>
-        <div class="conditional-field" id="esketamine-detail">
-          <label>Please describe your Esketamine program (e.g., patient population, setting, frequency)</label>
-          <textarea name="Esketamine Program Details" placeholder="e.g., Spravato for treatment-resistant depression, REMS-certified clinic, bi-weekly sessions…"></textarea>
+        <div class="conditional-field" id="intranasal_rems-detail">
+          <label>Please describe the program (e.g., patient population, setting, treatment frequency)</label>
+          <textarea name="Intranasal REMS Program Details" placeholder="e.g., REMS-certified clinic, treatment-resistant depression, bi-weekly sessions…"></textarea>
         </div>
       </div>
 
       <div class="why-row">
-        <div class="why-label">Do you currently offer or plan to offer IV / IM Ketamine therapy?</div>
+        <div class="why-label">Do you currently offer or plan to offer IV or IM infusion-based psychiatric treatments?</div>
         <div class="radio-row">
-          <label><input type="radio" name="ketamine" value="Yes — currently offering" onchange="handleKetamineChange(this)"> <span>Yes — currently offering</span></label>
-          <label><input type="radio" name="ketamine" value="Yes — planning to offer" onchange="handleKetamineChange(this)"> <span>Yes — planning to offer</span></label>
-          <label><input type="radio" name="ketamine" value="No" onchange="handleKetamineChange(this)"> <span>No</span></label>
+          <label><input type="radio" name="iv_infusion" value="Yes — currently offering" onchange="handleInfusionChange(this)"> <span>Yes — currently offering</span></label>
+          <label><input type="radio" name="iv_infusion" value="Yes — planning to offer" onchange="handleInfusionChange(this)"> <span>Yes — planning to offer</span></label>
+          <label><input type="radio" name="iv_infusion" value="No" onchange="handleInfusionChange(this)"> <span>No</span></label>
         </div>
-        <div class="conditional-field" id="ketamine-detail">
-          <label>Please describe your IV / IM Ketamine program (e.g., protocol used, patient population, setting)</label>
-          <textarea name="IV IM Ketamine Program Details" placeholder="e.g., IV ketamine infusions for treatment-resistant depression, working with anesthesia support…"></textarea>
+        <div class="conditional-field" id="infusion-detail">
+          <label>Please describe the program (e.g., protocol used, patient population, setting)</label>
+          <textarea name="IV IM Infusion Program Details" placeholder="e.g., IV infusion therapy for treatment-resistant depression, anesthesia support…"></textarea>
         </div>
       </div>
 
@@ -874,7 +861,7 @@
         </div>
         <div class="conditional-field" id="otherAdvanced-detail">
           <label>Please describe the treatment(s)</label>
-          <textarea name="Other Advanced Treatments" placeholder="e.g., SPRAVATO (esketamine), neurofeedback, EMDR, psychedelic-assisted therapy…"></textarea>
+          <textarea name="Other Advanced Treatments" placeholder="e.g., neurofeedback, EMDR, psychedelic-assisted therapy…"></textarea>
         </div>
       </div>
 
@@ -1033,7 +1020,7 @@
       </div>
       <div class="field field-span-2">
         <label>Please provide a brief summary of the types of treatment and services you will be providing</label>
-        <textarea name="Anything Else We Should Know" placeholder="e.g., medication management, psychotherapy, ADHD evaluations, medication-assisted treatment, ketamine therapy…"></textarea>
+        <textarea name="Anything Else We Should Know" placeholder="e.g., medication management, psychotherapy, ADHD evaluations, medication-assisted treatment, infusion therapy…"></textarea>
       </div>
     </div>
   </div>
@@ -1165,11 +1152,11 @@ function toggleReferralField(sel) {
   document.getElementById('referral-detail').classList.toggle('visible', sel.value === 'Colleague / Referral');
 }
 
-function handleEsketamineChange(el) {
-  document.getElementById('esketamine-detail').classList.toggle('visible', el.value !== 'No');
+function handleIntranasal REMSChange(el) {
+  document.getElementById('intranasal_rems-detail').classList.toggle('visible', el.value !== 'No');
 }
-function handleKetamineChange(el) {
-  document.getElementById('ketamine-detail').classList.toggle('visible', el.value !== 'No');
+function handleInfusionChange(el) {
+  document.getElementById('infusion-detail').classList.toggle('visible', el.value !== 'No');
 }
 function handleTMSChange(el) {
   var detail = document.getElementById('tms-detail');
