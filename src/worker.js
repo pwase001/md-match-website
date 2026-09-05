@@ -488,13 +488,10 @@ async function handleNpPaSubmit(request, env) {
       'Patient Population': fields['Patient Population'] || '—',
       'Weekly Hours': fields['Weekly Hours'] || '—',
       'Controlled Substances': fields['controlled'] === 'no' ? 'No' : fields['controlled'] === 'unsure' ? 'Unsure / Not yet' : 'Yes',
-      'Stimulants Frequency': fields['Stimulants Frequency'] || '—',
-      'Benzodiazepines Frequency': fields['Benzodiazepines Frequency'] || '—',
-      'MAT Frequency': fields['MAT Frequency'] || '—',
-      'esketamine': fields['esketamine'] || '—',
-      'Esketamine Program Details': fields['Esketamine Program Details'] || '',
-      'ketamine': fields['ketamine'] || '—',
-      'IV IM Ketamine Program Details': fields['IV IM Ketamine Program Details'] || '',
+      'Controlled Substance Schedule': fields['controlled_substance_scope'] || '—',
+      'MAT Services': fields['mat_services'] || '—',
+      'Interventional Route': fields['interventional_route'] || '—',
+      'Interventional Practice Notes': fields['Interventional Practice Notes'] || '',
       'TMS': tmsMap[fields['tms']] || fields['tms'] || '—',
       'TMS Program Details': fields['TMS Program Details'] || '',
       'Board Action': fields['boardAction'] === 'yes' ? 'Yes' : 'No',
@@ -608,9 +605,9 @@ async function handlePhysicianSubmit(request, env) {
       'DEA States': fields['dea_states'] || 'None specified',
       'Controlled Substances Comfort': comfortMap[fields['controlledSub']] || fields['controlledSub'] || '—',
       'Schedule II Signoff': comfortMap[fields['scheduleIISignoff']] || fields['scheduleIISignoff'] || '—',
-      'IV Ketamine Comfort': comfortMap[fields['ketamineIV']] || fields['ketamineIV'] || '—',
-      'IM Ketamine Comfort': comfortMap[fields['ketamineIM']] || fields['ketamineIM'] || '—',
-      'Intranasal Ketamine Comfort': comfortMap[fields['ketamineIN']] || fields['ketamineIN'] || '—',
+      'IV Interventional Comfort': comfortMap[fields['ketamineIV']] || fields['ketamineIV'] || '—',
+      'IM Interventional Comfort': comfortMap[fields['ketamineIM']] || fields['ketamineIM'] || '—',
+      'Intranasal Interventional Comfort': comfortMap[fields['ketamineIN']] || fields['ketamineIN'] || '—',
       'TMS Comfort': comfortMap[fields['tms']] || fields['tms'] || '—',
       'Credentialing Willingness': comfortMap[fields['credentialing']] || fields['credentialing'] || '—',
       'Board Action': yesNoMap[fields['boardAction']] || 'No',
@@ -1817,9 +1814,9 @@ function buildPhysicianSummary(f) {
     ${section('Clinical Preferences')}
     ${row('Controlled Substances Comfort', f['Controlled Substances Comfort'])}
     ${f['Controlled Substances Comfort'] !== 'No' ? row('Schedule II Signoff', f['Schedule II Signoff']) : ''}
-    ${row('IV Ketamine Comfort', f['IV Ketamine Comfort'])}
-    ${row('IM Ketamine Comfort', f['IM Ketamine Comfort'])}
-    ${row('Intranasal Ketamine Comfort', f['Intranasal Ketamine Comfort'])}
+    ${row('IV Interventional Comfort', f['IV Interventional Comfort'])}
+    ${row('IM Interventional Comfort', f['IM Interventional Comfort'])}
+    ${row('Intranasal Interventional Comfort', f['Intranasal Interventional Comfort'])}
     ${row('TMS Comfort', f['TMS Comfort'])}
     ${row('Credentialing Willingness', f['Credentialing Willingness'])}
     ${section('Legal & Board Standing')}
@@ -1874,13 +1871,10 @@ function buildSummary(f) {
     ${row('Weekly Hours', f['Weekly Hours'])}
     ${section('Clinical Services')}
     ${row('Controlled Substances', f['Controlled Substances'])}
-    ${f['Controlled Substances'] === 'Yes' ? row('Stimulants (Schedule II)', f['Stimulants Frequency']) : ''}
-    ${f['Controlled Substances'] === 'Yes' ? row('Benzodiazepines (Schedule IV)', f['Benzodiazepines Frequency']) : ''}
-    ${f['Controlled Substances'] === 'Yes' ? row('MAT / Buprenorphine', f['MAT Frequency']) : ''}
-    ${row('Esketamine (Intranasal)', f['esketamine'])}
-    ${f['esketamine'] && f['esketamine'] !== 'No' ? row('Esketamine Details', f['Esketamine Program Details']) : ''}
-    ${row('IV / IM Ketamine', f['ketamine'])}
-    ${f['ketamine'] && f['ketamine'] !== 'No' ? row('IV/IM Ketamine Details', f['IV IM Ketamine Program Details']) : ''}
+    ${f['Controlled Substances'] === 'Yes' ? row('Controlled Substance Schedule', f['Controlled Substance Schedule']) : ''}
+    ${f['Controlled Substances'] === 'Yes' ? row('MAT Services', f['MAT Services']) : ''}
+    ${row('Interventional Route', f['Interventional Route'])}
+    ${f['Interventional Practice Notes'] ? row('Interventional Notes', f['Interventional Practice Notes']) : ''}
     ${row('TMS', f['TMS'])}
     ${section('Legal & Board Standing')}
     ${row('Board Disciplinary Action', f['Board Action'])}
