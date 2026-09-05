@@ -320,6 +320,29 @@
   .state-pill + label:hover { border-color: var(--teal-light); background: #eaf4f4; }
   .state-pill:checked + label:hover { background: var(--teal); }
 
+  .conditional-field {
+    display: none;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-top: 0.4rem;
+    padding-left: 1rem;
+    border-left: 2px solid var(--teal-light);
+  }
+  .conditional-field.visible { display: flex; }
+  .conditional-field label { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--teal); }
+  .conditional-field textarea {
+    background: white;
+    border: 1px solid var(--border);
+    border-bottom: 2px solid var(--teal-light);
+    padding: 0.6rem 0.8rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--ink);
+    outline: none;
+    resize: vertical;
+    border-radius: 0;
+  }
+
   /* Radio pills */
   .why-row { display: flex; flex-direction: column; gap: 0.5rem; }
 
@@ -555,10 +578,32 @@
     </div>
   </div>
 
-  <!-- 03 · Referral -->
+  <!-- 03 · Purpose -->
   <div class="section">
     <div class="section-header">
       <span class="section-number">03</span>
+      <span class="section-title">What Brings You to MD-Match?</span>
+    </div>
+    <div class="why-block">
+      <div class="why-row">
+        <div class="why-label">What brings you to MD-Match? (optional)</div>
+        <div class="radio-row" style="flex-direction:column;gap:0.3rem;">
+          <label><input type="radio" name="Why Seeking Collaboration" value="Looking to start my own private practice" onchange="toggleSwitchReason(false)"> <span>Looking to start my own private practice</span></label>
+          <label><input type="radio" name="Why Seeking Collaboration" value="Joining a group practice" onchange="toggleSwitchReason(false)"> <span>Joining a group practice</span></label>
+          <label><input type="radio" name="Why Seeking Collaboration" value="Switching to a new collaborator" onchange="toggleSwitchReason(true)"> <span>Switching to a new collaborator</span></label>
+        </div>
+        <div class="conditional-field" id="switch-reason-field">
+          <label>What is the reason for switching?</label>
+          <textarea name="Why Switching" placeholder="Please briefly describe why you are looking for a new collaborator…" rows="3"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 04 · Referral -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">04</span>
       <span class="section-title">How Did You Hear About Us?</span>
     </div>
     <div class="field-grid">
@@ -610,6 +655,11 @@
   function updateCount() {
     const n = document.querySelectorAll('.state-pill:checked').length;
     document.getElementById('state-count').textContent = n === 0 ? '0 selected' : `${n} selected`;
+  }
+
+  function toggleSwitchReason(show) {
+    document.getElementById('switch-reason-field').classList.toggle('visible', show);
+    if (!show) document.querySelector('textarea[name="Why Switching"]').value = '';
   }
 
   function selectAll() {
