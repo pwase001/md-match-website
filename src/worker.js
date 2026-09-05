@@ -1967,6 +1967,7 @@ async function handleNpPaIntakeStep1(request, env) {
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">State(s)</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${statesList}</td></tr>
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Specialty</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Specialty'] || '—'}</td></tr>
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Practice Setting</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['practice_setting_step1'] || '—'}</td></tr>
+    <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Patient Population</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Patient Population'] || '—'}</td></tr>
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Ideal Start Date</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Ideal Start Date'] || '—'}</td></tr>
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">First Patient Timeline</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['First Patient Timeline'] || '—'}</td></tr>
     ${fields['Referred By'] ? `<tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Referred By</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Referred By']}</td></tr>` : ''}
@@ -2057,7 +2058,8 @@ async function handleNpPaIntakeStep2(request, env) {
       'Provider Type': providerTypeMap[step1Fields['Provider Type']] || step1Fields['Provider Type'] || '—',
       'Specialty': step1Fields['Specialty'] || '—',
       'States Needing Collaboration': statesList,
-      'Practice Setting': practiceSettingMap[step1Fields['practice_setting_step1']] || step1Fields['practice_setting_step1'] || '—',
+      'Practice Setting': step1Fields['practice_setting_step1'] || '—',
+      'Patient Population': step1Fields['Patient Population'] || '—',
       'Ideal Start Date': step1Fields['Ideal Start Date'] || '—',
       'First Patient Timeline': step1Fields['First Patient Timeline'] || '—',
       'Referred By': step1Fields['Referred By'] || '',
@@ -2070,6 +2072,7 @@ async function handleNpPaIntakeStep2(request, env) {
       'IM Ketamine': yesNoMap[fields['im_ketamine']] || fields['im_ketamine'] || '—',
       'Intranasal Ketamine': yesNoMap[fields['intranasal_ketamine']] || fields['intranasal_ketamine'] || '—',
       'TMS': yesNoMap[fields['tms_clinical']] || fields['tms_clinical'] || '—',
+      'Family Medicine Services': fields['Family Medicine Services'] || '',
       'Additional Information': fields['Anything Else We Should Know'] || '',
     };
 
@@ -2146,6 +2149,7 @@ function buildStep2Summary(f) {
     ${section('Collaboration & Practice')}
     ${row('States Needing Collaboration', f['States Needing Collaboration'])}
     ${row('Practice Setting', f['Practice Setting'])}
+    ${row('Patient Population', f['Patient Population'])}
     ${row('Ideal Start Date', f['Ideal Start Date'])}
     ${row('First Patient Timeline', f['First Patient Timeline'])}
     ${section('Clinical Services')}
@@ -2157,6 +2161,7 @@ function buildStep2Summary(f) {
     ${row('IM Ketamine', f['IM Ketamine'])}
     ${row('Intranasal Ketamine', f['Intranasal Ketamine'])}
     ${row('TMS Therapy', f['TMS'])}
+    ${f['Family Medicine Services'] ? row('Family Medicine Services', f['Family Medicine Services']) : ''}
     ${section('Additional Information')}
     ${row('Additional Notes', f['Additional Information'] || 'None provided')}
     ${f['Referred By'] ? row('Referred By', f['Referred By']) : ''}
