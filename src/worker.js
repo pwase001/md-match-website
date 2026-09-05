@@ -1970,6 +1970,8 @@ async function handleNpPaIntakeStep1(request, env) {
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Patient Population</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Patient Population'] || '—'}</td></tr>
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Ideal Start Date</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Ideal Start Date'] || '—'}</td></tr>
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">First Patient Timeline</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['First Patient Timeline'] || '—'}</td></tr>
+    ${fields['Why Seeking Collaboration'] ? `<tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">What Brings Them</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Why Seeking Collaboration']}</td></tr>` : ''}
+    ${fields['Why Switching'] ? `<tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Reason for Switching</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Why Switching']}</td></tr>` : ''}
     ${fields['Referred By'] ? `<tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Referred By</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Referred By']}</td></tr>` : ''}
   </table>
   <p style="color:#aaa;font-size:11px;margin-top:24px">Submission ID: ${id} · MD-Match.com</p>
@@ -2062,6 +2064,8 @@ async function handleNpPaIntakeStep2(request, env) {
       'Patient Population': step1Fields['Patient Population'] || '—',
       'Ideal Start Date': step1Fields['Ideal Start Date'] || '—',
       'First Patient Timeline': step1Fields['First Patient Timeline'] || '—',
+      'Why Seeking Collaboration': step1Fields['Why Seeking Collaboration'] || '',
+      'Why Switching': step1Fields['Why Switching'] || '',
       'Referred By': step1Fields['Referred By'] || '',
       // Step 2 clinical fields
       'Controlled Substances': controlledMap[fields['controlled']] || fields['controlled'] || '—',
@@ -2162,6 +2166,8 @@ function buildStep2Summary(f) {
     ${row('Intranasal Ketamine', f['Intranasal Ketamine'])}
     ${row('TMS Therapy', f['TMS'])}
     ${f['Family Medicine Services'] ? row('Family Medicine Services', f['Family Medicine Services']) : ''}
+    ${f['Why Seeking Collaboration'] ? row('What Brought Them', f['Why Seeking Collaboration']) : ''}
+    ${f['Why Switching'] ? row('Reason for Switching', f['Why Switching']) : ''}
     ${section('Additional Information')}
     ${row('Additional Notes', f['Additional Information'] || 'None provided')}
     ${f['Referred By'] ? row('Referred By', f['Referred By']) : ''}
