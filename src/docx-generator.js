@@ -204,7 +204,9 @@ export async function generateNpPaIntakeDocx(f) {
     labelRow('Controlled Substances', f['Controlled Substances']),
     ...(f['Stimulants Frequency'] ? [labelRow('Stimulants (Frequency)', f['Stimulants Frequency'])] : []),
     ...(f['Benzodiazepines Frequency'] ? [labelRow('Benzodiazepines (Frequency)', f['Benzodiazepines Frequency'])] : []),
-    labelRow('MAT (Opioid Use Disorder)', f['MAT Services']),
+    labelRow('Buprenorphine / Suboxone', f['Buprenorphine / Suboxone']),
+    labelRow('IV Ketamine', f['IV Ketamine']),
+    labelRow('IM Ketamine', f['IM Ketamine']),
     labelRow('Intranasal Ketamine', f['Intranasal Ketamine']),
     labelRow('TMS Therapy', f['TMS']),
   ];

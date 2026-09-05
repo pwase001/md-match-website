@@ -477,11 +477,29 @@
       </div>
 
       <div class="why-row">
-        <div class="why-label">Do you prescribe (or plan to prescribe) Medication Assisted Treatment (MAT) for opioid use disorder? <span class="req">*</span></div>
+        <div class="why-label">Do you prescribe (or plan to prescribe) Buprenorphine / Suboxone? <span class="req">*</span></div>
         <div class="radio-row">
-          <label><input type="radio" name="mat_clinical" value="Yes"> <span>Yes</span></label>
-          <label><input type="radio" name="mat_clinical" value="No"> <span>No</span></label>
-          <label><input type="radio" name="mat_clinical" value="Planning to"> <span>Planning to</span></label>
+          <label><input type="radio" name="buprenorphine" value="Yes"> <span>Yes</span></label>
+          <label><input type="radio" name="buprenorphine" value="No"> <span>No</span></label>
+          <label><input type="radio" name="buprenorphine" value="Planning to"> <span>Planning to</span></label>
+        </div>
+      </div>
+
+      <div class="why-row">
+        <div class="why-label">Do you prescribe (or plan to prescribe) IV Ketamine? <span class="req">*</span></div>
+        <div class="radio-row">
+          <label><input type="radio" name="iv_ketamine" value="Yes"> <span>Yes</span></label>
+          <label><input type="radio" name="iv_ketamine" value="No"> <span>No</span></label>
+          <label><input type="radio" name="iv_ketamine" value="Planning to"> <span>Planning to</span></label>
+        </div>
+      </div>
+
+      <div class="why-row">
+        <div class="why-label">Do you prescribe (or plan to prescribe) IM (Intramuscular) Ketamine? <span class="req">*</span></div>
+        <div class="radio-row">
+          <label><input type="radio" name="im_ketamine" value="Yes"> <span>Yes</span></label>
+          <label><input type="radio" name="im_ketamine" value="No"> <span>No</span></label>
+          <label><input type="radio" name="im_ketamine" value="Planning to"> <span>Planning to</span></label>
         </div>
       </div>
 
@@ -557,7 +575,7 @@
     e.preventDefault();
     const btn = this.querySelector('.btn-submit');
 
-    const requiredRadios = ['controlled', 'mat_clinical', 'intranasal_ketamine', 'tms_clinical'];
+    const requiredRadios = ['controlled', 'buprenorphine', 'iv_ketamine', 'im_ketamine', 'intranasal_ketamine', 'tms_clinical'];
     for (const name of requiredRadios) {
       if (!document.querySelector(`input[name="${name}"]:checked`)) {
         alert('Please answer all required questions before submitting.');
