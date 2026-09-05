@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://md-match.com/</loc>
-    <lastmod>2026-08-02</lastmod>
-  </url>
-  <url>
-    <loc>https://md-match.com/psychiatry-match-np-pa-intake</loc>
-    <lastmod>2026-08-02</lastmod>
-  </url>
-  <url>
-    <loc>https://md-match.com/md-match-physician-intake</loc>
-    <lastmod>2026-08-02</lastmod>
-  </url>
-  <url>
-    <loc>https://md-match.com/collaborating-physician-texas</loc>
+    <loc>https://www.md-match.com/</loc>
     <lastmod>2026-09-05</lastmod>
   </url>
   <url>
-    <loc>https://md-match.com/collaborating-physician-pennsylvania</loc>
+    <loc>https://www.md-match.com/np-pa-intake.html</loc>
     <lastmod>2026-09-05</lastmod>
   </url>
   <url>
-    <loc>https://md-match.com/collaborating-physician-florida</loc>
+    <loc>https://www.md-match.com/md-match-physician-intake.html</loc>
+    <lastmod>2026-09-05</lastmod>
+  </url>
+  <url>
+    <loc>https://www.md-match.com/collaborating-physician-texas.html</loc>
+    <lastmod>2026-09-05</lastmod>
+  </url>
+  <url>
+    <loc>https://www.md-match.com/collaborating-physician-pennsylvania.html</loc>
+    <lastmod>2026-09-05</lastmod>
+  </url>
+  <url>
+    <loc>https://www.md-match.com/collaborating-physician-florida.html</loc>
     <lastmod>2026-09-05</lastmod>
   </url>
 </urlset>
