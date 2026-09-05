@@ -516,20 +516,22 @@
       </div>
     </div>
 
-    <div class="why-row" style="margin-bottom:1.4rem">
-      <div class="why-label">When do you need a collaborator? <span class="req">*</span></div>
-      <div class="radio-row">
-        <label><input type="radio" name="timeline" value="Immediately" required> <span>Immediately</span></label>
-        <label><input type="radio" name="timeline" value="1–3 months"> <span>1–3 months</span></label>
-        <label><input type="radio" name="timeline" value="Just exploring"> <span>Just exploring</span></label>
+    <div class="field-grid" style="margin-bottom:1.4rem">
+      <div class="field">
+        <label>Ideal Start Date for Collaboration</label>
+        <input type="date" name="Ideal Start Date">
       </div>
     </div>
 
     <div class="why-row" style="margin-bottom:1.4rem">
-      <div class="why-label">Do you currently have a collaborating physician? <span class="req">*</span></div>
-      <div class="radio-row">
-        <label><input type="radio" name="has_collaborator" value="Yes" required> <span>Yes</span></label>
-        <label><input type="radio" name="has_collaborator" value="No"> <span>No</span></label>
+      <div class="why-label">When do you plan to see your first patient?</div>
+      <div class="radio-row" style="flex-direction:column;gap:0.3rem;">
+        <label><input type="radio" name="First Patient Timeline" value="I am already seeing patients"> <span>I am already seeing patients</span></label>
+        <label><input type="radio" name="First Patient Timeline" value="Within 2 weeks"> <span>Within 2 weeks</span></label>
+        <label><input type="radio" name="First Patient Timeline" value="Within 4 weeks"> <span>Within 4 weeks</span></label>
+        <label><input type="radio" name="First Patient Timeline" value="Within 2 months"> <span>Within 2 months</span></label>
+        <label><input type="radio" name="First Patient Timeline" value="Within 3 months"> <span>Within 3 months</span></label>
+        <label><input type="radio" name="First Patient Timeline" value="I still need an extensive amount of credentialing and expect to wait longer than 3 months to see my first patient"> <span>I still need an extensive amount of credentialing and expect to wait longer than 3 months to see my first patient</span></label>
       </div>
     </div>
 
@@ -619,7 +621,7 @@
     const btn = this.querySelector('.btn-submit');
 
     // Validate required radio groups
-    const requiredRadios = ['practice_setting_step1', 'timeline', 'has_collaborator'];
+    const requiredRadios = ['practice_setting_step1'];
     for (const name of requiredRadios) {
       if (!document.querySelector(`input[name="${name}"]:checked`)) {
         alert('Please answer all required questions before continuing.');
