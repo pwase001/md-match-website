@@ -1969,6 +1969,7 @@ async function handleNpPaIntakeStep1(request, env) {
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Practice Setting</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['practice_setting_step1'] || '—'}</td></tr>
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Patient Population</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Patient Population'] || '—'}</td></tr>
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Weekly Hours</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Weekly Hours Per Week'] || '—'}</td></tr>
+    <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Practice Site Address</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Practice Site Address'] || '—'}</td></tr>
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Ideal Start Date</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Ideal Start Date'] || '—'}</td></tr>
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">First Patient Timeline</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['First Patient Timeline'] || '—'}</td></tr>
     ${fields['Why Seeking Collaboration'] ? `<tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">What Brings Them</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Why Seeking Collaboration']}</td></tr>` : ''}
@@ -2073,6 +2074,7 @@ async function handleNpPaIntakeStep2(request, env) {
       'Practice Setting': step1Fields['practice_setting_step1'] || '—',
       'Patient Population': step1Fields['Patient Population'] || '—',
       'Weekly Hours Per Week': step1Fields['Weekly Hours Per Week'] || '—',
+      'Practice Site Address': step1Fields['Practice Site Address'] || '',
       'Ideal Start Date': step1Fields['Ideal Start Date'] || '—',
       'First Patient Timeline': step1Fields['First Patient Timeline'] || '—',
       'Why Seeking Collaboration': step1Fields['Why Seeking Collaboration'] || '',
@@ -2183,6 +2185,7 @@ function buildStep2Summary(f) {
     ${row('Practice Setting', f['Practice Setting'])}
     ${row('Patient Population', f['Patient Population'])}
     ${row('Weekly Hours Per Week', f['Weekly Hours Per Week'])}
+    ${f['Practice Site Address'] ? row('Practice Site Address', f['Practice Site Address']) : ''}
     ${row('Ideal Start Date', f['Ideal Start Date'])}
     ${row('First Patient Timeline', f['First Patient Timeline'])}
     ${section('Clinical Services')}
