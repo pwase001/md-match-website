@@ -243,6 +243,7 @@ export async function generateNpPaIntakeDocx(f) {
           labelRow('States Needing Collaboration', f['States Needing Collaboration']),
           labelRow('Practice Setting', f['Practice Setting']),
           labelRow('Patient Population', f['Patient Population']),
+          labelRow('Weekly Hours Per Week', f['Weekly Hours Per Week']),
           labelRow('Ideal Start Date', f['Ideal Start Date']),
           labelRow('First Patient Timeline', f['First Patient Timeline']),
         ]),

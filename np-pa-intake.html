@@ -545,17 +545,16 @@
       </div>
       <div class="field">
         <label>Specialty <span class="req">*</span></label>
-        <select name="Specialty / Certification" required>
+        <select name="Specialty / Certification" required onchange="toggleSpecialtyOther(this.value)">
           <option value="">— Select —</option>
-          <option>PMHNP – Psychiatric-Mental Health NP</option>
-          <option>FNP – Family Nurse Practitioner</option>
-          <option>ANP – Adult Nurse Practitioner</option>
-          <option>PNP – Pediatric Nurse Practitioner</option>
-          <option>PA-C – Certified Physician Assistant (Psychiatry)</option>
-          <option>PA-C – Certified Physician Assistant (Family Medicine)</option>
-          <option>PA-C – Other Specialty</option>
-          <option>Other / In Progress</option>
+          <option value="Mental Health / Psychiatric">Mental Health / Psychiatric</option>
+          <option value="Family Medicine">Family Medicine</option>
+          <option value="Other">Other</option>
         </select>
+        <div class="conditional-field" id="specialty-other-field" style="margin-top:0.5rem;">
+          <label>Please specify your specialty <span class="req">*</span></label>
+          <textarea name="Specialty Other Text" id="specialtyOtherText" placeholder="Describe your specialty…" rows="2"></textarea>
+        </div>
       </div>
     </div>
   </div>
@@ -607,15 +606,26 @@
       </div>
     </div>
 
+    <div class="why-row" style="margin-bottom:1.4rem">
+      <div class="why-label">How many hours per week are you working, or do you plan to work? <span class="req">*</span></div>
+      <div class="radio-row" style="flex-direction:column;gap:0.3rem;">
+        <label><input type="radio" name="Weekly Hours Per Week" value="1–10 hours" required> <span>1–10 hours</span></label>
+        <label><input type="radio" name="Weekly Hours Per Week" value="11–20 hours"> <span>11–20 hours</span></label>
+        <label><input type="radio" name="Weekly Hours Per Week" value="21–30 hours"> <span>21–30 hours</span></label>
+        <label><input type="radio" name="Weekly Hours Per Week" value="31–40 hours"> <span>31–40 hours</span></label>
+        <label><input type="radio" name="Weekly Hours Per Week" value="40+ hours"> <span>40+ hours</span></label>
+      </div>
+    </div>
+
     <div class="field-grid" style="margin-bottom:1.4rem">
       <div class="field">
-        <label>Ideal Start Date for Collaboration</label>
-        <input type="date" name="Ideal Start Date">
+        <label>Ideal Start Date for Collaboration <span class="req">*</span></label>
+        <input type="date" name="Ideal Start Date" required>
       </div>
     </div>
 
     <div class="why-row" style="margin-bottom:1.4rem">
-      <div class="why-label">When do you plan to see your first patient?</div>
+      <div class="why-label">When do you plan to see your first patient? <span class="req">*</span></div>
       <div class="radio-row" style="flex-direction:column;gap:0.3rem;">
         <label><input type="radio" name="First Patient Timeline" value="I am already seeing patients"> <span>I am already seeing patients</span></label>
         <label><input type="radio" name="First Patient Timeline" value="Within 2 weeks"> <span>Within 2 weeks</span></label>
@@ -700,6 +710,15 @@
     if (!show) document.querySelector('textarea[name="Why Switching"]').value = '';
   }
 
+  function toggleSpecialtyOther(val) {
+    const field = document.getElementById('specialty-other-field');
+    const textarea = document.getElementById('specialtyOtherText');
+    const show = val === 'Other';
+    field.classList.toggle('visible', show);
+    textarea.required = show;
+    if (!show) textarea.value = '';
+  }
+
   function selectAll() {
     document.querySelectorAll('.state-pill').forEach(el => el.checked = true);
     updateCount();
@@ -717,10 +736,27 @@
     const btn = this.querySelector('.btn-submit');
 
     // Validate required radio groups
-    const requiredRadios = ['practice_setting_step1'];
+    const requiredRadios = ['practice_setting_step1', 'Weekly Hours Per Week', 'First Patient Timeline'];
     for (const name of requiredRadios) {
       if (!document.querySelector(`input[name="${name}"]:checked`)) {
         alert('Please answer all required questions before continuing.');
+        return;
+      }
+    }
+
+    // Validate ideal start date
+    const startDate = document.querySelector('input[name="Ideal Start Date"]');
+    if (!startDate || !startDate.value) {
+      alert('Please provide your ideal start date for collaboration.');
+      return;
+    }
+
+    // Validate specialty Other text if Other is selected
+    const specialtySelect = document.querySelector('select[name="Specialty / Certification"]');
+    if (specialtySelect && specialtySelect.value === 'Other') {
+      const otherText = document.getElementById('specialtyOtherText');
+      if (!otherText || !otherText.value.trim()) {
+        alert('Please specify your specialty.');
         return;
       }
     }
