@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-18417505552"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'AW-18417505552');
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Collaborating Physician in Indiana | APRN CPA &amp; 5% Rule</title>
+<meta name="description" content="Indiana requires 5% random chart sampling submitted within 7 days, a CPA filed with the Board before prescribing, and a state CSR. From a physician licensed in IN.">
+<link rel="icon" type="image/svg+xml" href="/logo.svg">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Nunito:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --teal-deep: #0b3535;
+    --teal: #1a6b6b;
+    --teal-light: #2a9090;
+    --teal-pale: #e8f5f5;
+    --gold: #c9a84c;
+    --gold-light: #e2c97e;
+    --white: #ffffff;
+    --off-white: #f8fbfb;
+    --text: #1a3333;
+    --muted: #4a6b6b;
+    --border: #d0e2e2;
+    --nav-h: 68px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Nunito', sans-serif; color: var(--text); background: var(--white); font-size: 15px; line-height: 1.7; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    height: var(--nav-h);
+    background: rgba(11,53,53,0.97);
+    backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2.5rem;
+    border-bottom: 1px solid rgba(201,168,76,0.2);
+  }
+  .nav-brand { display: flex; flex-direction: column; gap: 0; text-decoration: none; }
+  .nav-logo { font-family: 'Playfair Display', serif; font-size: 1.35rem; color: var(--white); letter-spacing: -0.01em; }
+  .nav-logo em { color: var(--gold); font-style: italic; }
+  .nav-sub { font-size: 9px; color: rgba(255,255,255,0.45); letter-spacing: 0.14em; text-transform: uppercase; }
+  .nav-links { display: flex; align-items: center; gap: 2rem; }
+  .nav-links a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--gold-light); }
+  .nav-links a.nav-btn { background: transparent; border: 1.5px solid rgba(201,168,76,0.6); color: var(--gold-light); padding: 0.42rem 1.1rem; border-radius: 4px; transition: all 0.2s; }
+  .nav-links a.nav-btn:hover { background: var(--gold); color: var(--teal-deep); border-color: var(--gold); }
+  .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; }
+  .hamburger span { display: block; width: 22px; height: 2px; background: var(--white); border-radius: 2px; }
+  .mobile-menu { display: none; position: fixed; inset: 0; top: var(--nav-h); background: var(--teal-deep); z-index: 99; flex-direction: column; padding: 2rem; gap: 1rem; overflow-y: auto; }
+  .mobile-menu.open { display: flex; }
+  .mobile-menu a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 1.1rem; font-weight: 600; padding: 0.8rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+
+  /* PAGE HERO */
+  .page-hero {
+    padding: calc(var(--nav-h) + 3.5rem) 2rem 3rem;
+    background: linear-gradient(150deg, var(--teal-deep) 0%, #0f4242 55%, #1a6060 100%);
+    text-align: center;
+  }
+  .page-hero-inner { max-width: 760px; margin: 0 auto; }
+  .page-eyebrow { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); font-weight: 700; margin-bottom: 1.2rem; display: flex; align-items: center; justify-content: center; gap: 0.7rem; }
+  .page-eyebrow::before, .page-eyebrow::after { content: ''; display: block; width: 32px; height: 1px; background: var(--gold); opacity: 0.6; }
+  .page-hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(1.8rem, 4vw, 2.9rem); color: var(--white); font-weight: 400; line-height: 1.25; margin-bottom: 1.2rem; }
+  .page-hero-sub { font-size: 1rem; color: rgba(255,255,255,0.65); font-weight: 300; max-width: 580px; margin: 0 auto 2rem; line-height: 1.8; }
+  .byline { font-size: 12px; color: rgba(255,255,255,0.4); letter-spacing: 0.06em; margin-top: 1.5rem; }
+
+  /* CONTENT */
+  .content-wrap { max-width: 780px; margin: 0 auto; padding: 3.5rem 2rem 5rem; }
+
+  .quick-answers {
+    background: var(--teal-pale);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 2rem 2.2rem;
+    margin-bottom: 3rem;
+  }
+  .quick-answers h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.35rem;
+    color: var(--teal-deep);
+    margin-bottom: 1.4rem;
+    font-weight: 600;
+  }
+  .qa-item { margin-bottom: 1.3rem; }
+  .qa-item:last-child { margin-bottom: 0; }
+  .qa-q { font-weight: 800; color: var(--teal-deep); font-size: 15px; margin-bottom: 0.3rem; }
+  .qa-a { color: var(--muted); font-size: 14.5px; line-height: 1.75; }
+
+  .content-section { margin-bottom: 2.8rem; }
+  .content-section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.55rem;
+    color: var(--teal-deep);
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid var(--border);
+  }
+  .content-section h3 {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--teal-deep);
+    margin: 1.4rem 0 0.4rem;
+  }
+  .content-section p { color: var(--text); font-size: 15px; line-height: 1.85; margin-bottom: 1rem; }
+  .content-section p:last-child { margin-bottom: 0; }
+  .content-section strong { color: var(--teal-deep); }
+  .content-section ol, .content-section ul { padding-left: 1.4rem; color: var(--text); font-size: 15px; line-height: 2; margin-bottom: 1rem; }
+  .content-section ol li, .content-section ul li { margin-bottom: 0.3rem; }
+  .content-section em { font-style: italic; }
+
+  .statute-note {
+    background: var(--off-white);
+    border-left: 3px solid var(--teal-light);
+    padding: 1rem 1.2rem;
+    margin: 1.2rem 0;
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.75;
+    font-style: italic;
+    border-radius: 0 6px 6px 0;
+  }
+
+  /* FAQ */
+  .faq-section { margin-bottom: 2.8rem; }
+  .faq-section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.55rem;
+    color: var(--teal-deep);
+    font-weight: 600;
+    margin-bottom: 1.2rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid var(--border);
+  }
+  .faq-item { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0.5rem; overflow: hidden; background: var(--off-white); }
+  .faq-q { width: 100%; text-align: left; background: none; border: none; padding: 1rem 1.2rem; font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700; color: var(--teal-deep); cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 1rem; line-height: 1.4; }
+  .faq-q:hover { background: #f0f7f7; }
+  .faq-icon { font-size: 18px; color: var(--teal); flex-shrink: 0; transition: transform 0.2s; }
+  .faq-q[aria-expanded="true"] .faq-icon { transform: rotate(45deg); }
+  .faq-a { display: none; padding: 0 1.2rem 1rem; font-size: 14.5px; color: var(--muted); line-height: 1.75; border-top: 1px solid var(--border); }
+  .faq-a.open { display: block; }
+
+  /* CTA block */
+  .cta-block {
+    background: var(--teal-deep);
+    border-radius: 10px;
+    padding: 2.5rem 2.5rem;
+    text-align: center;
+    margin: 3rem 0;
+  }
+  .cta-block h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    color: var(--white);
+    font-weight: 400;
+    margin-bottom: 0.8rem;
+  }
+  .cta-block p { color: rgba(255,255,255,0.6); font-size: 14px; margin-bottom: 1.5rem; }
+  .btn-gold { display: inline-block; background: var(--gold); color: var(--teal-deep); padding: 0.85rem 2rem; border-radius: 4px; font-weight: 800; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; text-decoration: none; transition: all 0.2s; border: 2px solid var(--gold); }
+  .btn-gold:hover { background: var(--gold-light); border-color: var(--gold-light); }
+
+  /* Disclaimer */
+  .disclaimer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 1.5rem; margin-top: 1rem; line-height: 1.75; font-style: italic; }
+
+  /* FOOTER */
+  footer { background: var(--teal-deep); padding: 3.5rem 2rem; }
+  .footer-inner { max-width: 1060px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr; gap: 3rem; }
+  .footer-brand-name { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--white); }
+  .footer-brand-name em { color: var(--gold); font-style: italic; }
+  .footer-brand-sub { font-size: 11px; color: rgba(255,255,255,0.4); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 0.2rem; margin-bottom: 1rem; }
+  .footer-desc { font-size: 13px; color: rgba(255,255,255,0.5); line-height: 1.75; max-width: 360px; }
+  .footer-col-title { font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); font-weight: 700; margin-bottom: 1rem; }
+  .footer-col a { display: block; font-size: 13px; color: rgba(255,255,255,0.55); text-decoration: none; margin-bottom: 0.5rem; transition: color 0.2s; }
+  .footer-col a:hover { color: var(--white); }
+  .footer-bottom { max-width: 1060px; margin: 2.5rem auto 0; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+  .footer-copy { font-size: 11.5px; color: rgba(255,255,255,0.35); }
+
+  @media (max-width: 900px) {
+    .footer-inner { grid-template-columns: 1fr; gap: 2rem; }
+    .nav-links { display: none; }
+    .hamburger { display: flex; }
+  }
+  @media (max-width: 600px) {
+    nav { padding: 0 1.2rem; }
+    .content-wrap { padding: 2rem 1.2rem 4rem; }
+    .quick-answers { padding: 1.5rem 1.3rem; }
+    .cta-block { padding: 2rem 1.3rem; }
+    .page-hero { padding-left: 1.2rem; padding-right: 1.2rem; }
+    .footer-inner { gap: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="/" class="nav-brand">
+    <span class="nav-logo">MD-<em>Match</em></span>
+    <span class="nav-sub">Collaborating Physician Network</span>
+  </a>
+  <div class="nav-links">
+    <a href="/#goals">Our Goals</a>
+    <a href="/#for-nps">For NPs &amp; PAs</a>
+    <a href="/#for-physicians">For Physicians</a>
+    <a href="/#faq">FAQ</a>
+    <a href="/np-pa-intake.html" target="_blank" class="nav-btn">NPs and PAs get my free quote</a>
+    <a href="/md-match-physician-intake.html" target="_blank" class="nav-btn">Physicians join our network</a>
+  </div>
+  <div class="hamburger" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="/" onclick="closeMenu()">Home</a>
+  <a href="/#goals" onclick="closeMenu()">Our Goals</a>
+  <a href="/#for-nps" onclick="closeMenu()">For NPs &amp; PAs</a>
+  <a href="/#for-physicians" onclick="closeMenu()">For Physicians</a>
+  <a href="/#faq" onclick="closeMenu()">FAQ</a>
+  <a href="/np-pa-intake.html" target="_blank" onclick="closeMenu()">NPs and PAs get my free quote</a>
+  <a href="/md-match-physician-intake.html" target="_blank" onclick="closeMenu()">Physicians join our network</a>
+</div>
+
+<!-- PAGE HERO -->
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-eyebrow">Indiana State Guide</div>
+    <h1>Collaborating Physicians in Indiana: What APRNs Need</h1>
+    <p class="page-hero-sub"><strong style="color:rgba(255,255,255,0.85)">Indiana's chart review requirement is small in volume and fast in tempo — and the tempo is what people miss.</strong></p>
+    <p class="byline">Reviewed by Philip Wasef, MD — actively collaborating physician, licensed in 45 states including Indiana. Last updated: September 2026.</p>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="content-wrap">
+
+  <p style="color:var(--muted);font-size:15px;line-height:1.85;margin-bottom:2.5rem;">You must submit documentation of your prescribing practices to your collaborating physician <strong style="color:var(--teal-deep)">within seven days</strong>, including <strong style="color:var(--teal-deep)">at least a 5% random sampling</strong> of charts and medications prescribed. Five percent is a modest sample. Seven days is a short clock. Indiana also requires your collaborative practice agreement to be <strong style="color:var(--teal-deep)">filed with the Board before you prescribe anything</strong>, and a <strong style="color:var(--teal-deep)">state Controlled Substances Registration</strong> separate from your federal DEA.</p>
+
+  <!-- Quick Answers -->
+  <div class="quick-answers">
+    <h2>Quick Answers</h2>
+
+    <div class="qa-item">
+      <div class="qa-q">Do Indiana APRNs need a collaborating physician?</div>
+      <div class="qa-a">Yes. Prescriptive authority requires a written collaborative practice agreement with a licensed practitioner, submitted to the Indiana State Board of Nursing.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">Can I prescribe while the application is pending?</div>
+      <div class="qa-a">No. Prescriptive authority is granted by the Board. Submit the agreement and the fee, and wait for issuance.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">How much chart review is required?</div>
+      <div class="qa-a">At least a <strong>5% random sampling</strong> of charts and medications prescribed, with documentation submitted to your collaborating physician <strong>within seven days</strong>.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">How many APRNs can one physician collaborate with?</div>
+      <div class="qa-a">No numeric limit.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">Is there a distance requirement?</div>
+      <div class="qa-a">No mileage rule. The Board's sample agreement does ask you to address <strong>proximity</strong> as part of how you'll collaborate, alongside information sharing and coverage during absences — so it's something your agreement speaks to, not a line you can't cross.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">Do I need a state controlled substance registration?</div>
+      <div class="qa-a"><strong>Yes.</strong> Indiana requires a Controlled Substances Registration — <strong>$60</strong> — and you must hold one to prescribe controlled substances in Indiana. A separate registration is needed for <strong>each physical location</strong> where controlled substances are stored. Federal DEA registration is also required.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">Does my collaborating physician need one?</div>
+      <div class="qa-a">Not for your authority. The registration requirement attaches to the prescriber. Nothing in the statute, the rule, or the Board's sample agreement conditions your prescribing on the physician holding a CSR.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">Can Indiana APRNs prescribe Schedule II?</div>
+      <div class="qa-a">Yes. Indiana APRNs are authorised to prescribe drugs including controlled substances, with any limits set out in your agreement.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">When does prescriptive authority renew?</div>
+      <div class="qa-a">It expires <strong>31 October of the odd-numbered year</strong> following the year it was granted or renewed, and renews for successive two-year periods.</div>
+    </div>
+  </div>
+
+  <!-- Seven-day rhythm -->
+  <div class="content-section">
+    <h2>The Seven-Day Rhythm</h2>
+    <p>This is the operational heart of an Indiana collaboration, and it's worth understanding before you choose a collaborator.</p>
+    <p><strong>What's required:</strong> documentation of your prescribing practices submitted to your collaborating physician within seven days, including at least a 5% random sampling of the charts and medications you've prescribed.</p>
+    <p><strong>Why the tempo matters more than the percentage.</strong> A 5% sample is genuinely light — lighter than Missouri's 10%, far lighter than Tennessee's 20%. But a seven-day turnaround means this is a weekly rhythm rather than a monthly task, and it's the kind of obligation that lapses quietly because each individual instance feels small.</p>
+    <p><strong>What to establish before you sign.</strong> How the documentation gets to your physician, in what format, and what happens when either of you is away. An arrangement where this is left vague is an arrangement where it stops happening in month three and nobody notices until it's a year of gaps.</p>
+    <p>A physician who asks <em>how</em> you'll handle the seven-day submission is a physician who intends to do the work. One who waves it off is telling you something.</p>
+  </div>
+
+  <!-- Other agreements disclosure -->
+  <div class="content-section">
+    <h2>The Agreement Has to Disclose Your Other Agreements</h2>
+    <p>Indiana includes a requirement most states don't: your collaborative practice agreement must contain <strong>a list of all other written practice agreements held by both you and the collaborating practitioner.</strong></p>
+    <p><strong>Both parties. All of them.</strong></p>
+    <p>That's a transparency mechanism, and it has a practical consequence: <strong>you will see how many other APRNs your prospective physician is already collaborating with.</strong></p>
+    <p>Indiana sets no numeric cap, so there's no threshold that disqualifies anyone. But a physician with a long list is a physician whose seven-day reviews are spread thin, and you're entitled to ask how that works in practice before you sign. Few states hand you that information as a matter of course.</p>
+  </div>
+
+  <!-- Agreement contents -->
+  <div class="content-section">
+    <h2>What the Agreement Must Contain</h2>
+    <p>Per the Board's requirements and its sample form:</p>
+    <ul>
+      <li><strong>Complete names, home and business addresses, postcodes and telephone numbers</strong> for both parties</li>
+      <li><strong>Practice locations</strong> where prescriptive authority applies</li>
+      <li><strong>Specialty certifications</strong> of both the licensed practitioner and the APRN</li>
+      <li><strong>The specific manner of collaboration</strong> — how you'll work together, share information, maintain proximity, and cover absences</li>
+      <li><strong>Any limitations</strong> on your prescriptive authority</li>
+      <li><strong>How the physician reviews your prescribing practices</strong>, including the 5% sampling and seven-day submission</li>
+      <li><strong>A list of all other written practice agreements</strong> of both parties</li>
+      <li><strong>Duration</strong> — start date and termination conditions</li>
+    </ul>
+  </div>
+
+  <!-- Approval checklist -->
+  <div class="content-section">
+    <h2>Approval Checklist</h2>
+    <ol>
+      <li><strong>Draft and sign the collaborative practice agreement</strong>, covering every required element including the 5% sampling and the seven-day submission.</li>
+      <li><strong>List all other existing collaborative agreements</strong> held by both you and your collaborating practitioner.</li>
+      <li><strong>Submit the signed agreement with the $50 application fee</strong> to the Indiana State Board of Nursing, before any prescribing begins. The fee is non-refundable.</li>
+      <li><strong>Wait for prescriptive authority to be issued.</strong> Don't prescribe against a pending application.</li>
+      <li><strong>Obtain your Indiana Controlled Substances Registration ($60) and your federal DEA registration</strong> if you'll prescribe controlled substances — plus a separate CSR for each physical location where controlled substances are stored.</li>
+      <li><strong>Run the review cycle:</strong> 5% random sampling, documentation to your physician within seven days, documented.</li>
+      <li><strong>Notify the Board in writing immediately</strong> of any change to the agreement or its termination.</li>
+      <li><strong>Renew biennially</strong> — authority expires 31 October of the odd-numbered year following grant or renewal. Submit a current signed agreement and your continuing education documentation.</li>
+    </ol>
+    <div class="statute-note">On continuing education: for an initial grant made twelve or more months before expiration, at least 15 contact hours including at least 4 in pharmacology. For renewal, at least 30 hours including at least 8 in pharmacology. If your initial authority is granted less than twelve months before expiration, no CE is required for that first cycle.</div>
+  </div>
+
+  <!-- Cost -->
+  <div class="content-section">
+    <h2>What a Collaborating Physician Costs in Indiana</h2>
+    <p><strong>Indiana is mid-range and predictable.</strong></p>
+    <p>No cap on collaborations, no mileage rule, and the lightest chart review percentage of any state that mandates one. Supply isn't constrained and the physician's recurring burden is modest.</p>
+    <p><strong>What Indiana costs you is the gate and the tempo.</strong> You can't prescribe until the Board issues authority, so there's a real interval between signing and earning. And the seven-day rhythm means you need a collaborator who is reliably responsive week to week, not one who surfaces quarterly.</p>
+    <p><strong>So the thing to pay for here is responsiveness, not availability.</strong> A cheap collaborator who takes three weeks to acknowledge a submission is more expensive than the rate suggests, because the obligation is yours to evidence.</p>
+    <p>At MD-Match, pricing is tailored to your practice rather than flat-rated. The match fee is $50, one time, and rematching is free, always.</p>
+  </div>
+
+  <!-- CTA 1 -->
+  <div class="cta-block">
+    <h3>Get My Free Indiana Quote — 2-Minute First Step</h3>
+    <p>Tell me your expected patient volume — it determines what a 5% weekly sample actually looks like for your physician.</p>
+    <a href="/np-pa-intake.html" class="btn-gold">Start the Free Intake Form →</a>
+  </div>
+
+  <!-- Mistakes -->
+  <div class="content-section">
+    <h2>Mistakes I Actually See in Indiana Arrangements</h2>
+
+    <h3>Prescribing before authority is issued.</h3>
+    <p>The agreement is submitted to the Board and authority is granted. A signed agreement isn't permission.</p>
+
+    <h3>Letting the seven-day submission slide.</h3>
+    <p>It's weekly in practice, each instance feels minor, and a year of gaps looks very different from one missed week.</p>
+
+    <h3>Not agreeing the mechanics up front.</h3>
+    <p>Format, delivery method, and cover during absences. Vague arrangements stop happening.</p>
+
+    <h3>Skipping the Indiana CSR.</h3>
+    <p>It's separate from the federal DEA, it's $60, and you need one to prescribe controlled substances in Indiana.</p>
+
+    <h3>Forgetting the per-location registration.</h3>
+    <p>A separate CSR is required for each physical location where controlled substances are stored.</p>
+
+    <h3>Leaving the other-agreements list incomplete.</h3>
+    <p>It's a required element and it covers both parties.</p>
+
+    <h3>Missing the 31 October renewal.</h3>
+    <p>It falls in odd-numbered years, which makes it easy to lose track of — you go two years between reminders, and nothing external prompts you.</p>
+
+    <h3>Assuming renewal CE matches initial CE.</h3>
+    <p>Initial is 15 hours with 4 in pharmacology; renewal is 30 with 8.</p>
+
+    <p>Every physician in the MD-Match network is background-checked, license-verified for Indiana, and capacity-checked before matching — and for Indiana we ask directly how they handle the seven-day review, because that's the obligation that decides whether an arrangement works. We build the submission rhythm into the agreement, track the odd-year October renewal, and flag the CE difference before it's a problem.</p>
+  </div>
+
+  <!-- How MD-Match works -->
+  <div class="content-section">
+    <h2>How MD-Match Works in Indiana</h2>
+    <ol>
+      <li><strong>Complete the free intake form</strong> — credential, specialty, practice setting, timeline. First step takes about two minutes.</li>
+      <li><strong>Get a personalized quote.</strong> I review every Indiana submission myself. Tell me your expected patient volume — it determines what a 5% weekly sample actually looks like for your physician.</li>
+      <li><strong>Pay the one-time $50 match fee</strong> and get matched with an Indiana-licensed, specialty-aligned physician with genuine capacity and a workable review process.</li>
+      <li><strong>We handle the compliance rails</strong> — the agreement with every required element, the Board submission, CSR and DEA sequencing, the seven-day review rhythm, and the biennial renewal. If a match stops working, rematching is free.</li>
+    </ol>
+  </div>
+
+  <!-- CTA 2 -->
+  <div class="cta-block">
+    <h3>Start the Free Intake Form</h3>
+    <p>Two minutes. No commitment. I'll review your situation personally and match you with a physician who will stay on top of the seven-day rhythm.</p>
+    <a href="/np-pa-intake.html" class="btn-gold">Start the Free Intake Form →</a>
+  </div>
+
+  <!-- FAQ -->
+  <div class="faq-section">
+    <h2>Indiana FAQ</h2>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>Do Indiana APRNs need a collaborative practice agreement?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Yes. Prescriptive authority requires a written collaborative practice agreement with a licensed practitioner, submitted to the Indiana State Board of Nursing with the application fee.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>Can an Indiana APRN prescribe before the Board grants authority?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">No. Prescriptive authority must be issued by the Board before prescribing begins.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>How much chart review does Indiana require?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Documentation of the APRN's prescribing practices must be submitted to the collaborating practitioner within seven days, including at least a 5% random sampling of the charts and medications prescribed.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>What must an Indiana collaborative practice agreement contain?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Names, addresses and contact details for both parties; practice locations; specialty certifications; the specific manner of collaboration including information sharing, proximity and coverage during absences; any prescriptive limitations; how prescribing is reviewed; a list of all other written practice agreements of both parties; and the duration and termination terms.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>How many APRNs can one Indiana physician collaborate with?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Indiana sets no numeric limit. The agreement must disclose all other written practice agreements held by both parties.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>Does Indiana require a state controlled substance registration?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Yes. A practitioner must hold an Indiana Controlled Substances Registration to prescribe controlled substances in Indiana, at a fee of $60, with a separate registration for each physical location where controlled substances are stored. Federal DEA registration is also required.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>Does the collaborating physician need a controlled substance registration for the APRN to prescribe?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">The registration requirement attaches to the prescriber. Nothing in the statute, the rule, or the Board's sample agreement conditions the APRN's prescribing on the collaborating physician holding one.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>Can Indiana APRNs prescribe Schedule II medications?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Indiana APRNs are authorised to prescribe drugs including controlled substances, subject to any limitations set out in the collaborative practice agreement.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>When does Indiana prescriptive authority expire?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">On 31 October of the odd-numbered year following the year authority was granted or renewed, renewable for successive two-year periods.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>What continuing education is required?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">For an initial grant made twelve or more months before expiration, at least 15 contact hours including at least 4 in pharmacology. For renewal, at least 30 hours including at least 8 in pharmacology.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>What happens if the agreement changes or ends?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Notify the Board in writing immediately.</div>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    Philip Wasef, MD is the founder of MD-Match and an actively practicing collaborating physician licensed in 45 states, including Indiana. This page describes regulatory requirements in general terms and is not legal advice; requirements change and your situation may vary. Verify current rules with the Indiana State Board of Nursing and the Indiana Professional Licensing Agency, or ask us.
+  </div>
+
+</div><!-- .content-wrap -->
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div class="footer-brand-name">MD-<em>Match</em></div>
+      <div class="footer-brand-sub">Collaborating Physician Network</div>
+      <p class="footer-desc">A platform built by Dr. Philip Wasef, MD — an actively collaborating physician — to give NPs, PAs, and physicians a compliant, clearly structured path to collaborate with confidence.</p>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Contact &amp; Apply</div>
+      <a href="mailto:philipwasef@md-match.com">philipwasef@md-match.com</a>
+      <a href="/np-pa-intake.html" target="_blank">NPs and PAs get my free quote</a>
+      <a href="/md-match-physician-intake.html" target="_blank">Physicians join our collaboration network</a>
+      <div class="footer-col-title" style="margin-top:1.5rem;">State Resources</div>
+      <a href="/collaborating-physician-texas.html">Collaborating Physician in Texas</a>
+      <a href="/collaborating-physician-pennsylvania.html">Collaborating Physician in Pennsylvania</a>
+      <a href="/collaborating-physician-florida.html">Collaborating Physician in Florida</a>
+      <a href="/collaborating-physician-ohio.html">Collaborating Physician in Ohio</a>
+      <a href="/collaborating-physician-new-york.html">Collaborating Physician in New York</a>
+      <a href="/collaborating-physician-alabama.html">Collaborating Physician in Alabama</a>
+      <a href="/collaborating-physician-california.html">Collaborating Physician in California</a>
+      <a href="/collaborating-physician-virginia.html">Collaborating Physician in Virginia</a>
+      <a href="/collaborating-physician-north-carolina.html">Collaborating Physician in North Carolina</a>
+      <a href="/collaborating-physician-missouri.html">Collaborating Physician in Missouri</a>
+      <a href="/collaborating-physician-tennessee.html">Collaborating Physician in Tennessee</a>
+      <a href="/collaborating-physician-mississippi.html">Collaborating Physician in Mississippi</a>
+      <a href="/collaborating-physician-illinois.html">Collaborating Physician in Illinois</a>
+      <a href="/collaborating-physician-new-jersey.html">Collaborating Physician in New Jersey</a>
+      <a href="/collaborating-physician-louisiana.html">Collaborating Physician in Louisiana</a>
+      <a href="/collaborating-physician-kentucky.html">Collaborating Physician in Kentucky</a>
+      <a href="/collaborating-physician-indiana.html">Collaborating Physician in Indiana</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2025 MD-Match · Founded by Dr. Philip Wasef, MD · All rights reserved.</div>
+    <div class="footer-copy">Confidential · Not for redistribution</div>
+  </div>
+</footer>
+
+<script>
+  function toggleMenu() { document.getElementById('mobileMenu').classList.toggle('open'); }
+  function closeMenu() { document.getElementById('mobileMenu').classList.remove('open'); }
+  document.querySelectorAll('.faq-q').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const answer = btn.nextElementSibling;
+      const expanded = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', !expanded);
+      answer.classList.toggle('open', !expanded);
+    });
+  });
+</script>
+</body>
+</html>
