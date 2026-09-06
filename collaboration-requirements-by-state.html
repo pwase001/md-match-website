@@ -129,15 +129,17 @@
   .table-filter:focus { border-color: var(--teal-light); }
   .filter-hint { font-size: 13px; color: var(--muted); }
 
-  .table-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+  .table-scroll { overflow-x: auto; overflow-y: visible; border: 1px solid var(--border); border-radius: 10px; }
   .state-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 13.5px;
     min-width: 900px;
   }
-  .state-table thead { position: sticky; top: var(--nav-h); z-index: 10; }
   .state-table thead tr { background: var(--teal-deep); }
+  @media (min-width: 768px) {
+    .state-table thead { position: sticky; top: var(--nav-h); z-index: 10; }
+  }
   .state-table th {
     padding: 0.9rem 1rem;
     text-align: left;
