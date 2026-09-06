@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-18417505552"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'AW-18417505552');
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Collaborating Physician in Kentucky | CAPA-NS &amp; CAPA-CS</title>
+<meta name="description" content="Kentucky APRNs need a CAPA-NS, a CAPA-CS, or both — and both can be discontinued after four years of prescribing. What's required, from a physician licensed in KY.">
+<link rel="icon" type="image/svg+xml" href="/logo.svg">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Nunito:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --teal-deep: #0b3535;
+    --teal: #1a6b6b;
+    --teal-light: #2a9090;
+    --teal-pale: #e8f5f5;
+    --gold: #c9a84c;
+    --gold-light: #e2c97e;
+    --white: #ffffff;
+    --off-white: #f8fbfb;
+    --text: #1a3333;
+    --muted: #4a6b6b;
+    --border: #d0e2e2;
+    --nav-h: 68px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Nunito', sans-serif; color: var(--text); background: var(--white); font-size: 15px; line-height: 1.7; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    height: var(--nav-h);
+    background: rgba(11,53,53,0.97);
+    backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2.5rem;
+    border-bottom: 1px solid rgba(201,168,76,0.2);
+  }
+  .nav-brand { display: flex; flex-direction: column; gap: 0; text-decoration: none; }
+  .nav-logo { font-family: 'Playfair Display', serif; font-size: 1.35rem; color: var(--white); letter-spacing: -0.01em; }
+  .nav-logo em { color: var(--gold); font-style: italic; }
+  .nav-sub { font-size: 9px; color: rgba(255,255,255,0.45); letter-spacing: 0.14em; text-transform: uppercase; }
+  .nav-links { display: flex; align-items: center; gap: 2rem; }
+  .nav-links a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--gold-light); }
+  .nav-links a.nav-btn { background: transparent; border: 1.5px solid rgba(201,168,76,0.6); color: var(--gold-light); padding: 0.42rem 1.1rem; border-radius: 4px; transition: all 0.2s; }
+  .nav-links a.nav-btn:hover { background: var(--gold); color: var(--teal-deep); border-color: var(--gold); }
+  .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; }
+  .hamburger span { display: block; width: 22px; height: 2px; background: var(--white); border-radius: 2px; }
+  .mobile-menu { display: none; position: fixed; inset: 0; top: var(--nav-h); background: var(--teal-deep); z-index: 99; flex-direction: column; padding: 2rem; gap: 1rem; overflow-y: auto; }
+  .mobile-menu.open { display: flex; }
+  .mobile-menu a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 1.1rem; font-weight: 600; padding: 0.8rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+
+  /* PAGE HERO */
+  .page-hero {
+    padding: calc(var(--nav-h) + 3.5rem) 2rem 3rem;
+    background: linear-gradient(150deg, var(--teal-deep) 0%, #0f4242 55%, #1a6060 100%);
+    text-align: center;
+  }
+  .page-hero-inner { max-width: 760px; margin: 0 auto; }
+  .page-eyebrow { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); font-weight: 700; margin-bottom: 1.2rem; display: flex; align-items: center; justify-content: center; gap: 0.7rem; }
+  .page-eyebrow::before, .page-eyebrow::after { content: ''; display: block; width: 32px; height: 1px; background: var(--gold); opacity: 0.6; }
+  .page-hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(1.8rem, 4vw, 2.9rem); color: var(--white); font-weight: 400; line-height: 1.25; margin-bottom: 1.2rem; }
+  .page-hero-sub { font-size: 1rem; color: rgba(255,255,255,0.65); font-weight: 300; max-width: 580px; margin: 0 auto 2rem; line-height: 1.8; }
+  .byline { font-size: 12px; color: rgba(255,255,255,0.4); letter-spacing: 0.06em; margin-top: 1.5rem; }
+
+  /* CONTENT */
+  .content-wrap { max-width: 780px; margin: 0 auto; padding: 3.5rem 2rem 5rem; }
+
+  .quick-answers {
+    background: var(--teal-pale);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 2rem 2.2rem;
+    margin-bottom: 3rem;
+  }
+  .quick-answers h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.35rem;
+    color: var(--teal-deep);
+    margin-bottom: 1.4rem;
+    font-weight: 600;
+  }
+  .qa-item { margin-bottom: 1.3rem; }
+  .qa-item:last-child { margin-bottom: 0; }
+  .qa-q { font-weight: 800; color: var(--teal-deep); font-size: 15px; margin-bottom: 0.3rem; }
+  .qa-a { color: var(--muted); font-size: 14.5px; line-height: 1.75; }
+
+  .content-section { margin-bottom: 2.8rem; }
+  .content-section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.55rem;
+    color: var(--teal-deep);
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid var(--border);
+  }
+  .content-section h3 {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--teal-deep);
+    margin: 1.4rem 0 0.4rem;
+  }
+  .content-section p { color: var(--text); font-size: 15px; line-height: 1.85; margin-bottom: 1rem; }
+  .content-section p:last-child { margin-bottom: 0; }
+  .content-section strong { color: var(--teal-deep); }
+  .content-section ol, .content-section ul { padding-left: 1.4rem; color: var(--text); font-size: 15px; line-height: 2; margin-bottom: 1rem; }
+  .content-section ol li, .content-section ul li { margin-bottom: 0.3rem; }
+  .content-section em { font-style: italic; }
+
+  .statute-note {
+    background: var(--off-white);
+    border-left: 3px solid var(--teal-light);
+    padding: 1rem 1.2rem;
+    margin: 1.2rem 0;
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.75;
+    font-style: italic;
+    border-radius: 0 6px 6px 0;
+  }
+
+  /* FAQ */
+  .faq-section { margin-bottom: 2.8rem; }
+  .faq-section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.55rem;
+    color: var(--teal-deep);
+    font-weight: 600;
+    margin-bottom: 1.2rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid var(--border);
+  }
+  .faq-item { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0.5rem; overflow: hidden; background: var(--off-white); }
+  .faq-q { width: 100%; text-align: left; background: none; border: none; padding: 1rem 1.2rem; font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700; color: var(--teal-deep); cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 1rem; line-height: 1.4; }
+  .faq-q:hover { background: #f0f7f7; }
+  .faq-icon { font-size: 18px; color: var(--teal); flex-shrink: 0; transition: transform 0.2s; }
+  .faq-q[aria-expanded="true"] .faq-icon { transform: rotate(45deg); }
+  .faq-a { display: none; padding: 0 1.2rem 1rem; font-size: 14.5px; color: var(--muted); line-height: 1.75; border-top: 1px solid var(--border); }
+  .faq-a.open { display: block; }
+
+  /* CTA block */
+  .cta-block {
+    background: var(--teal-deep);
+    border-radius: 10px;
+    padding: 2.5rem 2.5rem;
+    text-align: center;
+    margin: 3rem 0;
+  }
+  .cta-block h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    color: var(--white);
+    font-weight: 400;
+    margin-bottom: 0.8rem;
+  }
+  .cta-block p { color: rgba(255,255,255,0.6); font-size: 14px; margin-bottom: 1.5rem; }
+  .btn-gold { display: inline-block; background: var(--gold); color: var(--teal-deep); padding: 0.85rem 2rem; border-radius: 4px; font-weight: 800; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; text-decoration: none; transition: all 0.2s; border: 2px solid var(--gold); }
+  .btn-gold:hover { background: var(--gold-light); border-color: var(--gold-light); }
+
+  /* Disclaimer */
+  .disclaimer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 1.5rem; margin-top: 1rem; line-height: 1.75; font-style: italic; }
+
+  /* FOOTER */
+  footer { background: var(--teal-deep); padding: 3.5rem 2rem; }
+  .footer-inner { max-width: 1060px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr; gap: 3rem; }
+  .footer-brand-name { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--white); }
+  .footer-brand-name em { color: var(--gold); font-style: italic; }
+  .footer-brand-sub { font-size: 11px; color: rgba(255,255,255,0.4); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 0.2rem; margin-bottom: 1rem; }
+  .footer-desc { font-size: 13px; color: rgba(255,255,255,0.5); line-height: 1.75; max-width: 360px; }
+  .footer-col-title { font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); font-weight: 700; margin-bottom: 1rem; }
+  .footer-col a { display: block; font-size: 13px; color: rgba(255,255,255,0.55); text-decoration: none; margin-bottom: 0.5rem; transition: color 0.2s; }
+  .footer-col a:hover { color: var(--white); }
+  .footer-bottom { max-width: 1060px; margin: 2.5rem auto 0; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+  .footer-copy { font-size: 11.5px; color: rgba(255,255,255,0.35); }
+
+  @media (max-width: 900px) {
+    .footer-inner { grid-template-columns: 1fr; gap: 2rem; }
+    .nav-links { display: none; }
+    .hamburger { display: flex; }
+  }
+  @media (max-width: 600px) {
+    nav { padding: 0 1.2rem; }
+    .content-wrap { padding: 2rem 1.2rem 4rem; }
+    .quick-answers { padding: 1.5rem 1.3rem; }
+    .cta-block { padding: 2rem 1.3rem; }
+    .page-hero { padding-left: 1.2rem; padding-right: 1.2rem; }
+    .footer-inner { gap: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="/" class="nav-brand">
+    <span class="nav-logo">MD-<em>Match</em></span>
+    <span class="nav-sub">Collaborating Physician Network</span>
+  </a>
+  <div class="nav-links">
+    <a href="/#goals">Our Goals</a>
+    <a href="/#for-nps">For NPs &amp; PAs</a>
+    <a href="/#for-physicians">For Physicians</a>
+    <a href="/#faq">FAQ</a>
+    <a href="/np-pa-intake.html" target="_blank" class="nav-btn">NPs and PAs get my free quote</a>
+    <a href="/md-match-physician-intake.html" target="_blank" class="nav-btn">Physicians join our network</a>
+  </div>
+  <div class="hamburger" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="/" onclick="closeMenu()">Home</a>
+  <a href="/#goals" onclick="closeMenu()">Our Goals</a>
+  <a href="/#for-nps" onclick="closeMenu()">For NPs &amp; PAs</a>
+  <a href="/#for-physicians" onclick="closeMenu()">For Physicians</a>
+  <a href="/#faq" onclick="closeMenu()">FAQ</a>
+  <a href="/np-pa-intake.html" target="_blank" onclick="closeMenu()">NPs and PAs get my free quote</a>
+  <a href="/md-match-physician-intake.html" target="_blank" onclick="closeMenu()">Physicians join our network</a>
+</div>
+
+<!-- PAGE HERO -->
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-eyebrow">Kentucky State Guide</div>
+    <h1>Collaborating Physicians in Kentucky: What APRNs Need</h1>
+    <p class="page-hero-sub"><strong style="color:rgba(255,255,255,0.85)">Kentucky is one of the few states where the collaborating physician requirement has a genuine end date — and it applies to controlled substances too.</strong></p>
+    <p class="byline">Reviewed by Philip Wasef, MD — actively collaborating physician, licensed in 45 states including Kentucky. Last updated: September 2026.</p>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="content-wrap">
+
+  <p style="color:var(--muted);font-size:15px;line-height:1.85;margin-bottom:2.5rem;">After <strong style="color:var(--teal-deep)">four years of prescribing</strong>, you may request to discontinue your non-scheduled agreement. After <strong style="color:var(--teal-deep)">four or more years of prescribing controlled substances</strong>, you may apply for exemption from the controlled substances agreement as well. That makes a Kentucky collaboration a defined term, not an indefinite arrangement — and it should change how you negotiate one. Kentucky also splits prescriptive authority into two separate agreements, which is the thing people most often get wrong. This page covers both, the four-year exits, and the first-year rule that catches new APRNs going independent.</p>
+
+  <!-- Quick Answers -->
+  <div class="quick-answers">
+    <h2>Quick Answers</h2>
+
+    <div class="qa-item">
+      <div class="qa-q">Do Kentucky APRNs need a collaborating physician?</div>
+      <div class="qa-a">For prescribing, yes — through one or both collaborative agreements, until you qualify to discontinue them.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What are CAPA-NS and CAPA-CS?</div>
+      <div class="qa-a"><strong>CAPA-NS</strong> covers non-scheduled, legend drugs. <strong>CAPA-CS</strong> covers Schedules II through V. You may hold one, both, or neither depending on what you prescribe.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">When can I stop needing them?</div>
+      <div class="qa-a"><strong>CAPA-NS: after four years of prescribing</strong>, on notifying the Board and remaining in good standing. <strong>CAPA-CS: after four or more years of prescribing controlled substances</strong>, by application, with current documentation on file, fees paid, and good standing maintained.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">Can a new APRN prescribe controlled substances?</div>
+      <div class="qa-a">Yes, <strong>if employed.</strong> An APRN wanting a CAPA-CS in their first year of licensure must be employed by a health care entity or provider.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">How often must we meet?</div>
+      <div class="qa-a">For a CAPA-CS: <strong>quarterly in year one</strong>, then <strong>at least biannually in years two through four</strong>, to review KASPER reports. Keep a written record of each meeting.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">Is chart review required?</div>
+      <div class="qa-a">No mandated chart review percentage. The obligation is the scheduled KASPER review meetings.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">How many APRNs can one physician collaborate with?</div>
+      <div class="qa-a">No numeric limit.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">Is there a distance requirement?</div>
+      <div class="qa-a">No geographic restriction. Your physician must be Kentucky-licensed and in the same or a similar specialty.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">Can Kentucky APRNs prescribe Schedule II?</div>
+      <div class="qa-a">Yes, Schedules II through V under a CAPA-CS. <strong>The limits are set in your agreement</strong> — the CAPA-CS states any limits on controlled substances you may prescribe, as agreed by both parties, rather than by a statutory supply cap.</div>
+    </div>
+  </div>
+
+  <!-- Two agreements -->
+  <div class="content-section">
+    <h2>Two Agreements, Not One</h2>
+    <p>This is the structural thing to understand about Kentucky.</p>
+    <p><strong>CAPA-NS</strong> — Collaborative Agreement for Prescriptive Authority, Non-Scheduled. Required before you prescribe or dispense non-scheduled legend drugs. Entered into with a Kentucky-licensed physician in the same or similar specialty.</p>
+    <p><strong>CAPA-CS</strong> — Collaborative Agreement for Prescriptive Authority, Controlled Substances. Required before you prescribe Schedules II through V. Uses a <strong>standardized CAPA-CS form</strong>.</p>
+    <p><strong>You may need one, both, or neither.</strong> An APRN who prescribes only non-scheduled medications needs just the CAPA-NS. A psychiatric APRN prescribing both will need both, and they run on separate tracks with separate four-year clocks.</p>
+    <p><strong>Why this trips people up:</strong> discontinuing your CAPA-NS after four years doesn't touch your CAPA-CS. They're distinct authorities with distinct requirements, and being released from one while assuming you're released from both is the error to avoid.</p>
+  </div>
+
+  <!-- Four-year exits -->
+  <div class="content-section">
+    <h2>The Four-Year Exits</h2>
+    <p><strong>CAPA-NS.</strong> After four years of prescribing in the role, you may notify the Board that the requirement has been met and request to discontinue the agreement, provided you remain in good standing.</p>
+    <p><strong>CAPA-CS.</strong> After four or more years of prescribing controlled substances, you may request exemption — by submitting an application, ensuring current documentation is on file, paying the required fees, and maintaining good standing.</p>
+    <p><strong>What this means for an arrangement you're negotiating now.</strong> You're buying a defined period, not an open-ended dependency. An APRN two years into practice is roughly halfway through the requirement.</p>
+    <p>That's worth saying out loud when you're discussing terms. A physician quoting as though the relationship is permanent is quoting the wrong thing — and an APRN who doesn't realise there's an exit may accept terms they'd otherwise negotiate.</p>
+    <div class="statute-note">Track your dates. Nothing prompts you at four years. The exit exists, but you have to go and take it.</div>
+  </div>
+
+  <!-- First-year rule -->
+  <div class="content-section">
+    <h2>The First-Year Rule, and Who It Actually Affects</h2>
+    <p>Your notes may tell you a new APRN can't prescribe controlled substances for a year. That's not quite it, and the difference matters.</p>
+    <p>The regulation says: <strong>an APRN wishing to have a CAPA-CS in the first year of licensure shall be employed by a health care entity or provider.</strong></p>
+    <p><strong>So it's an employment condition, not a waiting period.</strong></p>
+    <p><strong>If you're joining a practice or health system</strong>, you can hold a CAPA-CS from the start, subject to the quarterly meeting requirement.</p>
+    <p><strong>If you're going independent in your first year</strong> — your own practice, contract work, no employer — that route isn't open to you for controlled substances until the condition is satisfied.</p>
+    <p>For psychiatric APRNs launching a solo practice straight out of certification, this is a genuine planning constraint and it's better known early. It may argue for an employed first year, or for structuring the practice differently at the outset.</p>
+  </div>
+
+  <!-- Meetings and KASPER -->
+  <div class="content-section">
+    <h2>Meetings and KASPER</h2>
+    <p>For a CAPA-CS, the meeting cadence steps down over time:</p>
+    <ul>
+      <li><strong>Year one: at least quarterly</strong></li>
+      <li><strong>Years two through four: at least biannually</strong></li>
+    </ul>
+    <p>Meetings are to review the APRN's KASPER report — Kentucky's prescription monitoring data. Both parties <strong>maintain a written record</strong> of each meeting, kept for <strong>one year past the expiration of the CAPA-CS</strong>.</p>
+    <p>You'll also need a <strong>KASPER master account</strong> set up, and your <strong>Kentucky DEA registration uploaded to the Board's portal</strong>.</p>
+    <p><strong>These meetings are the substance of a Kentucky collaboration.</strong> There's no chart review percentage to hit — what the state asks is that you and your physician sit down with your prescribing data on a set schedule and document it. A collaborator who won't commit to that isn't offering much.</p>
+  </div>
+
+  <!-- Approval checklist -->
+  <div class="content-section">
+    <h2>Approval Checklist</h2>
+    <ol>
+      <li><strong>Work out which agreements you need</strong> — CAPA-NS for non-scheduled legend drugs, CAPA-CS for Schedules II–V, one, both, or neither.</li>
+      <li><strong>Enter into the agreement(s)</strong> with a Kentucky-licensed physician in the same or similar specialty. The CAPA-CS uses a standardized form.</li>
+      <li><strong>Notify the Kentucky Board of Nursing</strong> through the online nurse portal. This is a notification and filing rather than a wait-for-approval process.</li>
+      <li><strong>Keep a copy at every practice site</strong> where you see patients.</li>
+      <li><strong>For controlled substances:</strong> upload your Kentucky DEA registration to the KBN portal, and upload verification of your KASPER master account.</li>
+      <li><strong>If you're in your first year of licensure and want a CAPA-CS</strong>, be employed by a health care entity or provider.</li>
+      <li><strong>Hold the meetings</strong> — quarterly in year one, biannually in years two through four — reviewing your KASPER report, with written records kept for a year past expiration.</li>
+      <li><strong>Report any change to either agreement</strong> to KBN.</li>
+      <li><strong>If a collaboration ends</strong>, file the Rescission Form and enter a new agreement with a different physician before continuing to prescribe in that category.</li>
+      <li><strong>Diary your four-year dates</strong> for both agreements and take the exits when you reach them.</li>
+    </ol>
+  </div>
+
+  <!-- Cost -->
+  <div class="content-section">
+    <h2>What a Collaborating Physician Costs in Kentucky</h2>
+    <p><strong>Kentucky is among the more affordable states, and the four-year exit is a large part of why.</strong></p>
+    <p>There's no cap on how many APRNs a physician may collaborate with, no geographic restriction, and no mandated chart review percentage. Supply isn't constrained and the recurring burden is a scheduled meeting rather than a review quota.</p>
+    <p><strong>On top of that, demand naturally drains.</strong> Every APRN who reaches four years and takes the exit leaves the market. That's unusual — most states recycle the same population indefinitely — and it keeps pressure off pricing.</p>
+    <p><strong>What it means for you:</strong> you're buying a term, and you should price it as one. An APRN at year three should not be agreeing to terms structured as though the relationship continues indefinitely.</p>
+    <p>At MD-Match, pricing is tailored to your practice rather than flat-rated. The match fee is $50, one time, and rematching is free, always.</p>
+  </div>
+
+  <!-- CTA 1 -->
+  <div class="cta-block">
+    <h3>Get My Free Kentucky Quote — 2-Minute First Step</h3>
+    <p>Tell me how long you've been prescribing — if you're approaching four years, the right arrangement is a short one.</p>
+    <a href="/np-pa-intake.html" class="btn-gold">Start the Free Intake Form →</a>
+  </div>
+
+  <!-- Mistakes -->
+  <div class="content-section">
+    <h2>Mistakes I Actually See in Kentucky Arrangements</h2>
+
+    <h3>Treating CAPA-NS and CAPA-CS as one thing.</h3>
+    <p>Two agreements, two authorities, two clocks. Being released from the non-scheduled agreement says nothing about the controlled substances one.</p>
+
+    <h3>Missing the four-year exit.</h3>
+    <p>Nothing reminds you. APRNs continue paying for collaboration years after they could have discontinued it — which is the most expensive mistake on this page, and the easiest to avoid.</p>
+
+    <h3>Assuming a new APRN simply can't prescribe controlled substances.</h3>
+    <p>They can, if employed. The condition is employment, not elapsed time, and misreading it can push someone into an unnecessary year of waiting.</p>
+
+    <h3>Dropping from quarterly to nothing after year one.</h3>
+    <p>The cadence becomes biannual, not optional.</p>
+
+    <h3>Not documenting the meetings.</h3>
+    <p>The written record must be kept for a year past expiration of the CAPA-CS. Undocumented meetings are, to a reviewer, meetings that didn't happen.</p>
+
+    <h3>Prescribing after a collaboration ends.</h3>
+    <p>File the Rescission Form and enter a new agreement in that category before you continue.</p>
+
+    <h3>One copy at the main office.</h3>
+    <p>It belongs at every practice site where you see patients.</p>
+
+    <p>Every physician in the MD-Match network is background-checked, license-verified for Kentucky, and specialty-matched — which matters here, since the agreement requires the same or a similar specialty. We track both four-year clocks and set the meeting schedule, because the exits only help you if someone is counting.</p>
+  </div>
+
+  <!-- How MD-Match works -->
+  <div class="content-section">
+    <h2>How MD-Match Works in Kentucky</h2>
+    <ol>
+      <li><strong>Complete the free intake form</strong> — credential, specialty, practice setting, timeline. First step takes about two minutes.</li>
+      <li><strong>Get a personalized quote.</strong> I review every Kentucky submission myself. Tell me how long you've been prescribing — if you're approaching four years, the right arrangement is a short one.</li>
+      <li><strong>Pay the one-time $50 match fee</strong> and get matched with a Kentucky-licensed, same-or-similar-specialty physician with genuine capacity.</li>
+      <li><strong>We handle the compliance rails</strong> — both agreements as needed, the KBN portal notification, DEA and KASPER uploads, the meeting schedule with documentation, and the four-year exit dates. If a match stops working, rematching is free.</li>
+    </ol>
+  </div>
+
+  <!-- CTA 2 -->
+  <div class="cta-block">
+    <h3>Start the Free Intake Form</h3>
+    <p>Two minutes. No commitment. I'll review your situation personally and tell you exactly what you need — and when you'll stop needing it.</p>
+    <a href="/np-pa-intake.html" class="btn-gold">Start the Free Intake Form →</a>
+  </div>
+
+  <!-- FAQ -->
+  <div class="faq-section">
+    <h2>Kentucky FAQ</h2>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>Do Kentucky APRNs need a collaborating physician to prescribe?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Yes. A CAPA-NS is required for non-scheduled legend drugs and a CAPA-CS for Schedules II through V, until the APRN qualifies to discontinue them.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>What is the difference between CAPA-NS and CAPA-CS?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">CAPA-NS covers non-scheduled legend drugs; CAPA-CS covers Schedules II through V and uses a standardized form. An APRN may hold one, both, or neither depending on prescribing scope.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>Can a Kentucky APRN stop needing a collaborative agreement?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Yes. After four years of prescribing, an APRN may notify the Board and request to discontinue the CAPA-NS. After four or more years of prescribing controlled substances, an APRN may apply for exemption from the CAPA-CS.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>Can a newly licensed Kentucky APRN prescribe controlled substances?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Yes, if employed. An APRN wishing to have a CAPA-CS in the first year of licensure must be employed by a health care entity or provider.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>How often must a Kentucky APRN meet with the collaborating physician?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Under a CAPA-CS, at least quarterly in the first year and at least biannually in the following three years, to review KASPER reports. Written records are kept for one year past expiration of the agreement.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>Does Kentucky require chart review?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">No chart review percentage is mandated. The requirement is the scheduled KASPER review meetings and their documentation.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>How many APRNs can one Kentucky physician collaborate with?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Kentucky sets no numeric limit.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>What Schedule II limits apply in Kentucky?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">The CAPA-CS states any limits on controlled substances the APRN may prescribe, as agreed by the APRN and the physician, rather than a fixed statutory supply cap.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>Is the agreement approved by the Board?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">The APRN notifies the Board through the online nurse portal. It is a notification and filing process rather than a wait-for-approval one.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>What happens if my collaborating physician relationship ends?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">File the Rescission Form and enter a new agreement with a different physician before continuing to prescribe in that category.</div>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    Philip Wasef, MD is the founder of MD-Match and an actively practicing collaborating physician licensed in 45 states, including Kentucky. This page describes regulatory requirements in general terms and is not legal advice; requirements change and your situation may vary. Verify current rules with the Kentucky Board of Nursing, or ask us.
+  </div>
+
+</div><!-- .content-wrap -->
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div class="footer-brand-name">MD-<em>Match</em></div>
+      <div class="footer-brand-sub">Collaborating Physician Network</div>
+      <p class="footer-desc">A platform built by Dr. Philip Wasef, MD — an actively collaborating physician — to give NPs, PAs, and physicians a compliant, clearly structured path to collaborate with confidence.</p>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Contact &amp; Apply</div>
+      <a href="mailto:philipwasef@md-match.com">philipwasef@md-match.com</a>
+      <a href="/np-pa-intake.html" target="_blank">NPs and PAs get my free quote</a>
+      <a href="/md-match-physician-intake.html" target="_blank">Physicians join our collaboration network</a>
+      <div class="footer-col-title" style="margin-top:1.5rem;">State Resources</div>
+      <a href="/collaborating-physician-texas.html">Collaborating Physician in Texas</a>
+      <a href="/collaborating-physician-pennsylvania.html">Collaborating Physician in Pennsylvania</a>
+      <a href="/collaborating-physician-florida.html">Collaborating Physician in Florida</a>
+      <a href="/collaborating-physician-ohio.html">Collaborating Physician in Ohio</a>
+      <a href="/collaborating-physician-new-york.html">Collaborating Physician in New York</a>
+      <a href="/collaborating-physician-alabama.html">Collaborating Physician in Alabama</a>
+      <a href="/collaborating-physician-california.html">Collaborating Physician in California</a>
+      <a href="/collaborating-physician-virginia.html">Collaborating Physician in Virginia</a>
+      <a href="/collaborating-physician-north-carolina.html">Collaborating Physician in North Carolina</a>
+      <a href="/collaborating-physician-missouri.html">Collaborating Physician in Missouri</a>
+      <a href="/collaborating-physician-tennessee.html">Collaborating Physician in Tennessee</a>
+      <a href="/collaborating-physician-mississippi.html">Collaborating Physician in Mississippi</a>
+      <a href="/collaborating-physician-illinois.html">Collaborating Physician in Illinois</a>
+      <a href="/collaborating-physician-new-jersey.html">Collaborating Physician in New Jersey</a>
+      <a href="/collaborating-physician-louisiana.html">Collaborating Physician in Louisiana</a>
+      <a href="/collaborating-physician-kentucky.html">Collaborating Physician in Kentucky</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2025 MD-Match · Founded by Dr. Philip Wasef, MD · All rights reserved.</div>
+    <div class="footer-copy">Confidential · Not for redistribution</div>
+  </div>
+</footer>
+
+<script>
+  function toggleMenu() { document.getElementById('mobileMenu').classList.toggle('open'); }
+  function closeMenu() { document.getElementById('mobileMenu').classList.remove('open'); }
+  document.querySelectorAll('.faq-q').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const answer = btn.nextElementSibling;
+      const expanded = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', !expanded);
+      answer.classList.toggle('open', !expanded);
+    });
+  });
+</script>
+</body>
+</html>
