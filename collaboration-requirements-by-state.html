@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-18417505552"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'AW-18417505552');
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NP &amp; PA Collaboration Requirements by State | MD-Match</title>
+<meta name="description" content="Physician-reviewed reference on NP and PA collaboration rules by state: capacity caps, on-site requirements, chart review, Schedule II limits, and filing steps.">
+<link rel="canonical" href="https://www.md-match.com/collaboration-requirements-by-state.html">
+<link rel="icon" type="image/svg+xml" href="/logo.svg">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Nunito:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal-deep: #0b3535;
+    --teal: #1a6b6b;
+    --teal-light: #2a9090;
+    --teal-pale: #e8f5f5;
+    --gold: #c9a84c;
+    --gold-light: #e2c97e;
+    --white: #ffffff;
+    --off-white: #f8fbfb;
+    --text: #1a3333;
+    --muted: #4a6b6b;
+    --border: #d0e2e2;
+    --nav-h: 68px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Nunito', sans-serif; color: var(--text); background: var(--white); font-size: 15px; line-height: 1.7; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    height: var(--nav-h);
+    background: rgba(11,53,53,0.97);
+    backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2.5rem;
+    border-bottom: 1px solid rgba(201,168,76,0.2);
+  }
+  .nav-brand { display: flex; flex-direction: column; gap: 0; text-decoration: none; }
+  .nav-logo { font-family: 'Playfair Display', serif; font-size: 1.35rem; color: var(--white); letter-spacing: -0.01em; }
+  .nav-logo em { color: var(--gold); font-style: italic; }
+  .nav-sub { font-size: 9px; color: rgba(255,255,255,0.45); letter-spacing: 0.14em; text-transform: uppercase; }
+  .nav-links { display: flex; align-items: center; gap: 2rem; }
+  .nav-links a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--gold-light); }
+  .nav-links a.nav-btn { background: transparent; border: 1.5px solid rgba(201,168,76,0.6); color: var(--gold-light); padding: 0.42rem 1.1rem; border-radius: 4px; transition: all 0.2s; }
+  .nav-links a.nav-btn:hover { background: var(--gold); color: var(--teal-deep); border-color: var(--gold); }
+  .nav-links a.nav-active { color: var(--gold-light); }
+  .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; }
+  .hamburger span { display: block; width: 22px; height: 2px; background: var(--white); border-radius: 2px; }
+  .mobile-menu { display: none; position: fixed; inset: 0; top: var(--nav-h); background: var(--teal-deep); z-index: 99; flex-direction: column; padding: 2rem; gap: 1rem; overflow-y: auto; }
+  .mobile-menu.open { display: flex; }
+  .mobile-menu a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 1.1rem; font-weight: 600; padding: 0.8rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+
+  /* PAGE HERO */
+  .page-hero {
+    padding: calc(var(--nav-h) + 3.5rem) 2rem 3rem;
+    background: linear-gradient(150deg, var(--teal-deep) 0%, #0f4242 55%, #1a6060 100%);
+    text-align: center;
+  }
+  .page-hero-inner { max-width: 820px; margin: 0 auto; }
+  .page-eyebrow { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); font-weight: 700; margin-bottom: 1.2rem; display: flex; align-items: center; justify-content: center; gap: 0.7rem; }
+  .page-eyebrow::before, .page-eyebrow::after { content: ''; display: block; width: 32px; height: 1px; background: var(--gold); opacity: 0.6; }
+  .page-hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(1.8rem, 4vw, 2.9rem); color: var(--white); font-weight: 400; line-height: 1.25; margin-bottom: 1.2rem; }
+  .page-hero-sub { font-size: 1rem; color: rgba(255,255,255,0.65); font-weight: 300; max-width: 640px; margin: 0 auto 2rem; line-height: 1.8; }
+  .byline { font-size: 12px; color: rgba(255,255,255,0.4); letter-spacing: 0.06em; margin-top: 1.5rem; }
+
+  /* CONTENT */
+  .content-wrap { max-width: 1100px; margin: 0 auto; padding: 3.5rem 2rem 5rem; }
+
+  .content-section { margin-bottom: 2.8rem; }
+  .content-section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.55rem;
+    color: var(--teal-deep);
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid var(--border);
+  }
+  .content-section p { color: var(--text); font-size: 15px; line-height: 1.85; margin-bottom: 1rem; }
+  .content-section p:last-child { margin-bottom: 0; }
+  .content-section strong { color: var(--teal-deep); }
+  .content-section ul { padding-left: 1.4rem; color: var(--text); font-size: 15px; line-height: 2; margin-bottom: 1rem; }
+  .content-section ul li { margin-bottom: 0.3rem; }
+
+  /* TABLE SECTION */
+  .table-section { margin-bottom: 3rem; }
+  .table-section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.55rem;
+    color: var(--teal-deep);
+    font-weight: 600;
+    margin-bottom: 1.2rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid var(--border);
+  }
+
+  .table-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  .table-filter {
+    flex: 1;
+    min-width: 200px;
+    max-width: 340px;
+    padding: 0.55rem 1rem;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--white);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .table-filter:focus { border-color: var(--teal-light); }
+  .filter-hint { font-size: 13px; color: var(--muted); }
+
+  .table-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+  .state-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    min-width: 900px;
+  }
+  .state-table thead { position: sticky; top: var(--nav-h); z-index: 10; }
+  .state-table thead tr { background: var(--teal-deep); }
+  .state-table th {
+    padding: 0.9rem 1rem;
+    text-align: left;
+    color: var(--white);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    border-right: 1px solid rgba(255,255,255,0.1);
+  }
+  .state-table th:last-child { border-right: none; }
+  .state-table th:hover { background: #0f4040; }
+  .state-table th .sort-icon { display: inline-block; margin-left: 0.35rem; opacity: 0.5; font-style: normal; font-size: 10px; }
+  .state-table th.sort-asc .sort-icon::after { content: ' ▲'; opacity: 1; }
+  .state-table th.sort-desc .sort-icon::after { content: ' ▼'; opacity: 1; }
+  .state-table th:not(.sort-asc):not(.sort-desc) .sort-icon::after { content: ' ⇅'; }
+  .state-table tbody tr { border-bottom: 1px solid var(--border); background: var(--white); transition: background 0.15s; }
+  .state-table tbody tr:nth-child(even) { background: var(--off-white); }
+  .state-table tbody tr:hover { background: var(--teal-pale); }
+  .state-table tbody tr.hidden { display: none; }
+  .state-table td {
+    padding: 0.9rem 1rem;
+    vertical-align: top;
+    border-right: 1px solid var(--border);
+    line-height: 1.65;
+    color: var(--text);
+  }
+  .state-table td:last-child { border-right: none; white-space: nowrap; }
+  .state-table td a { color: var(--teal); font-weight: 700; text-decoration: none; }
+  .state-table td a:hover { color: var(--teal-deep); text-decoration: underline; }
+  .state-table td strong { color: var(--teal-deep); }
+  .no-results { display: none; padding: 2rem; text-align: center; color: var(--muted); font-size: 14px; }
+
+  /* In-progress section */
+  .in-progress-box {
+    background: var(--teal-pale);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.8rem 2rem;
+    margin-bottom: 3rem;
+  }
+  .in-progress-box h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.35rem;
+    color: var(--teal-deep);
+    font-weight: 600;
+    margin-bottom: 0.8rem;
+  }
+  .in-progress-box p { font-size: 15px; color: var(--text); line-height: 1.75; margin-bottom: 0.6rem; }
+  .in-progress-box p:last-child { margin-bottom: 0; }
+  .in-progress-box a { color: var(--teal); font-weight: 700; }
+
+  /* Disclaimer */
+  .disclaimer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 1.5rem; margin-top: 1rem; line-height: 1.75; font-style: italic; }
+
+  /* FOOTER */
+  footer { background: var(--teal-deep); padding: 3.5rem 2rem; }
+  .footer-inner { max-width: 1060px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr; gap: 3rem; }
+  .footer-brand-name { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--white); }
+  .footer-brand-name em { color: var(--gold); font-style: italic; }
+  .footer-brand-sub { font-size: 11px; color: rgba(255,255,255,0.4); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 0.2rem; margin-bottom: 1rem; }
+  .footer-desc { font-size: 13px; color: rgba(255,255,255,0.5); line-height: 1.75; max-width: 360px; }
+  .footer-col-title { font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); font-weight: 700; margin-bottom: 1rem; }
+  .footer-col a { display: block; font-size: 13px; color: rgba(255,255,255,0.55); text-decoration: none; margin-bottom: 0.5rem; transition: color 0.2s; }
+  .footer-col a:hover { color: var(--white); }
+  .footer-bottom { max-width: 1060px; margin: 2.5rem auto 0; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+  .footer-copy { font-size: 11.5px; color: rgba(255,255,255,0.35); }
+
+  @media (max-width: 900px) {
+    .footer-inner { grid-template-columns: 1fr; gap: 2rem; }
+    .nav-links { display: none; }
+    .hamburger { display: flex; }
+    .content-wrap { max-width: 100%; }
+  }
+  @media (max-width: 600px) {
+    nav { padding: 0 1.2rem; }
+    .content-wrap { padding: 2rem 1.2rem 4rem; }
+    .page-hero { padding-left: 1.2rem; padding-right: 1.2rem; }
+    .footer-inner { gap: 1.5rem; }
+    .table-controls { flex-direction: column; align-items: flex-start; }
+    .table-filter { max-width: 100%; width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="/" class="nav-brand">
+    <span class="nav-logo">MD-<em>Match</em></span>
+    <span class="nav-sub">Collaborating Physician Network</span>
+  </a>
+  <div class="nav-links">
+    <a href="/#goals">Our Goals</a>
+    <a href="/#for-nps">For NPs &amp; PAs</a>
+    <a href="/#for-physicians">For Physicians</a>
+    <a href="/collaboration-requirements-by-state.html" class="nav-active">State Requirements</a>
+    <a href="/#faq">FAQ</a>
+    <a href="/np-pa-intake.html" target="_blank" class="nav-btn">NPs and PAs get my free quote</a>
+    <a href="/md-match-physician-intake.html" target="_blank" class="nav-btn">Physicians join our network</a>
+  </div>
+  <div class="hamburger" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="/" onclick="closeMenu()">Home</a>
+  <a href="/#goals" onclick="closeMenu()">Our Goals</a>
+  <a href="/#for-nps" onclick="closeMenu()">For NPs &amp; PAs</a>
+  <a href="/#for-physicians" onclick="closeMenu()">For Physicians</a>
+  <a href="/collaboration-requirements-by-state.html" onclick="closeMenu()">State Requirements</a>
+  <a href="/#faq" onclick="closeMenu()">FAQ</a>
+  <a href="/np-pa-intake.html" target="_blank" onclick="closeMenu()">NPs and PAs get my free quote</a>
+  <a href="/md-match-physician-intake.html" target="_blank" onclick="closeMenu()">Physicians join our network</a>
+</div>
+
+<!-- PAGE HERO -->
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-eyebrow">Physician-Maintained Reference</div>
+    <h1>NP &amp; PA Collaboration Requirements by State</h1>
+    <p class="page-hero-sub">A physician-maintained reference on what each state actually requires — capacity limits, on-site presence, chart review, controlled substance authority, and how long approval takes.</p>
+    <p class="byline">Maintained by Philip Wasef, MD — actively collaborating physician, licensed in 45 states. Last updated: September 2026.</p>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="content-wrap">
+
+  <div class="content-section">
+    <p>Most comparison tables you'll find are compiled from other comparison tables. This one is built state by state from primary sources and from practice, reviewed by a physician who holds licences in 45 states and has personally activated collaborations in many of them.</p>
+    <p><strong>Which also means it's honest about its own limits.</strong> States marked <strong>Reviewed</strong> have been checked against the relevant boards and carry a review date. States marked <strong>In progress</strong> aren't published yet rather than guessed at. If a state you need isn't here, <a href="/np-pa-intake.html" style="color:var(--teal);font-weight:700;">ask us</a> — we can usually answer directly, and it moves that state up the queue.</p>
+  </div>
+
+  <div class="content-section">
+    <h2>How to use this table</h2>
+    <p><strong>Capacity limits are often measured in hours, not people.</strong> Texas caps at 7 FTEs, which means 280 supervised hours per week — so a physician may cover more than seven part-timers. Alabama works the same way at 360 hours. The right question for a prospective collaborator is usually "how many hours per week do you already carry?" rather than "how many providers do you have?"</p>
+    <p><strong>"No cap" doesn't mean no limit.</strong> States without a numeric cap still expect genuine availability. A physician stretched across twenty NPs may satisfy the arithmetic and fail the standard.</p>
+    <p><strong>Requirements change most legislative sessions.</strong> Every entry carries a review date. If it's more than six months old, treat it as a starting point rather than an answer.</p>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-section">
+    <h2>Reviewed states</h2>
+    <div class="table-controls">
+      <input type="text" class="table-filter" id="stateFilter" placeholder="Filter by state name…" aria-label="Filter states">
+      <span class="filter-hint" id="filterHint"></span>
+    </div>
+    <div class="table-scroll">
+      <table class="state-table" id="stateTable">
+        <thead>
+          <tr>
+            <th data-col="0">State <span class="sort-icon"></span></th>
+            <th data-col="1">NP needs a collaborator? <span class="sort-icon"></span></th>
+            <th data-col="2">Capacity limit <span class="sort-icon"></span></th>
+            <th data-col="3">On-site required? <span class="sort-icon"></span></th>
+            <th data-col="4">Chart review <span class="sort-icon"></span></th>
+            <th data-col="5">Schedule II <span class="sort-icon"></span></th>
+            <th data-col="6">Reviewed <span class="sort-icon"></span></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr data-state="texas">
+            <td><a href="/collaborating-physician-texas.html"><strong>Texas</strong></a></td>
+            <td>Yes — prescriptive authority agreement</td>
+            <td>7 FTEs combined NP+PA = <strong>280 hrs/week</strong>; part-time counts proportionally; medically underserved hours excluded; facility-based hospital exempt</td>
+            <td>No — reachable by phone suffices</td>
+            <td>Set by QA plan; no fixed %</td>
+            <td>Permitted</td>
+            <td>Sep 2026</td>
+          </tr>
+          <tr data-state="pennsylvania">
+            <td><a href="/collaborating-physician-pennsylvania.html"><strong>Pennsylvania</strong></a></td>
+            <td>Yes — career-long; <strong>plus a backup physician</strong></td>
+            <td>No NP cap; 6 PAs per physician</td>
+            <td>No</td>
+            <td><strong>Not required</strong></td>
+            <td>Permitted under own authority</td>
+            <td>Sep 2026</td>
+          </tr>
+          <tr data-state="florida">
+            <td><a href="/collaborating-physician-florida.html"><strong>Florida</strong></a></td>
+            <td>Not if autonomously registered (3,000 hrs; primary-care oriented)</td>
+            <td>4 primary-care / 2 specialty <strong>offices</strong> remotely; no NP headcount cap; 10 PAs</td>
+            <td>No</td>
+            <td><strong>Not required</strong></td>
+            <td>Yes, <strong>7-day supply cap</strong> — except psychiatric meds by psychiatric nurses</td>
+            <td>Sep 2026</td>
+          </tr>
+          <tr data-state="ohio">
+            <td><a href="/collaborating-physician-ohio.html"><strong>Ohio</strong></a></td>
+            <td>Yes — Standard Care Arrangement</td>
+            <td><strong>5 prescribing APRNs</strong> per physician; 5 PAs; no cap on non-prescribing</td>
+            <td>No</td>
+            <td>Annual review</td>
+            <td><strong>Restricted</strong> — 72-hr supply + terminal condition unless practice-site exception applies</td>
+            <td>Sep 2026</td>
+          </tr>
+          <tr data-state="new york">
+            <td><a href="/collaborating-physician-new-york.html"><strong>New York</strong></a></td>
+            <td><strong>Yes — exemption lapsed</strong></td>
+            <td>4 NPs at <strong>different</strong> locations; no cap same location</td>
+            <td>No</td>
+            <td><strong>Quarterly minimum</strong>, no fixed %</td>
+            <td>Permitted</td>
+            <td>Sep 2026</td>
+          </tr>
+          <tr data-state="alabama">
+            <td><a href="/collaborating-physician-alabama.html"><strong>Alabama</strong></a></td>
+            <td>Yes — joint ABME/ABN approval</td>
+            <td><strong>360 hrs/week</strong> across CRNPs, CNMs &amp; PAs</td>
+            <td><strong>Yes — 10%</strong> of scheduled hours if under 2 yrs/4,000 hrs. Local back-up physician may cover it; virtual practices exempt</td>
+            <td>Meaningful sample per QA plan; quarterly</td>
+            <td>Requires <strong>QACSC + LPSP</strong> permits and an agreed formulary</td>
+            <td>Sep 2026</td>
+          </tr>
+          <tr data-state="new jersey">
+            <td><a href="/collaborating-physician-new-jersey.html"><strong>New Jersey</strong></a></td>
+            <td>Yes — joint protocol until <strong>5,000+ hrs</strong> (S2996, signed 30 Mar 2026). Independent practice covers <strong>primary or behavioural health</strong>; excludes general OB &amp; cosmetic</td>
+            <td><strong>No cap</strong></td>
+            <td>No</td>
+            <td>No set percentage, but the protocol <strong>must specify</strong> review frequency &amp; methodology; <strong>annual protocol review</strong></td>
+            <td>Permitted. <strong>NJ CDS registration required</strong> alongside DEA — addresses must match</td>
+            <td>Sep 2026</td>
+          </tr>
+          <tr data-state="illinois">
+            <td><a href="/collaborating-physician-illinois.html"><strong>Illinois</strong></a></td>
+            <td>Yes — written collaborative agreement until <strong>full practice authority</strong> (4,000 hrs post-certification + 250 hrs CE). Hospital/ASTC practice exempt via clinical privileges</td>
+            <td><strong>No cap</strong></td>
+            <td>No</td>
+            <td><strong>Not required</strong> — no set percentage; standard agreement provides for a <strong>monthly Schedule II discussion</strong></td>
+            <td>Schedules II–V. <strong>Even with FPA, benzodiazepines &amp; Sch. II narcotics need a physician consultation relationship</strong>; Sch. II narcotics oral/topical/transdermal only. <strong>State CS licence required before DEA</strong></td>
+            <td>Sep 2026</td>
+          </tr>
+          <tr data-state="mississippi">
+            <td><a href="/collaborating-physician-mississippi.html"><strong>Mississippi</strong></a></td>
+            <td>Yes — both boards must approve site, physician <strong>and</strong> agreement before you practise. Backup coverage required, or protocol terms that no patients are seen when the primary is unavailable</td>
+            <td><strong>4 primary agreements</strong> (waiver needed beyond), plus up to 4 as secondary collaborator</td>
+            <td><strong>Yes — the strictest here. 40–75 miles</strong>, beyond which "Extended Mileage" needs a Board appearance. In practice <strong>most arrangements need a waiver or the Primary Care exemption</strong> (4 conditions; mental health counts as primary care)</td>
+            <td><strong>10% or 20 charts, whichever is less, monthly</strong> + a review log; <strong>quarterly face-to-face meetings</strong></td>
+            <td>Permitted under protocol, subject to MS controlled substance rules</td>
+            <td>Sep 2026</td>
+          </tr>
+          <tr data-state="tennessee">
+            <td><a href="/collaborating-physician-tennessee.html"><strong>Tennessee</strong></a></td>
+            <td>Yes — certificate of fitness + filed Notice &amp; Formulary; no independent pathway</td>
+            <td><strong>No numeric cap</strong> — tied to the physician's ability to meet the review duties</td>
+            <td>No</td>
+            <td><strong>20% of charts every 30 days</strong>; controlled-substance review <strong>within 10 days</strong></td>
+            <td>Schedules <strong>II–V</strong> with own DEA; <strong>Sch. II &amp; III opioids capped at a non-refillable 30-day course</strong> unless approved after consultation</td>
+            <td>Sep 2026</td>
+          </tr>
+          <tr data-state="indiana">
+            <td><a href="/collaborating-physician-indiana.html"><strong>Indiana</strong></a></td>
+            <td>Yes — CPA filed with the Board; <strong>authority must be issued before prescribing</strong>. Agreement must list <strong>every other practice agreement both parties hold</strong></td>
+            <td><strong>No cap</strong></td>
+            <td>No mileage rule; the agreement addresses "proximity" as a term</td>
+            <td><strong>5% random sampling, submitted to the physician within 7 days</strong> — lightest sample here, tightest clock</td>
+            <td>Permitted, limits set in the agreement. <strong>Indiana CSR ($60) required for the prescriber</strong>, plus one per storage location; not required of the physician</td>
+            <td>Sep 2026</td>
+          </tr>
+          <tr data-state="kentucky">
+            <td><a href="/collaborating-physician-kentucky.html"><strong>Kentucky</strong></a></td>
+            <td>Yes — <strong>CAPA-NS</strong> (legend drugs) and/or <strong>CAPA-CS</strong> (Sch. II–V). <strong>Both end after 4 years of prescribing</strong> — NS by notification, CS by application</td>
+            <td><strong>No cap</strong></td>
+            <td>No</td>
+            <td>No percentage — instead <strong>KASPER review meetings</strong>: quarterly in yr 1, biannual in yrs 2–4, documented</td>
+            <td>Schedules <strong>II–V</strong> under a CAPA-CS; limits set <strong>in the agreement</strong>, not by statute. First-year CAPA-CS requires <strong>employment</strong></td>
+            <td>Sep 2026</td>
+          </tr>
+          <tr data-state="louisiana">
+            <td><a href="/collaborating-physician-louisiana.html"><strong>Louisiana</strong></a></td>
+            <td>Yes — <strong>LSBN written approval before practising</strong>; CPA must use the Board's template</td>
+            <td><strong>No cap</strong></td>
+            <td>No mileage rule, but the physician must be <strong>actively practising in Louisiana</strong> in a comparable specialty</td>
+            <td><strong>Not required</strong> — no set percentage; Board may audit records at random</td>
+            <td>Requested by tier: III–V, <strong>Sch. II non-narcotic (ADHD)</strong>, or full Sch. II narcotics. <strong>State CDS licence required before DEA</strong>, whole chain inside 60 days</td>
+            <td>Sep 2026</td>
+          </tr>
+          <tr data-state="missouri">
+            <td><a href="/collaborating-physician-missouri.html"><strong>Missouri</strong></a></td>
+            <td>Yes — collaborative practice arrangement; no independent pathway</td>
+            <td><strong>6 FTEs</strong> combined APRNs, PAs <strong>&amp; assistant physicians</strong></td>
+            <td>No — 75-mile definition rescinded 2024, but statutory "geographic proximity" survives; waiver available (45-day default approval)</td>
+            <td><strong>10% of services + 20% of controlled-substance cases, every 14 days</strong> — the most demanding here</td>
+            <td><strong>Schedule II-hydrocodone only</strong> (120-hr, no refill), III–V; other Sch. II physician-only. <strong>BNDD registration required before DEA</strong></td>
+            <td>Sep 2026</td>
+          </tr>
+          <tr data-state="north carolina">
+            <td><a href="/collaborating-physician-north-carolina.html"><strong>North Carolina</strong></a></td>
+            <td>Yes — collaborative practice agreement, <strong>joint board approval before seeing patients</strong></td>
+            <td><strong>No numeric cap</strong> — "adequate supervision" standard instead</td>
+            <td>No</td>
+            <td>No mandated % — but a written ongoing review process required. <strong>Meetings monthly for 6 months, then every 6 months; restarts on physician change</strong></td>
+            <td>Permitted — own DEA; physician must hold equivalent schedules</td>
+            <td>Sep 2026</td>
+          </tr>
+          <tr data-state="virginia">
+            <td><a href="/collaborating-physician-virginia.html"><strong>Virginia</strong></a></td>
+            <td>Yes — practice agreement until autonomous (equiv. 3 yrs full-time; reduced from 5 in Jul 2024)</td>
+            <td><strong>6 APRNs — but 10</strong> where they're psychiatric-mental health APRNs. No PA cap</td>
+            <td>No</td>
+            <td><strong>Not required for NPs.</strong> PA agreements must specify a review timeframe</td>
+            <td>Schedules <strong>II–VI</strong> permitted</td>
+            <td>Sep 2026</td>
+          </tr>
+          <tr data-state="california">
+            <td><a href="/collaborating-physician-california.html"><strong>California</strong></a></td>
+            <td>Yes — Standardized Procedure Agreement, unless certified <strong>103</strong> (group setting w/ a physician, 3 yrs + 4,600 hrs) or <strong>104</strong> (independent in defined settings, 3 more yrs)</td>
+            <td><strong>4 prescribing NPs</strong>; <strong>8 PAs</strong> (raised from 4 on 1 Jan 2026). 103/104 NPs don't count</td>
+            <td>No</td>
+            <td><strong>Not required</strong> — no state percentage; PA countersignature eliminated</td>
+            <td>Permitted — furnishing number + DEA. <strong>CURES registration mandatory</strong></td>
+            <td>Sep 2026</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="no-results" id="noResults">No states match your filter.</div>
+    </div>
+  </div>
+
+  <!-- ANALYSIS -->
+  <div class="content-section">
+    <h2>What stands out across these states</h2>
+    <p><strong>Alabama is the only one requiring physical presence</strong> — 10% of scheduled hours for newer NPs. Everywhere else, reachable by phone satisfies the standard. That single difference determines whether a remote collaborator is viable.</p>
+    <p><strong>Ohio is the most restrictive on Schedule II</strong> by a wide margin. The default rule — terminal condition, physician-initiated, 72-hour supply — makes ordinary outpatient prescribing impossible unless you fall under a practice-site exception.</p>
+    <p><strong>Florida's psychiatric exemption is unusual.</strong> The 7-day Schedule II cap doesn't apply to psychiatric medications prescribed by psychiatric nurses, which makes Florida meaningfully easier for PMHNPs than for other specialties.</p>
+    <p><strong>Pennsylvania is the only one requiring a second physician.</strong> The backup physician requirement is easy to miss and stalls people mid-process.</p>
+    <p><strong>New York and New Jersey moved in opposite directions, months apart.</strong> New York's exemption lapsed — NPs who lawfully stopped maintaining written agreements now need them again. New Jersey went the other way in March 2026, exempting APNs past 5,000 hours. Two neighbouring states, opposite trajectories, and a lot of stale guidance about both.</p>
+    <p><strong>Read review requirements as a percentage <em>and</em> a clock.</strong> Tennessee's 20% monthly and Missouri's 10% fortnightly are heavy samples on a slow beat. Indiana's 5% within seven days is the lightest sample in the table on the tightest turnaround — a weekly habit rather than a scheduled task, and it lapses differently. The percentage alone tells you very little about what a physician is actually signing up for.</p>
+    <p><strong>Missouri asks the most of the physician, by a wide margin.</strong> 10% of all charts and 20% of controlled-substance charts, every fourteen days, written into both statute and regulation. Most states leave review to the agreement; Missouri sets a number and a clock. It's also the only state here where the provider's controlled-substance authority terminates immediately if the physician's does.</p>
+    <p><strong>Three states won't let you start.</strong> North Carolina requires joint approval from both boards before you see a patient, and the clock restarts if your physician changes. Louisiana requires written LSBN approval of your physician first. Mississippi requires site, physician and agreement all approved. Everywhere else, a signed agreement lets you begin — sometimes with a filing due later.</p>
+    <p><strong>Several states require a state controlled-substance registration on top of the DEA</strong> — California (CURES), Missouri (BNDD), New Jersey (CDS), Illinois and Louisiana — and in Missouri, Illinois and Louisiana the state credential must come <strong>first</strong>. Doing it in the wrong order is the most common avoidable delay in this table.</p>
+    <p><strong>Ask whose credential it is, too.</strong> Missouri requires the arrangement to name a current state controlled-substance registrant as the collaborating physician, and North Carolina requires the supervising physician to hold registration for the equivalent schedules — so in those states the physician's own credentials can disqualify them. Louisiana asks nothing of the physician beyond an active Louisiana medical practice.</p>
+    <p><strong>Mississippi is the hardest approval here, and the only one where the waiver is the normal route rather than the exception.</strong> Both boards must approve before you see a patient; a 40–75 mile radius, a four-agreement cap per physician, and a small pool of willing collaborators combine to make a compliant in-radius match unavailable for most NPs. The Primary Care exemption removes the mileage restriction outright for arrangements meeting four conditions — and mental health counts as primary care, which puts psychiatric arrangements through a door most people never find.</p>
+    <p><strong>Kentucky has the cleanest exit here, and it covers controlled substances.</strong> Both agreements end after four years of prescribing — the non-scheduled one by notifying the Board, the controlled substances one by application. Most states either require collaboration indefinitely or gate independence behind a threshold few reach. Nothing prompts you at four years, though: the exit exists, you have to go and take it.</p>
+    <p><strong>Illinois shows why "full practice authority" needs reading closely.</strong> An Illinois APRN with FPA drops the written agreement — but still needs a physician consultation relationship for benzodiazepines and Schedule II narcotics. For psychiatric practice, independence on paper and independence in prescribing are not the same thing, and this is the clearest example of the gap.</p>
+    <p><strong>Virginia is the only state here with a specialty-specific cap.</strong> Six APRNs per physician normally, ten where they're psychiatric-mental health APRNs — written into statute. For PMHNPs that's a materially larger pool of physicians with capacity than the headline number suggests.</p>
+    <p><strong>California moved in both directions at once.</strong> NPs gained a genuine independence pathway through the 103 and 104 categories — though it takes six years of qualifying practice to reach the top of it — while the PA supervision limit doubled from four to eight in January 2026. Most published guidance still describes the old numbers.</p>
+  </div>
+
+  <!-- IN PROGRESS -->
+  <div class="in-progress-box">
+    <h2>In progress</h2>
+    <p>These are drafted or queued, and will be published as they're reviewed:</p>
+    <p><strong>Next up:</strong> Georgia · South Carolina</p>
+    <p><strong>Need a state that isn't listed?</strong> <a href="/np-pa-intake.html">Tell us which one</a>. We answer directly, and it moves that state up the queue.</p>
+  </div>
+
+  <div class="disclaimer">
+    This table describes regulatory requirements in general terms and is not legal advice. Requirements change frequently and your specific situation may vary. Verify with the relevant state medical and nursing boards, or ask us.
+  </div>
+
+</div><!-- .content-wrap -->
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div class="footer-brand-name">MD-<em>Match</em></div>
+      <div class="footer-brand-sub">Collaborating Physician Network</div>
+      <p class="footer-desc">A platform built by Dr. Philip Wasef, MD — an actively collaborating physician — to give NPs, PAs, and physicians a compliant, clearly structured path to collaborate with confidence.</p>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Contact &amp; Apply</div>
+      <a href="mailto:philipwasef@md-match.com">philipwasef@md-match.com</a>
+      <a href="/np-pa-intake.html" target="_blank">NPs and PAs get my free quote</a>
+      <a href="/md-match-physician-intake.html" target="_blank">Physicians join our collaboration network</a>
+      <div class="footer-col-title" style="margin-top:1.5rem;">State Resources</div>
+      <a href="/collaboration-requirements-by-state.html">Requirements by State — Full Table</a>
+      <a href="/collaborating-physician-texas.html">Collaborating Physician in Texas</a>
+      <a href="/collaborating-physician-pennsylvania.html">Collaborating Physician in Pennsylvania</a>
+      <a href="/collaborating-physician-florida.html">Collaborating Physician in Florida</a>
+      <a href="/collaborating-physician-ohio.html">Collaborating Physician in Ohio</a>
+      <a href="/collaborating-physician-new-york.html">Collaborating Physician in New York</a>
+      <a href="/collaborating-physician-alabama.html">Collaborating Physician in Alabama</a>
+      <a href="/collaborating-physician-california.html">Collaborating Physician in California</a>
+      <a href="/collaborating-physician-virginia.html">Collaborating Physician in Virginia</a>
+      <a href="/collaborating-physician-north-carolina.html">Collaborating Physician in North Carolina</a>
+      <a href="/collaborating-physician-missouri.html">Collaborating Physician in Missouri</a>
+      <a href="/collaborating-physician-tennessee.html">Collaborating Physician in Tennessee</a>
+      <a href="/collaborating-physician-mississippi.html">Collaborating Physician in Mississippi</a>
+      <a href="/collaborating-physician-illinois.html">Collaborating Physician in Illinois</a>
+      <a href="/collaborating-physician-new-jersey.html">Collaborating Physician in New Jersey</a>
+      <a href="/collaborating-physician-louisiana.html">Collaborating Physician in Louisiana</a>
+      <a href="/collaborating-physician-kentucky.html">Collaborating Physician in Kentucky</a>
+      <a href="/collaborating-physician-indiana.html">Collaborating Physician in Indiana</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2025 MD-Match · Founded by Dr. Philip Wasef, MD · All rights reserved.</div>
+    <div class="footer-copy">Confidential · Not for redistribution</div>
+  </div>
+</footer>
+
+<script>
+  function toggleMenu() { document.getElementById('mobileMenu').classList.toggle('open'); }
+  function closeMenu() { document.getElementById('mobileMenu').classList.remove('open'); }
+
+  // Table filter
+  const filterInput = document.getElementById('stateFilter');
+  const tableBody = document.getElementById('tableBody');
+  const noResults = document.getElementById('noResults');
+  const filterHint = document.getElementById('filterHint');
+  const rows = Array.from(tableBody.querySelectorAll('tr'));
+
+  filterInput.addEventListener('input', function() {
+    const q = this.value.trim().toLowerCase();
+    let visible = 0;
+    rows.forEach(row => {
+      const state = row.getAttribute('data-state') || '';
+      const match = !q || state.includes(q);
+      row.classList.toggle('hidden', !match);
+      if (match) visible++;
+    });
+    noResults.style.display = visible === 0 ? 'block' : 'none';
+    filterHint.textContent = q ? visible + ' state' + (visible !== 1 ? 's' : '') + ' shown' : '';
+  });
+
+  // Table sort
+  let sortCol = -1, sortAsc = true;
+  document.querySelectorAll('.state-table th').forEach(th => {
+    th.addEventListener('click', function() {
+      const col = parseInt(this.getAttribute('data-col'));
+      if (sortCol === col) { sortAsc = !sortAsc; } else { sortCol = col; sortAsc = true; }
+      document.querySelectorAll('.state-table th').forEach(h => { h.classList.remove('sort-asc', 'sort-desc'); });
+      this.classList.add(sortAsc ? 'sort-asc' : 'sort-desc');
+      const sorted = rows.slice().sort((a, b) => {
+        const at = (a.cells[col] ? a.cells[col].textContent : '').trim().toLowerCase();
+        const bt = (b.cells[col] ? b.cells[col].textContent : '').trim().toLowerCase();
+        return sortAsc ? at.localeCompare(bt) : bt.localeCompare(at);
+      });
+      sorted.forEach(r => tableBody.appendChild(r));
+    });
+  });
+</script>
+</body>
+</html>
