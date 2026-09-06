@@ -648,10 +648,62 @@
     </div>
   </div>
 
-  <!-- 04 · Referral -->
+  <!-- 04 · Background Screening -->
   <div class="section">
     <div class="section-header">
       <span class="section-number">04</span>
+      <span class="section-title">Background Screening</span>
+    </div>
+    <div class="why-row" style="margin-bottom:1.4rem">
+      <div class="why-label">Have you ever had a board action taken against your license? <span class="req">*</span></div>
+      <div class="radio-row">
+        <label><input type="radio" name="boardAction" value="yes" required onchange="toggleScreening('board-details', true)"> <span>Yes</span></label>
+        <label><input type="radio" name="boardAction" value="no" onchange="toggleScreening('board-details', false)"> <span>No</span></label>
+      </div>
+      <div class="conditional-field" id="board-details">
+        <label>Please describe</label>
+        <textarea name="Board Action Details" placeholder="Briefly describe the nature of the action…" rows="3"></textarea>
+      </div>
+    </div>
+    <div class="why-row" style="margin-bottom:1.4rem">
+      <div class="why-label">Have you ever had your license suspended or revoked? <span class="req">*</span></div>
+      <div class="radio-row">
+        <label><input type="radio" name="licenseSuspension" value="yes" required onchange="toggleScreening('license-details', true)"> <span>Yes</span></label>
+        <label><input type="radio" name="licenseSuspension" value="no" onchange="toggleScreening('license-details', false)"> <span>No</span></label>
+      </div>
+      <div class="conditional-field" id="license-details">
+        <label>Please describe</label>
+        <textarea name="License Suspension Details" placeholder="Briefly describe the circumstances…" rows="3"></textarea>
+      </div>
+    </div>
+    <div class="why-row" style="margin-bottom:1.4rem">
+      <div class="why-label">Have you ever had a DEA action taken against you? <span class="req">*</span></div>
+      <div class="radio-row">
+        <label><input type="radio" name="deaAction" value="yes" required onchange="toggleScreening('dea-details', true)"> <span>Yes</span></label>
+        <label><input type="radio" name="deaAction" value="no" onchange="toggleScreening('dea-details', false)"> <span>No</span></label>
+      </div>
+      <div class="conditional-field" id="dea-details">
+        <label>Please describe</label>
+        <textarea name="DEA Action Details" placeholder="Briefly describe the action…" rows="3"></textarea>
+      </div>
+    </div>
+    <div class="why-row" style="margin-bottom:1.4rem">
+      <div class="why-label">Have you ever had a malpractice judgment or settlement against you? <span class="req">*</span></div>
+      <div class="radio-row">
+        <label><input type="radio" name="malpractice" value="yes" required onchange="toggleScreening('malpractice-details', true)"> <span>Yes</span></label>
+        <label><input type="radio" name="malpractice" value="no" onchange="toggleScreening('malpractice-details', false)"> <span>No</span></label>
+      </div>
+      <div class="conditional-field" id="malpractice-details">
+        <label>Please describe</label>
+        <textarea name="Malpractice Details" placeholder="Briefly describe the judgment or settlement…" rows="3"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- 05 · Referral -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-number">05</span>
       <span class="section-title">How Did You Hear About Us?</span>
     </div>
     <div class="field-grid">
@@ -719,6 +771,10 @@
     if (!show) textarea.value = '';
   }
 
+  function toggleScreening(id, show) {
+    document.getElementById(id).classList.toggle('visible', show);
+  }
+
   function selectAll() {
     document.querySelectorAll('.state-pill').forEach(el => el.checked = true);
     updateCount();
@@ -736,7 +792,7 @@
     const btn = this.querySelector('.btn-submit');
 
     // Validate required radio groups
-    const requiredRadios = ['practice_setting_step1', 'Weekly Hours Per Week', 'First Patient Timeline'];
+    const requiredRadios = ['practice_setting_step1', 'Weekly Hours Per Week', 'First Patient Timeline', 'boardAction', 'licenseSuspension', 'deaAction', 'malpractice'];
     for (const name of requiredRadios) {
       if (!document.querySelector(`input[name="${name}"]:checked`)) {
         alert('Please answer all required questions before continuing.');

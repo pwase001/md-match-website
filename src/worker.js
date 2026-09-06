@@ -1974,6 +1974,15 @@ async function handleNpPaIntakeStep1(request, env) {
     ${fields['Why Seeking Collaboration'] ? `<tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">What Brings Them</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Why Seeking Collaboration']}</td></tr>` : ''}
     ${fields['Why Switching'] ? `<tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Reason for Switching</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Why Switching']}</td></tr>` : ''}
     ${fields['Referred By'] ? `<tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Referred By</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Referred By']}</td></tr>` : ''}
+    <tr><td colspan="2" style="padding:10px 12px 4px;font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.08em;color:#1B6CA8;font-family:sans-serif;border-bottom:2px solid #1B6CA8">Background Screening</td></tr>
+    <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Board Disciplinary Action</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['boardAction'] === 'yes' ? 'Yes' : 'No'}</td></tr>
+    ${fields['boardAction'] === 'yes' && fields['Board Action Details'] ? `<tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Board Action Details</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Board Action Details']}</td></tr>` : ''}
+    <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">License Suspension</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['licenseSuspension'] === 'yes' ? 'Yes' : 'No'}</td></tr>
+    ${fields['licenseSuspension'] === 'yes' && fields['License Suspension Details'] ? `<tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">License Suspension Details</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['License Suspension Details']}</td></tr>` : ''}
+    <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">DEA Action</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['deaAction'] === 'yes' ? 'Yes' : 'No'}</td></tr>
+    ${fields['deaAction'] === 'yes' && fields['DEA Action Details'] ? `<tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">DEA Action Details</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['DEA Action Details']}</td></tr>` : ''}
+    <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Malpractice</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['malpractice'] === 'yes' ? 'Yes' : 'No'}</td></tr>
+    ${fields['malpractice'] === 'yes' && fields['Malpractice Details'] ? `<tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Malpractice Details</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Malpractice Details']}</td></tr>` : ''}
   </table>
   <p style="color:#aaa;font-size:11px;margin-top:24px">Submission ID: ${id} · MD-Match.com</p>
 </div>`;
@@ -2069,6 +2078,15 @@ async function handleNpPaIntakeStep2(request, env) {
       'Why Seeking Collaboration': step1Fields['Why Seeking Collaboration'] || '',
       'Why Switching': step1Fields['Why Switching'] || '',
       'Referred By': step1Fields['Referred By'] || '',
+      // Background screening (step 1 — email only, not in docx)
+      'Board Action': step1Fields['boardAction'] === 'yes' ? 'Yes' : 'No',
+      'Board Action Details': step1Fields['Board Action Details'] || '',
+      'License Suspension': step1Fields['licenseSuspension'] === 'yes' ? 'Yes' : 'No',
+      'License Suspension Details': step1Fields['License Suspension Details'] || '',
+      'DEA Action': step1Fields['deaAction'] === 'yes' ? 'Yes' : 'No',
+      'DEA Action Details': step1Fields['DEA Action Details'] || '',
+      'Malpractice': step1Fields['malpractice'] === 'yes' ? 'Yes' : 'No',
+      'Malpractice Details': step1Fields['Malpractice Details'] || '',
       // Step 2 clinical fields
       'Controlled Substances': controlledMap[fields['controlled']] || fields['controlled'] || '—',
       'Stimulants Frequency': fields['Stimulants Frequency'] || '',
@@ -2179,6 +2197,15 @@ function buildStep2Summary(f) {
     ${f['Family Medicine Services'] ? row('Family Medicine Services', f['Family Medicine Services']) : ''}
     ${f['Why Seeking Collaboration'] ? row('What Brought Them', f['Why Seeking Collaboration']) : ''}
     ${f['Why Switching'] ? row('Reason for Switching', f['Why Switching']) : ''}
+    ${section('Background Screening')}
+    ${row('Board Disciplinary Action', f['Board Action'])}
+    ${f['Board Action'] === 'Yes' ? row('Board Action Details', f['Board Action Details']) : ''}
+    ${row('License Suspension', f['License Suspension'])}
+    ${f['License Suspension'] === 'Yes' ? row('License Suspension Details', f['License Suspension Details']) : ''}
+    ${row('DEA Action', f['DEA Action'])}
+    ${f['DEA Action'] === 'Yes' ? row('DEA Action Details', f['DEA Action Details']) : ''}
+    ${row('Malpractice', f['Malpractice'])}
+    ${f['Malpractice'] === 'Yes' ? row('Malpractice Details', f['Malpractice Details']) : ''}
     ${section('Additional Information')}
     ${row('Additional Notes', f['Additional Information'] || 'None provided')}
     ${f['Referred By'] ? row('Referred By', f['Referred By']) : ''}
