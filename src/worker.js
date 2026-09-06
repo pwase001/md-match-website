@@ -1965,9 +1965,10 @@ async function handleNpPaIntakeStep1(request, env) {
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Email</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${email || '—'}</td></tr>
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Phone</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Phone Number'] || '—'}</td></tr>
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">State(s)</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${statesList}</td></tr>
-    <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Specialty</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Specialty'] || '—'}</td></tr>
+    <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Specialty</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${resolveSpecialty(fields) || '—'}</td></tr>
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Practice Setting</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['practice_setting_step1'] || '—'}</td></tr>
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Patient Population</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Patient Population'] || '—'}</td></tr>
+    <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Weekly Hours</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Weekly Hours Per Week'] || '—'}</td></tr>
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Ideal Start Date</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Ideal Start Date'] || '—'}</td></tr>
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">First Patient Timeline</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['First Patient Timeline'] || '—'}</td></tr>
     ${fields['Why Seeking Collaboration'] ? `<tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">What Brings Them</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Why Seeking Collaboration']}</td></tr>` : ''}
@@ -2058,10 +2059,11 @@ async function handleNpPaIntakeStep2(request, env) {
       'Email': email,
       'Phone': step1Fields['Phone Number'] || '—',
       'Provider Type': providerTypeMap[step1Fields['Provider Type']] || step1Fields['Provider Type'] || '—',
-      'Specialty': step1Fields['Specialty'] || '—',
+      'Specialty': resolveSpecialty(step1Fields),
       'States Needing Collaboration': statesList,
       'Practice Setting': step1Fields['practice_setting_step1'] || '—',
       'Patient Population': step1Fields['Patient Population'] || '—',
+      'Weekly Hours Per Week': step1Fields['Weekly Hours Per Week'] || '—',
       'Ideal Start Date': step1Fields['Ideal Start Date'] || '—',
       'First Patient Timeline': step1Fields['First Patient Timeline'] || '—',
       'Why Seeking Collaboration': step1Fields['Why Seeking Collaboration'] || '',
@@ -2133,6 +2135,14 @@ async function handleNpPaIntakeStep2(request, env) {
   }
 }
 
+function resolveSpecialty(fields) {
+  const base = fields['Specialty / Certification'] || '';
+  if (base === 'Other' && fields['Specialty Other Text']) {
+    return `Other: ${fields['Specialty Other Text']}`;
+  }
+  return base || '—';
+}
+
 function buildStep2Summary(f) {
   const row = (label, val) =>
     `<tr><td style="padding:6px 12px;font-weight:600;color:#1e2530;background:#f2f4f6;width:38%;font-family:sans-serif;font-size:13px;border-bottom:1px solid #ddd">${label}</td><td style="padding:6px 12px;color:#1e2530;font-family:sans-serif;font-size:13px;border-bottom:1px solid #ddd">${val || '—'}</td></tr>`;
@@ -2154,6 +2164,7 @@ function buildStep2Summary(f) {
     ${row('States Needing Collaboration', f['States Needing Collaboration'])}
     ${row('Practice Setting', f['Practice Setting'])}
     ${row('Patient Population', f['Patient Population'])}
+    ${row('Weekly Hours Per Week', f['Weekly Hours Per Week'])}
     ${row('Ideal Start Date', f['Ideal Start Date'])}
     ${row('First Patient Timeline', f['First Patient Timeline'])}
     ${section('Clinical Services')}
