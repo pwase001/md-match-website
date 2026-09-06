@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-18417505552"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'AW-18417505552');
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Collaborating Physician in New Jersey | APN Joint Protocols</title>
+<meta name="description" content="New Jersey APNs with 5,000+ hours can practise without a joint protocol under S2996. What's required before that, what the protocol must contain, from a licensed MD.">
+<link rel="icon" type="image/svg+xml" href="/logo.svg">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Nunito:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --teal-deep: #0b3535;
+    --teal: #1a6b6b;
+    --teal-light: #2a9090;
+    --teal-pale: #e8f5f5;
+    --gold: #c9a84c;
+    --gold-light: #e2c97e;
+    --white: #ffffff;
+    --off-white: #f8fbfb;
+    --text: #1a3333;
+    --muted: #4a6b6b;
+    --border: #d0e2e2;
+    --nav-h: 68px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Nunito', sans-serif; color: var(--text); background: var(--white); font-size: 15px; line-height: 1.7; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    height: var(--nav-h);
+    background: rgba(11,53,53,0.97);
+    backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2.5rem;
+    border-bottom: 1px solid rgba(201,168,76,0.2);
+  }
+  .nav-brand { display: flex; flex-direction: column; gap: 0; text-decoration: none; }
+  .nav-logo { font-family: 'Playfair Display', serif; font-size: 1.35rem; color: var(--white); letter-spacing: -0.01em; }
+  .nav-logo em { color: var(--gold); font-style: italic; }
+  .nav-sub { font-size: 9px; color: rgba(255,255,255,0.45); letter-spacing: 0.14em; text-transform: uppercase; }
+  .nav-links { display: flex; align-items: center; gap: 2rem; }
+  .nav-links a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--gold-light); }
+  .nav-links a.nav-btn { background: transparent; border: 1.5px solid rgba(201,168,76,0.6); color: var(--gold-light); padding: 0.42rem 1.1rem; border-radius: 4px; transition: all 0.2s; }
+  .nav-links a.nav-btn:hover { background: var(--gold); color: var(--teal-deep); border-color: var(--gold); }
+  .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; }
+  .hamburger span { display: block; width: 22px; height: 2px; background: var(--white); border-radius: 2px; }
+  .mobile-menu { display: none; position: fixed; inset: 0; top: var(--nav-h); background: var(--teal-deep); z-index: 99; flex-direction: column; padding: 2rem; gap: 1rem; overflow-y: auto; }
+  .mobile-menu.open { display: flex; }
+  .mobile-menu a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 1.1rem; font-weight: 600; padding: 0.8rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+
+  /* PAGE HERO */
+  .page-hero {
+    padding: calc(var(--nav-h) + 3.5rem) 2rem 3rem;
+    background: linear-gradient(150deg, var(--teal-deep) 0%, #0f4242 55%, #1a6060 100%);
+    text-align: center;
+  }
+  .page-hero-inner { max-width: 760px; margin: 0 auto; }
+  .page-eyebrow { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); font-weight: 700; margin-bottom: 1.2rem; display: flex; align-items: center; justify-content: center; gap: 0.7rem; }
+  .page-eyebrow::before, .page-eyebrow::after { content: ''; display: block; width: 32px; height: 1px; background: var(--gold); opacity: 0.6; }
+  .page-hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(1.8rem, 4vw, 2.9rem); color: var(--white); font-weight: 400; line-height: 1.25; margin-bottom: 1.2rem; }
+  .page-hero-sub { font-size: 1rem; color: rgba(255,255,255,0.65); font-weight: 300; max-width: 580px; margin: 0 auto 2rem; line-height: 1.8; }
+  .byline { font-size: 12px; color: rgba(255,255,255,0.4); letter-spacing: 0.06em; margin-top: 1.5rem; }
+
+  /* CONTENT */
+  .content-wrap { max-width: 780px; margin: 0 auto; padding: 3.5rem 2rem 5rem; }
+
+  .quick-answers {
+    background: var(--teal-pale);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 2rem 2.2rem;
+    margin-bottom: 3rem;
+  }
+  .quick-answers h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.35rem;
+    color: var(--teal-deep);
+    margin-bottom: 1.4rem;
+    font-weight: 600;
+  }
+  .qa-item { margin-bottom: 1.3rem; }
+  .qa-item:last-child { margin-bottom: 0; }
+  .qa-q { font-weight: 800; color: var(--teal-deep); font-size: 15px; margin-bottom: 0.3rem; }
+  .qa-a { color: var(--muted); font-size: 14.5px; line-height: 1.75; }
+
+  .content-section { margin-bottom: 2.8rem; }
+  .content-section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.55rem;
+    color: var(--teal-deep);
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid var(--border);
+  }
+  .content-section h3 {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--teal-deep);
+    margin: 1.4rem 0 0.4rem;
+  }
+  .content-section p { color: var(--text); font-size: 15px; line-height: 1.85; margin-bottom: 1rem; }
+  .content-section p:last-child { margin-bottom: 0; }
+  .content-section strong { color: var(--teal-deep); }
+  .content-section ol, .content-section ul { padding-left: 1.4rem; color: var(--text); font-size: 15px; line-height: 2; margin-bottom: 1rem; }
+  .content-section ol li, .content-section ul li { margin-bottom: 0.3rem; }
+  .content-section em { font-style: italic; }
+
+  .statute-note {
+    background: var(--off-white);
+    border-left: 3px solid var(--teal-light);
+    padding: 1rem 1.2rem;
+    margin: 1.2rem 0;
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.75;
+    font-style: italic;
+    border-radius: 0 6px 6px 0;
+  }
+
+  /* FAQ */
+  .faq-section { margin-bottom: 2.8rem; }
+  .faq-section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.55rem;
+    color: var(--teal-deep);
+    font-weight: 600;
+    margin-bottom: 1.2rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid var(--border);
+  }
+  .faq-item { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0.5rem; overflow: hidden; background: var(--off-white); }
+  .faq-q { width: 100%; text-align: left; background: none; border: none; padding: 1rem 1.2rem; font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700; color: var(--teal-deep); cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 1rem; line-height: 1.4; }
+  .faq-q:hover { background: #f0f7f7; }
+  .faq-icon { font-size: 18px; color: var(--teal); flex-shrink: 0; transition: transform 0.2s; }
+  .faq-q[aria-expanded="true"] .faq-icon { transform: rotate(45deg); }
+  .faq-a { display: none; padding: 0 1.2rem 1rem; font-size: 14.5px; color: var(--muted); line-height: 1.75; border-top: 1px solid var(--border); }
+  .faq-a.open { display: block; }
+
+  /* CTA block */
+  .cta-block {
+    background: var(--teal-deep);
+    border-radius: 10px;
+    padding: 2.5rem 2.5rem;
+    text-align: center;
+    margin: 3rem 0;
+  }
+  .cta-block h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    color: var(--white);
+    font-weight: 400;
+    margin-bottom: 0.8rem;
+  }
+  .cta-block p { color: rgba(255,255,255,0.6); font-size: 14px; margin-bottom: 1.5rem; }
+  .btn-gold { display: inline-block; background: var(--gold); color: var(--teal-deep); padding: 0.85rem 2rem; border-radius: 4px; font-weight: 800; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; text-decoration: none; transition: all 0.2s; border: 2px solid var(--gold); }
+  .btn-gold:hover { background: var(--gold-light); border-color: var(--gold-light); }
+
+  /* Disclaimer */
+  .disclaimer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 1.5rem; margin-top: 1rem; line-height: 1.75; font-style: italic; }
+
+  /* FOOTER */
+  footer { background: var(--teal-deep); padding: 3.5rem 2rem; }
+  .footer-inner { max-width: 1060px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr; gap: 3rem; }
+  .footer-brand-name { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--white); }
+  .footer-brand-name em { color: var(--gold); font-style: italic; }
+  .footer-brand-sub { font-size: 11px; color: rgba(255,255,255,0.4); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 0.2rem; margin-bottom: 1rem; }
+  .footer-desc { font-size: 13px; color: rgba(255,255,255,0.5); line-height: 1.75; max-width: 360px; }
+  .footer-col-title { font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); font-weight: 700; margin-bottom: 1rem; }
+  .footer-col a { display: block; font-size: 13px; color: rgba(255,255,255,0.55); text-decoration: none; margin-bottom: 0.5rem; transition: color 0.2s; }
+  .footer-col a:hover { color: var(--white); }
+  .footer-bottom { max-width: 1060px; margin: 2.5rem auto 0; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+  .footer-copy { font-size: 11.5px; color: rgba(255,255,255,0.35); }
+
+  @media (max-width: 900px) {
+    .footer-inner { grid-template-columns: 1fr; gap: 2rem; }
+    .nav-links { display: none; }
+    .hamburger { display: flex; }
+  }
+  @media (max-width: 600px) {
+    nav { padding: 0 1.2rem; }
+    .content-wrap { padding: 2rem 1.2rem 4rem; }
+    .quick-answers { padding: 1.5rem 1.3rem; }
+    .cta-block { padding: 2rem 1.3rem; }
+    .page-hero { padding-left: 1.2rem; padding-right: 1.2rem; }
+    .footer-inner { gap: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="/" class="nav-brand">
+    <span class="nav-logo">MD-<em>Match</em></span>
+    <span class="nav-sub">Collaborating Physician Network</span>
+  </a>
+  <div class="nav-links">
+    <a href="/#goals">Our Goals</a>
+    <a href="/#for-nps">For NPs &amp; PAs</a>
+    <a href="/#for-physicians">For Physicians</a>
+    <a href="/#faq">FAQ</a>
+    <a href="/np-pa-intake.html" target="_blank" class="nav-btn">NPs and PAs get my free quote</a>
+    <a href="/md-match-physician-intake.html" target="_blank" class="nav-btn">Physicians join our network</a>
+  </div>
+  <div class="hamburger" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="/" onclick="closeMenu()">Home</a>
+  <a href="/#goals" onclick="closeMenu()">Our Goals</a>
+  <a href="/#for-nps" onclick="closeMenu()">For NPs &amp; PAs</a>
+  <a href="/#for-physicians" onclick="closeMenu()">For Physicians</a>
+  <a href="/#faq" onclick="closeMenu()">FAQ</a>
+  <a href="/np-pa-intake.html" target="_blank" onclick="closeMenu()">NPs and PAs get my free quote</a>
+  <a href="/md-match-physician-intake.html" target="_blank" onclick="closeMenu()">Physicians join our network</a>
+</div>
+
+<!-- PAGE HERO -->
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-eyebrow">New Jersey State Guide</div>
+    <h1>Collaborating Physicians in New Jersey: What APNs Need in 2026</h1>
+    <p class="page-hero-sub"><strong style="color:rgba(255,255,255,0.85)">New Jersey changed this year, and if you're a psychiatric APN the change was written with you in mind.</strong></p>
+    <p class="byline">Reviewed by Philip Wasef, MD — actively collaborating physician, licensed in 45 states including New Jersey. Last updated: September 2026.</p>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="content-wrap">
+
+  <p style="color:var(--muted);font-size:15px;line-height:1.85;margin-bottom:2.5rem;">Governor Sherrill signed <strong style="color:var(--teal-deep)">S2996 on 30 March 2026</strong>. It took effect immediately. An advanced practice nurse with <strong style="color:var(--teal-deep)">more than 5,000 hours</strong> of licensed, active advanced nursing practice in their patient population may now practise <strong style="color:var(--teal-deep)">without a joint protocol</strong>. Crucially, the new authority covers <strong style="color:var(--teal-deep)">primary healthcare or behavioural healthcare</strong> — behavioural health named explicitly, alongside mental illness, emotional disorders and substance use disorders. Psychiatric APNs aren't practising in a grey area under this law. They're inside its core. Below 5,000 hours, the joint protocol requirement is unchanged, and it's more specific than most states' equivalents.</p>
+
+  <!-- Quick Answers -->
+  <div class="quick-answers">
+    <h2>Quick Answers</h2>
+
+    <div class="qa-item">
+      <div class="qa-q">Do New Jersey APNs need a collaborating physician?</div>
+      <div class="qa-a">Below 5,000 hours, yes — you practise under a written joint protocol with a collaborating physician. Above it, and within the qualifying practice areas, no.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What exactly is the 5,000-hour threshold?</div>
+      <div class="qa-a">More than 5,000 hours of licensed, active advanced nursing practice in your applicable patient population.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What does independent practice cover?</div>
+      <div class="qa-a"><strong>Primary healthcare or behavioural healthcare</strong>, within recognised population focuses — family across the lifespan, adult gerontology, paediatrics, women's health, or behavioural health.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What's excluded?</div>
+      <div class="qa-a">General obstetrics, and elective aesthetic or cosmetic services.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">Is chart review required?</div>
+      <div class="qa-a">There's no mandated percentage. But your joint protocol <strong>must specify the frequency and methodology</strong> for periodic review of patient records — you choose the number, you don't get to omit it.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">How often must the protocol be reviewed?</div>
+      <div class="qa-a"><strong>At least annually</strong>, reviewed and updated.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">Is the protocol filed with a board?</div>
+      <div class="qa-a">No. It must be <strong>maintained on the premises of every office</strong> where you practise.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">How many APNs can one physician collaborate with?</div>
+      <div class="qa-a">No numeric limit.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">Is there a distance requirement?</div>
+      <div class="qa-a">No. New Jersey imposes no geographic restriction.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">Do I need a state controlled substance registration?</div>
+      <div class="qa-a"><strong>Yes.</strong> New Jersey requires a <strong>CDS registration</strong> from the Division of Consumer Affairs in addition to your federal DEA registration. The New Jersey address on the CDS registration must match the address on your DEA registration.</div>
+    </div>
+  </div>
+
+  <!-- What S2996 changed -->
+  <div class="content-section">
+    <h2>What S2996 Changed, and What It Didn't</h2>
+    <p><strong>The threshold.</strong> More than 5,000 hours of licensed, active advanced nursing practice in your applicable patient population. That figure moved substantially during the bill's passage — earlier versions proposed far fewer — so guidance published before 2026 may cite a different number. 5,000 is the enacted figure.</p>
+    <p><strong>The scope.</strong> Independent practice is confined to <strong>primary healthcare or behavioural healthcare</strong>. Primary healthcare covers screening, diagnosis and treatment. Behavioural healthcare covers mental illness, emotional disorders and substance use disorders.</p>
+    <p><strong>The exclusions.</strong> General obstetrics, and elective aesthetic or cosmetic services. An APN doing cosmetic work is outside the independent practice authority regardless of hours.</p>
+    <p><strong>What didn't change.</strong> Board of Nursing oversight, continuing education obligations, and malpractice coverage requirements all remain. So does the CDS registration for controlled substances.</p>
+    <p><strong>One practical caution.</strong> The law took effect immediately, but implementing regulations followed separately. If you're relying on the exemption, confirm your status against current Board of Nursing guidance rather than against the statute alone — and don't dissolve a working joint protocol until you've done that. An arrangement that ends before your exempt status is settled leaves a gap, and gaps are harder to close than to avoid.</p>
+  </div>
+
+  <!-- Joint protocol -->
+  <div class="content-section">
+    <h2>The Joint Protocol, Below 5,000 Hours</h2>
+    <p>New Jersey's joint protocol is more prescriptive than the one-page agreements some states accept. It must address:</p>
+    <p><strong>The nature of the practice</strong> — the patient population and the settings in which you work.</p>
+    <p><strong>Specific medications</strong>, including limits on refills.</p>
+    <p><strong>Recordkeeping methodology.</strong></p>
+    <p><strong>The frequency and methodology for periodic review of patient records.</strong> This is the chart review provision. New Jersey doesn't set a percentage, but it requires you to set one and follow it. A protocol silent on review frequency is incomplete.</p>
+    <p><strong>Conditions requiring consultation</strong> with the collaborating physician — including your triggers around controlled substances.</p>
+    <p><strong>Identification of reference materials</strong> containing practice guidelines.</p>
+    <p>Two obligations attach to it:</p>
+    <p><strong>Maintain it on the premises of every office</strong> where you practise. Not centrally filed — at each location.</p>
+    <p><strong>Review it at least annually.</strong> Failure to establish and implement joint protocols may be deemed professional misconduct, which puts this above administrative housekeeping.</p>
+  </div>
+
+  <!-- Checklist -->
+  <div class="content-section">
+    <h2>Approval Checklist</h2>
+    <ol>
+      <li><strong>Draft and sign the written joint protocol</strong> covering all required elements — nature of the practice and patient population, medications and refill limits, recordkeeping methodology, the frequency and methodology for periodic record review, consultation triggers including controlled substances, and reference materials.</li>
+      <li><strong>Obtain your federal DEA registration and your New Jersey CDS registration</strong> if you'll prescribe controlled substances. The New Jersey address on the CDS registration must match the DEA address.</li>
+      <li><strong>Complete the controlled substance pharmacology continuing education requirement.</strong></li>
+      <li><strong>Keep the signed protocol on file at each practice location.</strong> Nothing is submitted to either board — which means nothing external will tell you the protocol is inadequate until someone asks to see it.</li>
+      <li><strong>Review, update and re-sign the protocol at least annually.</strong></li>
+      <li><strong>Track your hours toward 5,000</strong>, and reassess your status against current Board of Nursing guidance as you approach it.</li>
+    </ol>
+  </div>
+
+  <!-- Cost -->
+  <div class="content-section">
+    <h2>What a Collaborating Physician Costs in New Jersey</h2>
+    <p><strong>New Jersey is reasonable, and getting more so.</strong></p>
+    <p>There's no cap on how many APNs a physician may collaborate with, no geographic restriction, and no mandated review percentage. Three of the constraints that push prices up elsewhere are absent.</p>
+    <p><strong>S2996 is loosening it further.</strong> Every APN who crosses 5,000 hours and qualifies leaves the market for a collaborating physician, which frees capacity for those still below the threshold. That's demand falling against steady supply, and it moves prices in your favour.</p>
+    <p><strong>Which makes the term of your arrangement worth thinking about.</strong> If you're at 4,200 hours, you're buying a defined stretch, not an indefinite commitment — and you should be negotiating like it rather than accepting terms priced as though the relationship is permanent.</p>
+    <p>At MD-Match, pricing is tailored to your practice rather than flat-rated. The match fee is $50, one time, and rematching is free, always.</p>
+  </div>
+
+  <!-- CTA 1 -->
+  <div class="cta-block">
+    <h3>Get My Free New Jersey Quote — 2-Minute First Step</h3>
+    <p>Tell us roughly how many practice hours you have — if you're near 5,000, what you should be signing now is different from a long-term arrangement.</p>
+    <a href="/np-pa-intake.html" class="btn-gold">Start the Free Intake Form →</a>
+  </div>
+
+  <!-- Mistakes -->
+  <div class="content-section">
+    <h2>Mistakes I Actually See in New Jersey Arrangements</h2>
+
+    <h3>Ending a protocol before exempt status is confirmed.</h3>
+    <p>The law is in effect; the regulatory detail followed separately. Confirm with the Board before you dissolve a working arrangement, not after.</p>
+
+    <h3>Relying on an out-of-date hours figure.</h3>
+    <p>The threshold moved during the bill's passage. Guidance written before 2026 may cite a lower number. It's more than 5,000.</p>
+
+    <h3>Assuming the exemption covers all practice.</h3>
+    <p>It covers primary healthcare and behavioural healthcare, and excludes general obstetrics and elective aesthetic or cosmetic services. An APN with a cosmetic sideline needs to think carefully about which authority covers what.</p>
+
+    <h3>A protocol that doesn't state review frequency.</h3>
+    <p>New Jersey requires the frequency and methodology to be specified. Silence isn't "no requirement" — it's an incomplete protocol.</p>
+
+    <h3>One copy instead of one per office.</h3>
+    <p>It must be maintained at every location where you practise.</p>
+
+    <h3>Letting the annual review slide.</h3>
+    <p>Failure to establish and implement joint protocols may be deemed professional misconduct. Nothing prompts the review, because nothing is filed.</p>
+
+    <h3>Skipping the CDS registration.</h3>
+    <p>New Jersey requires it in addition to your DEA, and the addresses must match.</p>
+
+    <p>Every physician in the MD-Match network is background-checked, license-verified for New Jersey, and capacity-checked before matching. We draft the protocol to cover every required element rather than handing you a template, set the annual review reminder, and track your hours toward 5,000 — because in a state where the finish line is real, knowing exactly where you stand is worth something.</p>
+  </div>
+
+  <!-- How MD-Match works -->
+  <div class="content-section">
+    <h2>How MD-Match Works in New Jersey</h2>
+    <ol>
+      <li><strong>Complete the free intake form</strong> — credential, specialty, practice setting, timeline. First step takes about two minutes.</li>
+      <li><strong>Get a personalized quote.</strong> I review every New Jersey submission myself. Tell me roughly how many practice hours you have — if you're near 5,000, what you should be signing now is different from a long-term arrangement.</li>
+      <li><strong>Pay the one-time $50 match fee</strong> and get matched with a New Jersey-licensed, specialty-aligned physician with genuine capacity.</li>
+      <li><strong>We handle the compliance rails</strong> — the joint protocol drafted to every required element, CDS and DEA sequencing, annual review reminders, and hour tracking toward the 5,000-hour threshold. If a match stops working, rematching is free.</li>
+    </ol>
+  </div>
+
+  <!-- CTA 2 -->
+  <div class="cta-block">
+    <h3>Start the Free Intake Form</h3>
+    <p>Two minutes. No commitment. I'll review your situation personally and match you with the right physician for where you are now.</p>
+    <a href="/np-pa-intake.html" class="btn-gold">Start the Free Intake Form →</a>
+  </div>
+
+  <!-- FAQ -->
+  <div class="faq-section">
+    <h2>New Jersey FAQ</h2>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>Do New Jersey advanced practice nurses need a joint protocol?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Below the statutory hours threshold, yes. APNs with more than 5,000 hours of licensed, active advanced nursing practice in their applicable patient population may practise without one, within the qualifying practice areas.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>What is S2996?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Legislation signed on 30 March 2026 exempting qualifying advanced practice nurses from the joint protocol requirement. It took effect immediately, with implementing regulations following separately.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>What does independent practice authority cover in New Jersey?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Primary healthcare or behavioural healthcare, within recognised population focuses including family across the lifespan, adult gerontology, paediatrics, women's health, and behavioural health.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>What is excluded from independent practice authority?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">General obstetrics, and elective aesthetic or cosmetic services.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>What must a New Jersey joint protocol contain?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">The nature of the practice, patient population and settings; specific medications including refill limits; recordkeeping methodology; the frequency and methodology for periodic review of patient records; conditions requiring physician consultation; and identification of reference materials containing practice guidelines.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>Does New Jersey require chart review?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">No specific percentage is mandated, but the joint protocol must specify the frequency and methodology used to ensure periodic review of patient records.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>How often must a joint protocol be reviewed?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">At least annually.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>Is the joint protocol filed with the Board?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">No. It must be maintained on the premises of every office in which the advanced practice nurse practises.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>How many APNs can one New Jersey physician collaborate with?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">New Jersey sets no numeric limit.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>Does New Jersey require a state controlled substance registration?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Yes. A CDS registration from the Division of Consumer Affairs is required in addition to federal DEA registration, and the New Jersey address on the CDS registration must match the address used for the DEA registration.</div>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    Philip Wasef, MD is the founder of MD-Match and an actively practicing collaborating physician licensed in 45 states, including New Jersey. This page describes regulatory requirements in general terms and is not legal advice; requirements change and your situation may vary. Verify current rules with the New Jersey Board of Nursing, or ask us.
+  </div>
+
+</div><!-- .content-wrap -->
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div class="footer-brand-name">MD-<em>Match</em></div>
+      <div class="footer-brand-sub">Collaborating Physician Network</div>
+      <p class="footer-desc">A platform built by Dr. Philip Wasef, MD — an actively collaborating physician — to give NPs, PAs, and physicians a compliant, clearly structured path to collaborate with confidence.</p>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Contact &amp; Apply</div>
+      <a href="mailto:philipwasef@md-match.com">philipwasef@md-match.com</a>
+      <a href="/np-pa-intake.html" target="_blank">NPs and PAs get my free quote</a>
+      <a href="/md-match-physician-intake.html" target="_blank">Physicians join our collaboration network</a>
+      <div class="footer-col-title" style="margin-top:1.5rem;">State Resources</div>
+      <a href="/collaborating-physician-texas.html">Collaborating Physician in Texas</a>
+      <a href="/collaborating-physician-pennsylvania.html">Collaborating Physician in Pennsylvania</a>
+      <a href="/collaborating-physician-florida.html">Collaborating Physician in Florida</a>
+      <a href="/collaborating-physician-ohio.html">Collaborating Physician in Ohio</a>
+      <a href="/collaborating-physician-new-york.html">Collaborating Physician in New York</a>
+      <a href="/collaborating-physician-alabama.html">Collaborating Physician in Alabama</a>
+      <a href="/collaborating-physician-california.html">Collaborating Physician in California</a>
+      <a href="/collaborating-physician-virginia.html">Collaborating Physician in Virginia</a>
+      <a href="/collaborating-physician-north-carolina.html">Collaborating Physician in North Carolina</a>
+      <a href="/collaborating-physician-missouri.html">Collaborating Physician in Missouri</a>
+      <a href="/collaborating-physician-tennessee.html">Collaborating Physician in Tennessee</a>
+      <a href="/collaborating-physician-mississippi.html">Collaborating Physician in Mississippi</a>
+      <a href="/collaborating-physician-illinois.html">Collaborating Physician in Illinois</a>
+      <a href="/collaborating-physician-new-jersey.html">Collaborating Physician in New Jersey</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2025 MD-Match · Founded by Dr. Philip Wasef, MD · All rights reserved.</div>
+    <div class="footer-copy">Confidential · Not for redistribution</div>
+  </div>
+</footer>
+
+<script>
+  function toggleMenu() { document.getElementById('mobileMenu').classList.toggle('open'); }
+  function closeMenu() { document.getElementById('mobileMenu').classList.remove('open'); }
+  document.querySelectorAll('.faq-q').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const answer = btn.nextElementSibling;
+      const expanded = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', !expanded);
+      answer.classList.toggle('open', !expanded);
+    });
+  });
+</script>
+</body>
+</html>
