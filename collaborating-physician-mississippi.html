@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-18417505552"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'AW-18417505552');
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Collaborating Physician in Mississippi | NP Approval Rules</title>
+<meta name="description" content="Mississippi's mileage rule, the primary care exemption that removes it, chart review and quarterly meetings — and how to actually get approved. From a licensed MD.">
+<link rel="icon" type="image/svg+xml" href="/logo.svg">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Nunito:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --teal-deep: #0b3535;
+    --teal: #1a6b6b;
+    --teal-light: #2a9090;
+    --teal-pale: #e8f5f5;
+    --gold: #c9a84c;
+    --gold-light: #e2c97e;
+    --white: #ffffff;
+    --off-white: #f8fbfb;
+    --text: #1a3333;
+    --muted: #4a6b6b;
+    --border: #d0e2e2;
+    --nav-h: 68px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Nunito', sans-serif; color: var(--text); background: var(--white); font-size: 15px; line-height: 1.7; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    height: var(--nav-h);
+    background: rgba(11,53,53,0.97);
+    backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2.5rem;
+    border-bottom: 1px solid rgba(201,168,76,0.2);
+  }
+  .nav-brand { display: flex; flex-direction: column; gap: 0; text-decoration: none; }
+  .nav-logo { font-family: 'Playfair Display', serif; font-size: 1.35rem; color: var(--white); letter-spacing: -0.01em; }
+  .nav-logo em { color: var(--gold); font-style: italic; }
+  .nav-sub { font-size: 9px; color: rgba(255,255,255,0.45); letter-spacing: 0.14em; text-transform: uppercase; }
+  .nav-links { display: flex; align-items: center; gap: 2rem; }
+  .nav-links a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--gold-light); }
+  .nav-links a.nav-btn { background: transparent; border: 1.5px solid rgba(201,168,76,0.6); color: var(--gold-light); padding: 0.42rem 1.1rem; border-radius: 4px; transition: all 0.2s; }
+  .nav-links a.nav-btn:hover { background: var(--gold); color: var(--teal-deep); border-color: var(--gold); }
+  .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; }
+  .hamburger span { display: block; width: 22px; height: 2px; background: var(--white); border-radius: 2px; }
+  .mobile-menu { display: none; position: fixed; inset: 0; top: var(--nav-h); background: var(--teal-deep); z-index: 99; flex-direction: column; padding: 2rem; gap: 1rem; overflow-y: auto; }
+  .mobile-menu.open { display: flex; }
+  .mobile-menu a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 1.1rem; font-weight: 600; padding: 0.8rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+
+  /* PAGE HERO */
+  .page-hero {
+    padding: calc(var(--nav-h) + 3.5rem) 2rem 3rem;
+    background: linear-gradient(150deg, var(--teal-deep) 0%, #0f4242 55%, #1a6060 100%);
+    text-align: center;
+  }
+  .page-hero-inner { max-width: 760px; margin: 0 auto; }
+  .page-eyebrow { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); font-weight: 700; margin-bottom: 1.2rem; display: flex; align-items: center; justify-content: center; gap: 0.7rem; }
+  .page-eyebrow::before, .page-eyebrow::after { content: ''; display: block; width: 32px; height: 1px; background: var(--gold); opacity: 0.6; }
+  .page-hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(1.8rem, 4vw, 2.9rem); color: var(--white); font-weight: 400; line-height: 1.25; margin-bottom: 1.2rem; }
+  .page-hero-sub { font-size: 1rem; color: rgba(255,255,255,0.65); font-weight: 300; max-width: 580px; margin: 0 auto 2rem; line-height: 1.8; }
+  .byline { font-size: 12px; color: rgba(255,255,255,0.4); letter-spacing: 0.06em; margin-top: 1.5rem; }
+
+  /* CONTENT */
+  .content-wrap { max-width: 780px; margin: 0 auto; padding: 3.5rem 2rem 5rem; }
+
+  .quick-answers {
+    background: var(--teal-pale);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 2rem 2.2rem;
+    margin-bottom: 3rem;
+  }
+  .quick-answers h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.35rem;
+    color: var(--teal-deep);
+    margin-bottom: 1.4rem;
+    font-weight: 600;
+  }
+  .qa-item { margin-bottom: 1.3rem; }
+  .qa-item:last-child { margin-bottom: 0; }
+  .qa-q { font-weight: 800; color: var(--teal-deep); font-size: 15px; margin-bottom: 0.3rem; }
+  .qa-a { color: var(--muted); font-size: 14.5px; line-height: 1.75; }
+
+  .content-section { margin-bottom: 2.8rem; }
+  .content-section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.55rem;
+    color: var(--teal-deep);
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid var(--border);
+  }
+  .content-section h3 {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--teal-deep);
+    margin: 1.4rem 0 0.4rem;
+  }
+  .content-section p { color: var(--text); font-size: 15px; line-height: 1.85; margin-bottom: 1rem; }
+  .content-section p:last-child { margin-bottom: 0; }
+  .content-section strong { color: var(--teal-deep); }
+  .content-section ol, .content-section ul { padding-left: 1.4rem; color: var(--text); font-size: 15px; line-height: 2; margin-bottom: 1rem; }
+  .content-section ol li, .content-section ul li { margin-bottom: 0.3rem; }
+  .content-section em { font-style: italic; }
+
+  .statute-note {
+    background: var(--off-white);
+    border-left: 3px solid var(--teal-light);
+    padding: 1rem 1.2rem;
+    margin: 1.2rem 0;
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.75;
+    font-style: italic;
+    border-radius: 0 6px 6px 0;
+  }
+
+  /* FAQ */
+  .faq-section { margin-bottom: 2.8rem; }
+  .faq-section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.55rem;
+    color: var(--teal-deep);
+    font-weight: 600;
+    margin-bottom: 1.2rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid var(--border);
+  }
+  .faq-item { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0.5rem; overflow: hidden; background: var(--off-white); }
+  .faq-q { width: 100%; text-align: left; background: none; border: none; padding: 1rem 1.2rem; font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700; color: var(--teal-deep); cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 1rem; line-height: 1.4; }
+  .faq-q:hover { background: #f0f7f7; }
+  .faq-icon { font-size: 18px; color: var(--teal); flex-shrink: 0; transition: transform 0.2s; }
+  .faq-q[aria-expanded="true"] .faq-icon { transform: rotate(45deg); }
+  .faq-a { display: none; padding: 0 1.2rem 1rem; font-size: 14.5px; color: var(--muted); line-height: 1.75; border-top: 1px solid var(--border); }
+  .faq-a.open { display: block; }
+
+  /* CTA block */
+  .cta-block {
+    background: var(--teal-deep);
+    border-radius: 10px;
+    padding: 2.5rem 2.5rem;
+    text-align: center;
+    margin: 3rem 0;
+  }
+  .cta-block h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    color: var(--white);
+    font-weight: 400;
+    margin-bottom: 0.8rem;
+  }
+  .cta-block p { color: rgba(255,255,255,0.6); font-size: 14px; margin-bottom: 1.5rem; }
+  .btn-gold { display: inline-block; background: var(--gold); color: var(--teal-deep); padding: 0.85rem 2rem; border-radius: 4px; font-weight: 800; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; text-decoration: none; transition: all 0.2s; border: 2px solid var(--gold); }
+  .btn-gold:hover { background: var(--gold-light); border-color: var(--gold-light); }
+
+  /* Disclaimer */
+  .disclaimer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 1.5rem; margin-top: 1rem; line-height: 1.75; font-style: italic; }
+
+  /* FOOTER */
+  footer { background: var(--teal-deep); padding: 3.5rem 2rem; }
+  .footer-inner { max-width: 1060px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr; gap: 3rem; }
+  .footer-brand-name { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--white); }
+  .footer-brand-name em { color: var(--gold); font-style: italic; }
+  .footer-brand-sub { font-size: 11px; color: rgba(255,255,255,0.4); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 0.2rem; margin-bottom: 1rem; }
+  .footer-desc { font-size: 13px; color: rgba(255,255,255,0.5); line-height: 1.75; max-width: 360px; }
+  .footer-col-title { font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); font-weight: 700; margin-bottom: 1rem; }
+  .footer-col a { display: block; font-size: 13px; color: rgba(255,255,255,0.55); text-decoration: none; margin-bottom: 0.5rem; transition: color 0.2s; }
+  .footer-col a:hover { color: var(--white); }
+  .footer-bottom { max-width: 1060px; margin: 2.5rem auto 0; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+  .footer-copy { font-size: 11.5px; color: rgba(255,255,255,0.35); }
+
+  @media (max-width: 900px) {
+    .footer-inner { grid-template-columns: 1fr; gap: 2rem; }
+    .nav-links { display: none; }
+    .hamburger { display: flex; }
+  }
+  @media (max-width: 600px) {
+    nav { padding: 0 1.2rem; }
+    .content-wrap { padding: 2rem 1.2rem 4rem; }
+    .quick-answers { padding: 1.5rem 1.3rem; }
+    .cta-block { padding: 2rem 1.3rem; }
+    .page-hero { padding-left: 1.2rem; padding-right: 1.2rem; }
+    .footer-inner { gap: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="/" class="nav-brand">
+    <span class="nav-logo">MD-<em>Match</em></span>
+    <span class="nav-sub">Collaborating Physician Network</span>
+  </a>
+  <div class="nav-links">
+    <a href="/#goals">Our Goals</a>
+    <a href="/#for-nps">For NPs &amp; PAs</a>
+    <a href="/#for-physicians">For Physicians</a>
+    <a href="/#faq">FAQ</a>
+    <a href="/np-pa-intake.html" target="_blank" class="nav-btn">NPs and PAs get my free quote</a>
+    <a href="/md-match-physician-intake.html" target="_blank" class="nav-btn">Physicians join our network</a>
+  </div>
+  <div class="hamburger" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="/" onclick="closeMenu()">Home</a>
+  <a href="/#goals" onclick="closeMenu()">Our Goals</a>
+  <a href="/#for-nps" onclick="closeMenu()">For NPs &amp; PAs</a>
+  <a href="/#for-physicians" onclick="closeMenu()">For Physicians</a>
+  <a href="/#faq" onclick="closeMenu()">FAQ</a>
+  <a href="/np-pa-intake.html" target="_blank" onclick="closeMenu()">NPs and PAs get my free quote</a>
+  <a href="/md-match-physician-intake.html" target="_blank" onclick="closeMenu()">Physicians join our network</a>
+</div>
+
+<!-- PAGE HERO -->
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-eyebrow">Mississippi State Guide</div>
+    <h1>Collaborating Physicians in Mississippi: What NPs Actually Need</h1>
+    <p class="page-hero-sub"><strong style="color:rgba(255,255,255,0.85)">Mississippi is one of the two or three hardest states in the country to get a collaboration approved. It is not impossible, and the reason people fail is almost always the same one.</strong></p>
+    <p class="byline">Reviewed by Philip Wasef, MD — actively collaborating physician, licensed in 45 states including Mississippi, with Mississippi collaborations in place. Last updated: September 2026.</p>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="content-wrap">
+
+  <p style="color:var(--muted);font-size:15px;line-height:1.85;margin-bottom:2.5rem;">They treat the mileage rule as a wall rather than a door with a key in it. Mississippi restricts how far your collaborating physician can practise from your site — somewhere between <strong style="color:var(--teal-deep)">40 and 75 miles</strong>, depending on which rule applies — and a physician beyond that has to bring the protocol before the Board of Medical Licensure, <strong style="color:var(--teal-deep)">in person or by telephone</strong>, for approval before you see a single patient. Combine that radius with a small pool of willing physicians and a <strong style="color:var(--teal-deep)">four-agreement cap</strong> on each of them, and the arithmetic is brutal. For most NPs in most parts of the state, there simply isn't a qualifying physician close enough. Which is why the waiver is the whole game.</p>
+
+  <!-- Quick Answers -->
+  <div class="quick-answers">
+    <h2>Quick Answers</h2>
+
+    <div class="qa-item">
+      <div class="qa-q">Do Mississippi NPs need a collaborating physician?</div>
+      <div class="qa-a">Yes. Mississippi requires a formal collaborative agreement, approved by both boards, and there is no independent practice pathway.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">Can I practise while my agreement is pending?</div>
+      <div class="qa-a">No. You can hold APRN certification without an agreement, but you cannot begin practising until the site, the physician and the agreement are all Board-approved.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">How many NPs can one physician collaborate with?</div>
+      <div class="qa-a"><strong>Four</strong> primary collaborative agreements at any one time, unless the Board expressly grants a waiver. A physician may additionally serve as <strong>secondary collaborator</strong> on up to four further agreements.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">How far away can my physician be?</div>
+      <div class="qa-a">Roughly <strong>40 to 75 miles</strong>, depending on which rule bites. Beyond that you're into <strong>Extended Mileage Collaboration</strong>, which requires the physician to appear before the Board of Medical Licensure — personally or by telephone — and obtain approval before patient care begins.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">Realistically, will I need a waiver or exemption?</div>
+      <div class="qa-a"><strong>Almost certainly yes.</strong> For most Mississippi NPs the practical answer isn't finding a physician inside the radius — it's getting the restriction lifted. Plan for that from the start rather than treating it as a fallback.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">How much chart review is required?</div>
+      <div class="qa-a">A random sample representing <strong>10% of charts or 20 charts, whichever is less, every month</strong> — plus a documented log of the reviews.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">Are there required meetings?</div>
+      <div class="qa-a">Yes. <strong>Face to face with your collaborating physician once per quarter</strong>, documented, for quality assurance.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">Do I need a second, backup physician?</div>
+      <div class="qa-a">Not necessarily — and in Mississippi you usually shouldn't try. The rule requires backup coverage <em>or</em>, where backup can't be secured, a protocol term stating that no patients are seen when your primary collaborator is unavailable. <strong>Aligning your clinic hours with your physician's availability is almost always the better structure.</strong> See below.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What if I'm a new APRN?</div>
+      <div class="qa-a">You'll need monitored practice hours before practising independently of monitoring — 1,000 hours with a year or more of prior experience, 2,000 without.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">Can Mississippi NPs prescribe Schedule II?</div>
+      <div class="qa-a">Yes, under the protocol, subject to Mississippi's controlled substance requirements including prescription monitoring program use and limits on opioid prescribing for acute pain.</div>
+    </div>
+  </div>
+
+  <!-- Four-agreement cap -->
+  <div class="content-section">
+    <h2>The four-agreement cap</h2>
+    <p><strong>A Mississippi physician may hold primary collaborative agreements with no more than four APRNs at any one time</strong>, unless a waiver is expressly granted by the Board. Beyond that, a physician may serve as <strong>secondary collaborator</strong> on up to four additional agreements.</p>
+    <p><strong>Why this matters more here than elsewhere.</strong> In most states a cap is an abstraction — there are enough willing physicians that you never meet the ceiling. Mississippi is the opposite. The pool of physicians willing to collaborate is already small, and each one can hold only four primary agreements. Those two constraints multiply.</p>
+    <p><strong>The practical consequence:</strong> ask about capacity in your very first conversation, before specialty fit, before rates, before anything else. A physician who is already at four primary agreements cannot take you on as a primary collaborator regardless of how well matched you are — and finding that out after three weeks of discussion is three weeks lost in a state where the whole process is slow.</p>
+    <p>It also means a physician's availability changes. A collaborator who had no room in March may have room in July. Capacity here is a moving number worth re-checking rather than a permanent no.</p>
+  </div>
+
+  <!-- Mileage rule and exemption -->
+  <div class="content-section">
+    <h2>The mileage rule, and the exemption that removes it</h2>
+    <p><strong>The distance is somewhere between 40 and 75 miles</strong>, depending on which rule applies to your arrangement. Beyond it, you're in Extended Mileage Collaboration: the physician must submit the protocol and <strong>appear before the Board of Medical Licensure — personally or by telephone</strong> — before patient care begins. The Board looks at how the physician and NP plan to implement the protocol, and the method and manner of collaboration.</p>
+    <p>Licensed hospitals, state health department facilities, federally qualified community health clinics and volunteer clinics sit outside this.</p>
+    <p><strong>But the precise number matters less than most people think, and here's why.</strong></p>
+    <p>Mississippi has relatively few physicians willing to collaborate at all. Layer a radius of 40 to 75 miles on top of that, add the four-agreement cap limiting how many each one can take, and the set of physicians who are simultaneously willing, appropriately specialised, under capacity, <em>and</em> close enough to you is — for most NPs, in most parts of the state — effectively empty.</p>
+    <p><strong>So the honest framing is this: in Mississippi, you should expect to need a waiver or an exemption.</strong> Not as a contingency if the search fails. As the plan.</p>
+    <p>That changes what you're actually optimising for. You're not hunting for a physician who happens to be near enough. You're finding the right physician and then getting the restriction lifted — which is a filing problem, and filings can be done well or badly.</p>
+    <p><strong>The good news is there are two routes</strong>, and one of them removes the restriction outright.</p>
+    <p><strong>The exemption.</strong> Under the Primary Care Extended Mileage rule, the mileage restriction is removed entirely when <strong>all four</strong> of these are true:</p>
+    <p><strong>1. Both parties are in primary care.</strong> Mississippi defines a primary care physician as one whose practice is limited to or defined as <strong>Family Practice, General Internal Medicine, Mental Health, Women's Health, and/or General Pediatrics.</strong></p>
+    <p><strong>Note what's on that list.</strong> Mental Health is primary care in Mississippi for this purpose. For psychiatric NPs, that is the single most useful sentence in the state's rules — it means a psychiatric arrangement can qualify for an exemption most people assume is only for family practice.</p>
+    <p><strong>2. The physician is in a compatible practice</strong> — same specialty, treating the same patient population.</p>
+    <p><strong>3. EMR, three ways.</strong> The physician uses electronic medical records in their own practice, <strong>has direct access to the EMR you use</strong>, and EMR is used in the formal quality improvement programme. All three, not just the first.</p>
+    <p><strong>4. The physician practises within Mississippi at least 20 hours per week or 80 hours per month — and telemedicine hours don't count.</strong></p>
+    <p><strong>Condition four is where arrangements die.</strong> Conditions one through three you can structure for. The fourth requires a physician with a substantial physical Mississippi practice, which is exactly the constraint that made you look outside your area in the first place.</p>
+  </div>
+
+  <!-- Three conditions, not four -->
+  <div class="content-section">
+    <h2>When you meet three conditions but not the fourth</h2>
+    <p>This is the situation most Mississippi NPs are actually in: a willing, appropriately specialised physician who doesn't practise 20 hours a week inside Mississippi.</p>
+    <p><strong>There is a path, and it isn't a form.</strong> Exceptions to the in-state practice requirement can be granted by the Board for demonstrated <strong>good cause</strong>, with temporary permission available in the interim while the request is heard. What that means practically is that you're making an affirmative case to the Board — not ticking an attestation box.</p>
+    <p>A good cause showing has to explain the specific access-to-care problem: why a qualifying physician can't be secured under the standard conditions, what that costs patients in your area, and how the arrangement will still deliver genuine oversight. It's an argument, and arguments are won or lost on how they're constructed.</p>
+    <p><strong>This is the part I help with personally.</strong> I've collaborated with NPs in Mississippi and been through this process. I know what the Boards want to see, which conditions can be engineered for in advance, and how to frame a good cause request so it reads as a serious clinical arrangement rather than a workaround. If you're in Mississippi, I'll work through it with you step by step — that's included in the match, not billed separately.</p>
+  </div>
+
+  <!-- CTA 1 -->
+  <div class="cta-block">
+    <h3>Ask Me About Your Mississippi Approval — 2-Minute First Step</h3>
+    <p>Tell us where your site is and what EMR you use — both bear directly on which approval path you're on.</p>
+    <a href="/np-pa-intake.html" class="btn-gold">Start the Free Intake Form →</a>
+  </div>
+
+  <!-- Don't go looking for a second physician -->
+  <div class="content-section">
+    <h2>Don't go looking for a second physician</h2>
+    <p>The rules require your collaborating physician to ensure backup coverage when they're unavailable, and any backup must be a <strong>signatory to the protocol</strong> — not a verbal understanding, an actual signature.</p>
+    <p>Read that as written and it sounds like Mississippi requires you to find two physicians. <strong>In practice, trying to is usually a mistake.</strong></p>
+    <p>Finding one qualified, willing collaborating physician in Mississippi is hard enough. Finding a second who will sign your protocol, understand the arrangement, and stay engaged as a contingency they may never be called on is close to impossible — and every week spent looking is a week you're not practising.</p>
+    <p><strong>The rule provides an alternative, and it's the one to use.</strong> Where backup coverage genuinely can't be secured, the primary collaborator and the APRN may agree, in terms written into the protocol, that <strong>no patients will be seen when the primary collaborator is unavailable.</strong></p>
+    <p><strong>Which means the real solution is scheduling, not recruitment.</strong> Structure the arrangement so your primary physician is available at all times the clinic is operational, and write that into the protocol. The requirement is satisfied, you're not hunting a second signature, and the clinical reality is cleaner too — every patient you see is covered by the physician who actually knows your practice.</p>
+    <p>Two things to get right if you take this route. The protocol language has to be explicit rather than implied, and your operating hours have to genuinely match your physician's availability — including how you handle it when they're on holiday or ill. A protocol that says no patients are seen without the primary, attached to a clinic that stays open regardless, is worse than no provision at all.</p>
+  </div>
+
+  <!-- Safety net -->
+  <div class="content-section">
+    <h2>The safety net nobody tells you about</h2>
+    <p>Here's a provision worth knowing before you need it.</p>
+    <p><strong>If your collaborating physician dies, becomes unexpectedly disabled, or relocates unexpectedly</strong> — leaving you without a collaborator — the Board of Nursing can notify the Board of Medical Licensure, and you may be permitted to <strong>continue practising for a 90-day grace period</strong> while you find a replacement, without that being treated as the unlicensed practice of medicine.</p>
+    <p>During that window, <strong>the Executive Director of the Board of Medical Licensure serves as your collaborative physician.</strong> If you still haven't secured one after 90 days, a further 90-day extension may be granted by mutual agreement of both boards.</p>
+    <p>In a state this restrictive, that's a genuinely humane provision — and most Mississippi NPs have no idea it exists. It doesn't reduce the urgency of finding a replacement, but it means losing a physician isn't the immediate end of your practice.</p>
+  </div>
+
+  <!-- Process -->
+  <div class="content-section">
+    <h2>The Mississippi process, step by step</h2>
+    <p><strong>Board of Nursing side:</strong></p>
+    <ol>
+      <li><strong>Hold active APRN certification.</strong></li>
+      <li><strong>Add and verify your practice site</strong> through the Nurse Gateway, with the per-site fee. Mississippi sites only. You cannot practise at a new location before Board approval.</li>
+      <li><strong>List a collaborating physician for each practice site</strong> — at least one per site.</li>
+      <li><strong>Upload the formal collaborative agreement</strong> to the Gateway, covering parties and licence numbers, practice sites, scope and delegated prescribing authority, QA/QI protocols, and consultation and referral procedures.</li>
+      <li><strong>Maintain your QA/QI plan on site</strong>, available for Board inspection. The Board doesn't dictate its contents, but it must be a genuine evaluation tool — chart review percentages, quarterly meetings, and similar components.</li>
+      <li><strong>If you're a new APRN</strong>, complete your monitored practice hours with a qualifying on-site provider first — 1,000 or 2,000 depending on prior experience.</li>
+    </ol>
+    <p><strong>Board of Medical Licensure side:</strong></p>
+    <ol>
+      <li><strong>Your physician must hold a current, unrestricted Mississippi licence</strong> with no practice or prescriptive limitations.</li>
+      <li><strong>The physician adds you to their file</strong> through the MSBML gateway before patient care starts under the protocol.</li>
+      <li><strong>Settle the coverage question</strong> — either a backup collaborating physician who signs the protocol, or, more commonly and more practically, protocol terms stating that no patients are seen when the primary collaborator is unavailable, with clinic hours structured to match their availability.</li>
+      <li><strong>The QA/QI programme runs:</strong> monthly chart review at 10% or 20 charts whichever is fewer, a chart review log, and quarterly face-to-face meetings.</li>
+      <li><strong>If mileage applies</strong>, the physician submits the exemption request through the MSBML gateway — a letter identifying the NPs covered and affirmatively attesting that all four conditions are met. If condition four isn't met, that becomes a good cause request instead.</li>
+    </ol>
+  </div>
+
+  <!-- Cost -->
+  <div class="content-section">
+    <h2>What a collaborating physician costs in Mississippi</h2>
+    <p><strong>Mississippi is among the more expensive states, and the rigidity of the requirements is why.</strong></p>
+    <p>A Mississippi collaboration asks more of a physician than most: monthly chart review with a maintained log, quarterly face-to-face meetings, EMR access into your system, a backup physician who signs the protocol, and — for anything at distance — either a Board appearance or an exemption filing. That's real recurring work plus real upfront process, and physicians price it accordingly.</p>
+    <p>There's a second effect. Because the requirements are demanding and the approval process is genuinely difficult, fewer physicians are willing to do it at all. Add the four-agreement cap on each of the ones who are, and the mileage radius on top, and supply is constrained three separate ways. Restricted supply and elevated workload push in the same direction.</p>
+    <p><strong>What that means for you:</strong> the cheapest quote in Mississippi is rarely the relevant number. The relevant question is whether the physician will actually clear the approval process, and whether they'll still be doing quarterly meetings in year two.</p>
+    <p>At MD-Match, pricing is tailored to your practice rather than flat-rated. The match fee is $50, one time, and rematching is free, always.</p>
+  </div>
+
+  <!-- CTA 2 -->
+  <div class="cta-block">
+    <h3>Get My Free Mississippi Quote — 2-Minute First Step</h3>
+    <p>Dr. Wasef reviews every Mississippi submission personally and has worked the approval process — including good cause requests — in this state.</p>
+    <a href="/np-pa-intake.html" class="btn-gold">Get My Free Mississippi Quote →</a>
+  </div>
+
+  <!-- Mistakes -->
+  <div class="content-section">
+    <h2>Mistakes I actually see in Mississippi arrangements</h2>
+
+    <h3>Assuming the mileage rule is absolute.</h3>
+    <p>It isn't. The primary care exemption removes it entirely, and mental health counts as primary care. NPs abandon workable arrangements because nobody told them.</p>
+
+    <h3>Searching for a closer physician instead of filing for a waiver.</h3>
+    <p>This is the big one. Given the radius, the small pool, and the four-agreement cap, the search usually can't succeed on its own terms. Months disappear into it. The people who get approved in Mississippi are the ones who accepted early that a waiver or exemption was the path and put their effort there.</p>
+
+    <h3>Not asking about capacity first.</h3>
+    <p>A physician already holding four primary agreements can't take you on without a Board waiver. It's the fastest disqualifying question there is, and it belongs at the start of the conversation rather than the end.</p>
+
+    <h3>Discovering condition four too late.</h3>
+    <p>The 20 hours per week in Mississippi, telemedicine excluded, is the binding constraint. Establish it in the first conversation with a prospective physician, not after you've drafted an agreement.</p>
+
+    <h3>Treating the good cause route as a form.</h3>
+    <p>It's an affirmative showing. A thin request gets a thin result.</p>
+
+    <h3>Seeing patients before approval.</h3>
+    <p>Certification isn't authorisation. Site, physician and agreement all have to be Board-approved first.</p>
+
+    <h3>Burning months hunting a second physician.</h3>
+    <p>If you're going the backup route, the backup must actually sign the protocol — a verbal arrangement doesn't satisfy the rule. But in Mississippi the alignment route is usually faster and more durable: protocol terms stating no patients are seen when the primary is unavailable, with hours to match.</p>
+
+    <h3>A protocol that says one thing while the clinic does another.</h3>
+    <p>If your protocol states no patients are seen without the primary collaborator, your operating hours have to actually reflect that — holidays and sick days included.</p>
+
+    <h3>Reviewing charts without keeping the log.</h3>
+    <p>The log — patient identifiers, reviewer names, dates — is a separate obligation from the review itself. Reviews that happened without a log are hard to evidence.</p>
+
+    <h3>Letting quarterly meetings lapse.</h3>
+    <p>They must be face to face and documented. Quarterly slips to twice a year without anyone deciding to let it.</p>
+
+    <h3>Adding a practice site without Board approval.</h3>
+    <p>Each site needs registration, a fee, and its own listed collaborating physician. You can't practise at a new location before that's approved.</p>
+
+    <p>Every physician in the MD-Match network is background-checked, license-verified for Mississippi, capacity-checked against the four-agreement cap, and — specifically here — assessed against the four exemption conditions before we match you, so you know at the outset whether you're on the exemption path or the good cause path. We structure the coverage provision around your actual operating hours rather than sending you looking for a second physician. I work the approval process with you personally in this state, because Mississippi is where a good match and a bad filing still ends in a no.</p>
+  </div>
+
+  <!-- How MD-Match works -->
+  <div class="content-section">
+    <h2>How MD-Match works in Mississippi</h2>
+    <ol>
+      <li><strong>Complete the free intake form</strong> — credential, specialty, practice site, timeline. First step takes about two minutes.</li>
+      <li><strong>Get a personalized quote.</strong> I review every Mississippi submission myself. Tell me where your site is and what EMR you use — both bear directly on which approval path you're on.</li>
+      <li><strong>Pay the one-time $50 match fee</strong> and get matched with a Mississippi-licensed, specialty-aligned physician assessed against the exemption conditions for your specific situation.</li>
+      <li><strong>We work the approval together</strong> — the collaborative agreement, the QA/QI plan, the coverage provision built around your operating hours, Gateway submissions on both sides, the exemption request, and the good cause letter where it's needed. If a match stops working, rematching is free.</li>
+    </ol>
+  </div>
+
+  <!-- CTA 3 -->
+  <div class="cta-block">
+    <h3>Start the Free Intake Form</h3>
+    <p>Pricing is tailored to your practice, not flat-rated. The match fee is $50, one time, and rematching is free, always.</p>
+    <a href="/np-pa-intake.html" class="btn-gold">Start the Free Intake Form →</a>
+  </div>
+
+  <!-- FAQ -->
+  <div class="faq-section">
+    <h2>Mississippi FAQ</h2>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>Do Mississippi nurse practitioners need a collaborating physician?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Yes. Mississippi requires a formal collaborative agreement approved by both the Board of Nursing and the Board of Medical Licensure. There is no independent practice pathway.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>Can I begin practising before my collaborative agreement is approved?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">No. An APRN may hold certification without an agreement, but the practice site, collaborating physician and agreement must all be Board-approved before practice begins.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>How many nurse practitioners can one Mississippi physician collaborate with?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Four primary collaborative agreements at any one time, unless a waiver is expressly granted by the Board. A physician may also serve as secondary collaborator on up to four additional agreements.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>How far can my collaborating physician be from my practice site in Mississippi?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Between roughly 40 and 75 miles, depending on which rule applies to the arrangement. Beyond that distance the arrangement is Extended Mileage Collaboration and requires Board approval before patient care begins.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>What is Extended Mileage Collaboration?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">An arrangement where the nurse practitioner practises beyond the permitted distance from the collaborating physician's primary office. It requires the physician to appear before the Board of Medical Licensure, personally or by telephone, and obtain approval before patient care begins.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>Will I need a waiver or exemption to practise in Mississippi?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Most likely. Between the mileage restriction, the limited number of physicians willing to collaborate, and the four-agreement cap on each of them, most Mississippi nurse practitioners cannot find a qualifying collaborating physician within the permitted distance. The Primary Care Extended Mileage exemption or a good cause request is the usual route to approval rather than the exception.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>What is the Primary Care Extended Mileage exemption?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">A provision removing the mileage restriction entirely where four conditions are met: both parties are in primary care; the physician's practice is compatible; the physician uses EMR, has direct access to the APRN's EMR, and uses EMR in the quality improvement programme; and the physician practises within Mississippi at least 20 hours per week or 80 hours per month, excluding telemedicine.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>Does mental health count as primary care in Mississippi?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Yes. Mississippi defines a primary care physician as one whose practice is limited to or defined as Family Practice, General Internal Medicine, Mental Health, Women's Health, and/or General Pediatrics.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>What if my physician doesn't practise 20 hours a week in Mississippi?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Exceptions to the in-state practice requirement may be granted by the Board for demonstrated good cause, with temporary permission available while the request is considered. This requires an affirmative showing rather than a simple attestation.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>How much chart review does Mississippi require?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">A random sample representing 10% of charts or 20 charts, whichever is less, of patients seen by the nurse practitioner every month, with documentation maintained.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>How often must I meet with my collaborating physician?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Face to face once per quarter, documented, for quality assurance purposes.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>Does Mississippi require a backup collaborating physician?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Not strictly. The collaborating physician must ensure backup coverage when unavailable, and any backup must be a signatory to the protocol. But where backup coverage cannot be secured, the primary collaborator and the APRN may agree, in terms written into the protocol, that no patients will be seen when the primary collaborator is unavailable.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>Is it better to find a backup physician or to align clinic hours with my primary?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">For most Mississippi practices, aligning hours is the more practical route. Securing one qualified collaborating physician in Mississippi is difficult; securing a second who will sign the protocol as a contingency is considerably harder. Structuring the arrangement so the primary collaborator is available whenever the clinic operates, and writing that into the protocol, satisfies the requirement without a second search — provided the operating hours genuinely match.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>What happens if my collaborating physician dies or relocates unexpectedly?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">The Board of Nursing can notify the Board of Medical Licensure, and the APRN may be allowed to continue practising for a 90-day grace period while securing a new collaborator, with the Executive Director of the Board of Medical Licensure serving as collaborative physician. A further 90-day extension may be granted by mutual agreement of both boards.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>How many monitored practice hours does a new APRN need?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">1,000 hours with a year or more of prior experience, or 2,000 hours without.</div>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    Philip Wasef, MD is the founder of MD-Match and an actively practicing collaborating physician licensed in 45 states, including Mississippi. This page describes regulatory requirements in general terms and is not legal advice; requirements change and your situation may vary. Verify current rules with the Mississippi Board of Nursing and the Mississippi State Board of Medical Licensure, or ask us.
+  </div>
+
+</div><!-- .content-wrap -->
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div class="footer-brand-name">MD-<em>Match</em></div>
+      <div class="footer-brand-sub">Collaborating Physician Network</div>
+      <p class="footer-desc">A platform built by Dr. Philip Wasef, MD — an actively collaborating physician — to give NPs, PAs, and physicians a compliant, clearly structured path to collaborate with confidence.</p>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Contact &amp; Apply</div>
+      <a href="mailto:philipwasef@md-match.com">philipwasef@md-match.com</a>
+      <a href="/np-pa-intake.html" target="_blank">NPs and PAs get my free quote</a>
+      <a href="/md-match-physician-intake.html" target="_blank">Physicians join our collaboration network</a>
+      <div class="footer-col-title" style="margin-top:1.5rem;">State Resources</div>
+      <a href="/collaborating-physician-texas.html">Collaborating Physician in Texas</a>
+      <a href="/collaborating-physician-pennsylvania.html">Collaborating Physician in Pennsylvania</a>
+      <a href="/collaborating-physician-florida.html">Collaborating Physician in Florida</a>
+      <a href="/collaborating-physician-ohio.html">Collaborating Physician in Ohio</a>
+      <a href="/collaborating-physician-new-york.html">Collaborating Physician in New York</a>
+      <a href="/collaborating-physician-alabama.html">Collaborating Physician in Alabama</a>
+      <a href="/collaborating-physician-california.html">Collaborating Physician in California</a>
+      <a href="/collaborating-physician-virginia.html">Collaborating Physician in Virginia</a>
+      <a href="/collaborating-physician-north-carolina.html">Collaborating Physician in North Carolina</a>
+      <a href="/collaborating-physician-missouri.html">Collaborating Physician in Missouri</a>
+      <a href="/collaborating-physician-tennessee.html">Collaborating Physician in Tennessee</a>
+      <a href="/collaborating-physician-mississippi.html">Collaborating Physician in Mississippi</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2025 MD-Match · Founded by Dr. Philip Wasef, MD · All rights reserved.</div>
+    <div class="footer-copy">Confidential · Not for redistribution</div>
+  </div>
+</footer>
+
+<script>
+  function toggleMenu() { document.getElementById('mobileMenu').classList.toggle('open'); }
+  function closeMenu() { document.getElementById('mobileMenu').classList.remove('open'); }
+  document.querySelectorAll('.faq-q').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const answer = btn.nextElementSibling;
+      const expanded = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', !expanded);
+      answer.classList.toggle('open', !expanded);
+    });
+  });
+</script>
+</body>
+</html>
