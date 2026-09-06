@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-18417505552"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'AW-18417505552');
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Collaborating Physician in Illinois | APRN &amp; FPA Rules</title>
+<meta name="description" content="Illinois APRNs need a written collaborative agreement until full practice authority at 4,000 hours — and benzodiazepines still require a physician. From an MD.">
+<link rel="icon" type="image/svg+xml" href="/logo.svg">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Nunito:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --teal-deep: #0b3535;
+    --teal: #1a6b6b;
+    --teal-light: #2a9090;
+    --teal-pale: #e8f5f5;
+    --gold: #c9a84c;
+    --gold-light: #e2c97e;
+    --white: #ffffff;
+    --off-white: #f8fbfb;
+    --text: #1a3333;
+    --muted: #4a6b6b;
+    --border: #d0e2e2;
+    --nav-h: 68px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Nunito', sans-serif; color: var(--text); background: var(--white); font-size: 15px; line-height: 1.7; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    height: var(--nav-h);
+    background: rgba(11,53,53,0.97);
+    backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2.5rem;
+    border-bottom: 1px solid rgba(201,168,76,0.2);
+  }
+  .nav-brand { display: flex; flex-direction: column; gap: 0; text-decoration: none; }
+  .nav-logo { font-family: 'Playfair Display', serif; font-size: 1.35rem; color: var(--white); letter-spacing: -0.01em; }
+  .nav-logo em { color: var(--gold); font-style: italic; }
+  .nav-sub { font-size: 9px; color: rgba(255,255,255,0.45); letter-spacing: 0.14em; text-transform: uppercase; }
+  .nav-links { display: flex; align-items: center; gap: 2rem; }
+  .nav-links a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--gold-light); }
+  .nav-links a.nav-btn { background: transparent; border: 1.5px solid rgba(201,168,76,0.6); color: var(--gold-light); padding: 0.42rem 1.1rem; border-radius: 4px; transition: all 0.2s; }
+  .nav-links a.nav-btn:hover { background: var(--gold); color: var(--teal-deep); border-color: var(--gold); }
+  .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; }
+  .hamburger span { display: block; width: 22px; height: 2px; background: var(--white); border-radius: 2px; }
+  .mobile-menu { display: none; position: fixed; inset: 0; top: var(--nav-h); background: var(--teal-deep); z-index: 99; flex-direction: column; padding: 2rem; gap: 1rem; overflow-y: auto; }
+  .mobile-menu.open { display: flex; }
+  .mobile-menu a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 1.1rem; font-weight: 600; padding: 0.8rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+
+  /* PAGE HERO */
+  .page-hero {
+    padding: calc(var(--nav-h) + 3.5rem) 2rem 3rem;
+    background: linear-gradient(150deg, var(--teal-deep) 0%, #0f4242 55%, #1a6060 100%);
+    text-align: center;
+  }
+  .page-hero-inner { max-width: 760px; margin: 0 auto; }
+  .page-eyebrow { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); font-weight: 700; margin-bottom: 1.2rem; display: flex; align-items: center; justify-content: center; gap: 0.7rem; }
+  .page-eyebrow::before, .page-eyebrow::after { content: ''; display: block; width: 32px; height: 1px; background: var(--gold); opacity: 0.6; }
+  .page-hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(1.8rem, 4vw, 2.9rem); color: var(--white); font-weight: 400; line-height: 1.25; margin-bottom: 1.2rem; }
+  .page-hero-sub { font-size: 1rem; color: rgba(255,255,255,0.65); font-weight: 300; max-width: 580px; margin: 0 auto 2rem; line-height: 1.8; }
+  .byline { font-size: 12px; color: rgba(255,255,255,0.4); letter-spacing: 0.06em; margin-top: 1.5rem; }
+
+  /* CONTENT */
+  .content-wrap { max-width: 780px; margin: 0 auto; padding: 3.5rem 2rem 5rem; }
+
+  .quick-answers {
+    background: var(--teal-pale);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 2rem 2.2rem;
+    margin-bottom: 3rem;
+  }
+  .quick-answers h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.35rem;
+    color: var(--teal-deep);
+    margin-bottom: 1.4rem;
+    font-weight: 600;
+  }
+  .qa-item { margin-bottom: 1.3rem; }
+  .qa-item:last-child { margin-bottom: 0; }
+  .qa-q { font-weight: 800; color: var(--teal-deep); font-size: 15px; margin-bottom: 0.3rem; }
+  .qa-a { color: var(--muted); font-size: 14.5px; line-height: 1.75; }
+
+  .content-section { margin-bottom: 2.8rem; }
+  .content-section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.55rem;
+    color: var(--teal-deep);
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid var(--border);
+  }
+  .content-section h3 {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--teal-deep);
+    margin: 1.4rem 0 0.4rem;
+  }
+  .content-section p { color: var(--text); font-size: 15px; line-height: 1.85; margin-bottom: 1rem; }
+  .content-section p:last-child { margin-bottom: 0; }
+  .content-section strong { color: var(--teal-deep); }
+  .content-section ol, .content-section ul { padding-left: 1.4rem; color: var(--text); font-size: 15px; line-height: 2; margin-bottom: 1rem; }
+  .content-section ol li, .content-section ul li { margin-bottom: 0.3rem; }
+  .content-section em { font-style: italic; }
+
+  .statute-note {
+    background: var(--off-white);
+    border-left: 3px solid var(--teal-light);
+    padding: 1rem 1.2rem;
+    margin: 1.2rem 0;
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.75;
+    font-style: italic;
+    border-radius: 0 6px 6px 0;
+  }
+
+  /* FAQ */
+  .faq-section { margin-bottom: 2.8rem; }
+  .faq-section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.55rem;
+    color: var(--teal-deep);
+    font-weight: 600;
+    margin-bottom: 1.2rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid var(--border);
+  }
+  .faq-item { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0.5rem; overflow: hidden; background: var(--off-white); }
+  .faq-q { width: 100%; text-align: left; background: none; border: none; padding: 1rem 1.2rem; font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700; color: var(--teal-deep); cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 1rem; line-height: 1.4; }
+  .faq-q:hover { background: #f0f7f7; }
+  .faq-icon { font-size: 18px; color: var(--teal); flex-shrink: 0; transition: transform 0.2s; }
+  .faq-q[aria-expanded="true"] .faq-icon { transform: rotate(45deg); }
+  .faq-a { display: none; padding: 0 1.2rem 1rem; font-size: 14.5px; color: var(--muted); line-height: 1.75; border-top: 1px solid var(--border); }
+  .faq-a.open { display: block; }
+
+  /* CTA block */
+  .cta-block {
+    background: var(--teal-deep);
+    border-radius: 10px;
+    padding: 2.5rem 2.5rem;
+    text-align: center;
+    margin: 3rem 0;
+  }
+  .cta-block h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    color: var(--white);
+    font-weight: 400;
+    margin-bottom: 0.8rem;
+  }
+  .cta-block p { color: rgba(255,255,255,0.6); font-size: 14px; margin-bottom: 1.5rem; }
+  .btn-gold { display: inline-block; background: var(--gold); color: var(--teal-deep); padding: 0.85rem 2rem; border-radius: 4px; font-weight: 800; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; text-decoration: none; transition: all 0.2s; border: 2px solid var(--gold); }
+  .btn-gold:hover { background: var(--gold-light); border-color: var(--gold-light); }
+
+  /* Disclaimer */
+  .disclaimer { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 1.5rem; margin-top: 1rem; line-height: 1.75; font-style: italic; }
+
+  /* FOOTER */
+  footer { background: var(--teal-deep); padding: 3.5rem 2rem; }
+  .footer-inner { max-width: 1060px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr; gap: 3rem; }
+  .footer-brand-name { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--white); }
+  .footer-brand-name em { color: var(--gold); font-style: italic; }
+  .footer-brand-sub { font-size: 11px; color: rgba(255,255,255,0.4); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 0.2rem; margin-bottom: 1rem; }
+  .footer-desc { font-size: 13px; color: rgba(255,255,255,0.5); line-height: 1.75; max-width: 360px; }
+  .footer-col-title { font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); font-weight: 700; margin-bottom: 1rem; }
+  .footer-col a { display: block; font-size: 13px; color: rgba(255,255,255,0.55); text-decoration: none; margin-bottom: 0.5rem; transition: color 0.2s; }
+  .footer-col a:hover { color: var(--white); }
+  .footer-bottom { max-width: 1060px; margin: 2.5rem auto 0; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+  .footer-copy { font-size: 11.5px; color: rgba(255,255,255,0.35); }
+
+  @media (max-width: 900px) {
+    .footer-inner { grid-template-columns: 1fr; gap: 2rem; }
+    .nav-links { display: none; }
+    .hamburger { display: flex; }
+  }
+  @media (max-width: 600px) {
+    nav { padding: 0 1.2rem; }
+    .content-wrap { padding: 2rem 1.2rem 4rem; }
+    .quick-answers { padding: 1.5rem 1.3rem; }
+    .cta-block { padding: 2rem 1.3rem; }
+    .page-hero { padding-left: 1.2rem; padding-right: 1.2rem; }
+    .footer-inner { gap: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="/" class="nav-brand">
+    <span class="nav-logo">MD-<em>Match</em></span>
+    <span class="nav-sub">Collaborating Physician Network</span>
+  </a>
+  <div class="nav-links">
+    <a href="/#goals">Our Goals</a>
+    <a href="/#for-nps">For NPs &amp; PAs</a>
+    <a href="/#for-physicians">For Physicians</a>
+    <a href="/#faq">FAQ</a>
+    <a href="/np-pa-intake.html" target="_blank" class="nav-btn">NPs and PAs get my free quote</a>
+    <a href="/md-match-physician-intake.html" target="_blank" class="nav-btn">Physicians join our network</a>
+  </div>
+  <div class="hamburger" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="/" onclick="closeMenu()">Home</a>
+  <a href="/#goals" onclick="closeMenu()">Our Goals</a>
+  <a href="/#for-nps" onclick="closeMenu()">For NPs &amp; PAs</a>
+  <a href="/#for-physicians" onclick="closeMenu()">For Physicians</a>
+  <a href="/#faq" onclick="closeMenu()">FAQ</a>
+  <a href="/np-pa-intake.html" target="_blank" onclick="closeMenu()">NPs and PAs get my free quote</a>
+  <a href="/md-match-physician-intake.html" target="_blank" onclick="closeMenu()">Physicians join our network</a>
+</div>
+
+<!-- PAGE HERO -->
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="page-eyebrow">Illinois State Guide</div>
+    <h1>Collaborating Physicians in Illinois: What APRNs Need</h1>
+    <p class="page-hero-sub"><strong style="color:rgba(255,255,255,0.85)">Illinois grants full practice authority — and then quietly keeps a physician in the picture for the medications psychiatric NPs prescribe most.</strong></p>
+    <p class="byline">Reviewed by Philip Wasef, MD — actively collaborating physician, licensed in 45 states including Illinois. Last updated: September 2026.</p>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="content-wrap">
+
+  <p style="color:var(--muted);font-size:15px;line-height:1.85;margin-bottom:2.5rem;">An Illinois APRN who reaches full practice authority can drop the written collaborative agreement. But even with FPA, <strong style="color:var(--teal-deep)">benzodiazepines and Schedule II narcotics require a consultation relationship with a physician.</strong> Schedule II narcotics are limited to oral, topical or transdermal administration. So "full practice authority" in Illinois means something more specific than independence. For a psychiatric practice, the physician relationship doesn't disappear at 4,000 hours — it changes shape.</p>
+
+  <!-- Quick Answers -->
+  <div class="quick-answers">
+    <h2>Quick Answers</h2>
+
+    <div class="qa-item">
+      <div class="qa-q">Do Illinois APRNs need a collaborating physician?</div>
+      <div class="qa-a">Yes, until you obtain full practice authority. Until then you practise under a written collaborative agreement with a physician.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What does the agreement have to say?</div>
+      <div class="qa-a">It must describe your relationship with the collaborating physician and the categories of care, treatment or procedures you provide. Prescriptive authority is delegated through a separate written delegation.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">Is the agreement filed with the state?</div>
+      <div class="qa-a">No. It must be <strong>available to the Department on request</strong> from both you and your physician, and kept on file at your practice sites — but it isn't submitted for approval.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">Is chart review required?</div>
+      <div class="qa-a">There's no mandated review percentage. But where controlled substances are prescribed under delegated authority, the standard agreement provides for discussing those patients with your collaborating physician <strong>at least monthly for Schedule II</strong>.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">How many APRNs can one physician collaborate with?</div>
+      <div class="qa-a">No numeric limit.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">Is there a distance requirement?</div>
+      <div class="qa-a">No. Illinois imposes no geographic restriction. Consultation may be in person, by telecommunications, or electronically, as set out in your agreement.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">How do I get full practice authority?</div>
+      <div class="qa-a"><strong>4,000 hours of clinical experience</strong> after first attaining national certification, plus <strong>250 hours of continuing education or training</strong> in your certification area, with notarized attestations and a fee to IDFPR.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">Do I still need a physician after FPA?</div>
+      <div class="qa-a">For some prescribing, yes. <strong>Benzodiazepines and Schedule II narcotics require a consultation relationship with a physician</strong>, and Schedule II narcotics may only be given by oral dosage or topical or transdermal application — not by injection.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q">What about hospital practice?</div>
+      <div class="qa-a">An APRN may provide services in a licensed hospital, hospital affiliate, or ambulatory surgical treatment center <strong>without a written collaborative agreement</strong>, working instead under clinical privileges granted by the hospital.</div>
+    </div>
+  </div>
+
+  <!-- CTA 1 -->
+  <div class="cta-block">
+    <h3>Get My Free Illinois Quote</h3>
+    <p>Tell us about your practice — credential, specialty, setting, how close you are to 4,000 hours. First step takes about two minutes.</p>
+    <a href="/np-pa-intake.html" class="btn-gold">Start the Free Intake Form →</a>
+  </div>
+
+  <!-- Licensing sequence -->
+  <div class="content-section">
+    <h2>The Licensing Sequence People Get Backwards</h2>
+    <p>Illinois requires a <strong>state controlled substances licence</strong>, and the order matters.</p>
+    <p><strong>The Illinois Mid-Level Practitioner Controlled Substances Licence is a prerequisite to the federal DEA registration.</strong> IDFPR states this plainly. You obtain the Illinois licence first, then the DEA.</p>
+    <p>People routinely do this in the wrong order, apply for the DEA first, and end up redoing paperwork and losing weeks. If you're relocating from a state without a separate registration, this is the step that catches you.</p>
+    <p>Alongside it, IDFPR expects a <strong>Notice of Written Collaborative Agreement</strong> and a <strong>Notice of Delegated Authority for Controlled Substances.</strong> The delegation of prescriptive authority is a separate document from the collaborative agreement itself — the agreement describes the relationship and the categories of care; the delegation specifies what you may prescribe.</p>
+  </div>
+
+  <!-- FPA section -->
+  <div class="content-section">
+    <h2>Full Practice Authority: What It Is and What It Isn't</h2>
+    <p><strong>The requirements are specific:</strong></p>
+    <ul>
+      <li><strong>4,000 hours of clinical experience</strong> after first attaining national certification, in your area of certification</li>
+      <li><strong>250 hours of continuing education or training</strong> in that same area — formal CE, graduate education, and professional association programmes all count</li>
+      <li><strong>Notarized attestations</strong> from you and your collaborating physician confirming the clinical hours. A hospital medical staff committee may attest instead</li>
+      <li>Your current APRN and RN licence numbers, and the applicable fee, submitted to IDFPR</li>
+    </ul>
+    <p><strong>What FPA gives you:</strong> the ability to practise without a written collaborative agreement, and to prescribe Schedules II through V.</p>
+    <p><strong>What it doesn't give you.</strong> Two limits survive:</p>
+    <p><strong>Benzodiazepines and Schedule II narcotics require a consultation relationship with a physician.</strong> This is the one that surprises people. An Illinois psychiatric NP with full practice authority still needs a physician relationship for a substantial part of what they prescribe.</p>
+    <p><strong>Schedule II narcotics are route-limited</strong> — oral dosage, topical or transdermal application only. Injection or other routes aren't permitted under FPA.</p>
+    <p>Full practice authority also doesn't extend to operative surgery, or to services that law or rule requires a physician to perform.</p>
+    <p><strong>The practical upshot for psychiatric practice:</strong> don't treat FPA as the moment you stop needing a physician. Treat it as the moment the relationship narrows — from general collaboration to consultation on a defined set of medications. That's a smaller, cheaper, more focused arrangement, and it's worth structuring deliberately rather than letting your existing agreement lapse and discovering the gap afterwards.</p>
+  </div>
+
+  <!-- Board approval checklist -->
+  <div class="content-section">
+    <h2>Board Approval Checklist</h2>
+    <p><strong>Before you practise:</strong></p>
+    <ol>
+      <li><strong>Hold an active Illinois APRN licence</strong> and current national certification in your area of practice.</li>
+      <li><strong>Execute a written collaborative agreement</strong> with a collaborating physician. It must describe your relationship with the physician and the categories of care, treatment or procedures you'll provide, and set out the methods of communication available for consultation — in person, by telecommunications, or electronically.</li>
+      <li><strong>Obtain a written delegation of prescriptive authority</strong>, separate from the agreement, specifying the categories of drugs you may prescribe.</li>
+      <li><strong>File the notices with IDFPR</strong> — the Notice of Written Collaborative Agreement and, where controlled substances are delegated, the Notice of Delegated Authority for Controlled Substances.</li>
+      <li><strong>Apply for your Illinois Controlled Substances Licence.</strong> This comes <strong>before</strong> the federal DEA registration, not after.</li>
+      <li><strong>Obtain your federal DEA registration.</strong></li>
+      <li><strong>Keep the signed agreement on file at every practice site</strong>, available to the Department on request. It is not submitted for approval, which means nothing external will tell you it's inadequate until someone asks to see it.</li>
+    </ol>
+    <p><strong>Ongoing:</strong></p>
+    <ol start="8">
+      <li><strong>Hold the monthly Schedule II discussion.</strong> Where controlled substances are prescribed under delegated authority, discuss those patients with your collaborating physician at least once a month for Schedule II.</li>
+      <li><strong>Update the agreement whenever the relationship or your scope changes</strong>, and re-execute rather than amending informally.</li>
+      <li><strong>Track your hours toward full practice authority</strong> — 4,000 post-certification clinical hours and 250 hours of CE — and keep your collaborating physician engaged, because their notarized attestation is what completes the application.</li>
+    </ol>
+    <div class="statute-note">For hospital practice: an APRN working in a licensed hospital, hospital affiliate or ambulatory surgical treatment center may practise without a written collaborative agreement, under clinical privileges recommended by the medical staff and granted by the hospital. Prescribing there is governed by those privileges and remains subject to medical staff oversight and periodic review.</div>
+  </div>
+
+  <!-- Cost -->
+  <div class="content-section">
+    <h2>What a Collaborating Physician Costs in Illinois</h2>
+    <p><strong>Illinois sits comfortably in the middle, and the reasons are structural.</strong></p>
+    <p>There's <strong>no cap</strong> on how many APRNs a physician may collaborate with, so supply isn't artificially constrained the way it is in California or Virginia. There's <strong>no geographic restriction</strong>, so your search isn't limited by distance. And there's <strong>no mandated chart review percentage</strong>, so the recurring obligation on the physician is lighter than in Missouri or Tennessee.</p>
+    <p>Three constraints that raise prices elsewhere are all absent here. Illinois is, on the whole, a straightforward state to arrange collaboration in.</p>
+    <p><strong>Where it costs you is the FPA transition.</strong> Many Illinois APRNs approaching 4,000 hours assume they're about to stop paying for a physician entirely, and structure accordingly. If you prescribe benzodiazepines or Schedule II narcotics, you aren't — you need a consultation relationship, and arranging one after your previous agreement has lapsed is negotiating from a weaker position than arranging it before.</p>
+    <p>At MD-Match, pricing is tailored to your practice rather than flat-rated. The match fee is $50, one time, and rematching is free, always.</p>
+  </div>
+
+  <!-- CTA 2 -->
+  <div class="cta-block">
+    <h3>Get My Free Illinois Quote — 2-Minute First Step</h3>
+    <p>Tell me how close you are to 4,000 hours — if FPA is within sight, what you should be signing now is different from a standard collaboration.</p>
+    <a href="/np-pa-intake.html" class="btn-gold">Get My Free Illinois Quote →</a>
+  </div>
+
+  <!-- Mistakes -->
+  <div class="content-section">
+    <h2>Mistakes I Actually See in Illinois Arrangements</h2>
+
+    <h3>Applying for the DEA before the Illinois controlled substances licence.</h3>
+    <p>The state licence is the prerequisite. Doing it backwards means doing it twice.</p>
+
+    <h3>Assuming full practice authority ends the physician relationship.</h3>
+    <p>Benzodiazepines and Schedule II narcotics still require a consultation relationship. For psychiatric practice that's a large share of prescribing.</p>
+
+    <h3>Letting the collaborating physician disengage before the attestation.</h3>
+    <p>FPA requires their notarized attestation of your 4,000 hours. A physician you've lost touch with is a problem at hour 3,900.</p>
+
+    <h3>Treating the delegation as part of the agreement.</h3>
+    <p>They're separate documents. The agreement describes the relationship; the delegation specifies prescribing.</p>
+
+    <h3>Skipping the monthly Schedule II discussion.</h3>
+    <p>It's in the standard agreement structure, and it's easy to let slide precisely because nothing enforces it.</p>
+
+    <h3>An agreement that's never updated.</h3>
+    <p>Because nothing is filed for approval, no renewal notice ever arrives. Agreements drift years behind the practice they describe.</p>
+
+    <h3>Assuming hospital practice needs an agreement.</h3>
+    <p>It doesn't — clinical privileges govern instead. APRNs sometimes maintain an unnecessary agreement, or wrongly assume their hospital privileges cover their outside practice. They don't.</p>
+
+    <p>Every physician in the MD-Match network is background-checked, license-verified for Illinois, and capacity-checked before matching. For APRNs approaching full practice authority we structure the transition deliberately — securing the consultation relationship you'll still need for benzodiazepines and Schedule II narcotics before the existing agreement ends, rather than after.</p>
+  </div>
+
+  <!-- How MD-Match works -->
+  <div class="content-section">
+    <h2>How MD-Match Works in Illinois</h2>
+    <ol>
+      <li><strong>Complete the free intake form</strong> — credential, specialty, practice setting, timeline. First step takes about two minutes.</li>
+      <li><strong>Get a personalized quote.</strong> I review every Illinois submission myself. Tell me how close you are to 4,000 hours — if FPA is within sight, what you should be signing now is different.</li>
+      <li><strong>Pay the one-time $50 match fee</strong> and get matched with an Illinois-licensed, specialty-aligned physician with genuine capacity.</li>
+      <li><strong>We handle the compliance rails</strong> — the collaborative agreement, the separate prescriptive authority delegation, the IDFPR notices, the controlled substance licensing sequence, and hour tracking toward FPA so the attestation is ready when you are. If a match stops working, rematching is free.</li>
+    </ol>
+  </div>
+
+  <!-- CTA 3 -->
+  <div class="cta-block">
+    <h3>Start the Free Intake Form</h3>
+    <p>Two minutes. No commitment. I'll review your situation personally and tell you exactly what you need.</p>
+    <a href="/np-pa-intake.html" class="btn-gold">Start the Free Intake Form →</a>
+  </div>
+
+  <!-- FAQ -->
+  <div class="faq-section">
+    <h2>Illinois FAQ</h2>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>Do Illinois APRNs need a written collaborative agreement?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Yes, unless they hold full practice authority or are practising in a licensed hospital, hospital affiliate, or ambulatory surgical treatment center under clinical privileges.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>What must an Illinois written collaborative agreement contain?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">It must describe the relationship between the APRN and the collaborating physician and describe the categories of care, treatment or procedures the APRN provides, together with the methods of communication available for consultation.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>Is the collaborative agreement filed with IDFPR?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">The signed agreement must be available to the Department on request from both the APRN and the collaborating physician. Notices of the agreement and of delegated controlled substance authority are filed with IDFPR.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>How many APRNs can one Illinois physician collaborate with?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Illinois sets no numeric limit.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>Does Illinois require chart review?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">No specific review percentage is mandated. Where controlled substances are prescribed under delegated authority, the standard agreement provides for discussing those patients with the collaborating physician at least monthly for Schedule II.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>How does an Illinois APRN obtain full practice authority?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">By completing at least 4,000 hours of clinical experience after first attaining national certification and at least 250 hours of continuing education or training in the area of certification, then submitting notarized attestations, licence numbers and the applicable fee to IDFPR.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>Can an APRN with full practice authority prescribe controlled substances?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Yes, Schedules II through V — but benzodiazepines and Schedule II narcotics require a consultation relationship with a physician, and Schedule II narcotics may be administered only by oral dosage or topical or transdermal application.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>Does Illinois require a state controlled substances licence?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">Yes. The Illinois Mid-Level Practitioner Controlled Substances Licence is a prerequisite to the federal DEA registration.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>Do APRNs need a collaborative agreement to work in a hospital?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">No. An APRN may provide services in a licensed hospital, hospital affiliate or ambulatory surgical treatment center without a written collaborative agreement, under clinical privileges recommended by the medical staff and granted by the hospital.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false"><span>Is there a distance requirement for Illinois collaborating physicians?</span><span class="faq-icon">+</span></button>
+      <div class="faq-a">No. Consultation may be in person, by telecommunications or electronically, as set out in the agreement.</div>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    Philip Wasef, MD is the founder of MD-Match and an actively practicing collaborating physician licensed in 45 states, including Illinois. This page describes regulatory requirements in general terms and is not legal advice; requirements change and your situation may vary. Verify current rules with the Illinois Department of Financial and Professional Regulation, or ask us.
+  </div>
+
+</div><!-- .content-wrap -->
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div class="footer-brand-name">MD-<em>Match</em></div>
+      <div class="footer-brand-sub">Collaborating Physician Network</div>
+      <p class="footer-desc">A platform built by Dr. Philip Wasef, MD — an actively collaborating physician — to give NPs, PAs, and physicians a compliant, clearly structured path to collaborate with confidence.</p>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Contact &amp; Apply</div>
+      <a href="mailto:philipwasef@md-match.com">philipwasef@md-match.com</a>
+      <a href="/np-pa-intake.html" target="_blank">NPs and PAs get my free quote</a>
+      <a href="/md-match-physician-intake.html" target="_blank">Physicians join our collaboration network</a>
+      <div class="footer-col-title" style="margin-top:1.5rem;">State Resources</div>
+      <a href="/collaborating-physician-texas.html">Collaborating Physician in Texas</a>
+      <a href="/collaborating-physician-pennsylvania.html">Collaborating Physician in Pennsylvania</a>
+      <a href="/collaborating-physician-florida.html">Collaborating Physician in Florida</a>
+      <a href="/collaborating-physician-ohio.html">Collaborating Physician in Ohio</a>
+      <a href="/collaborating-physician-new-york.html">Collaborating Physician in New York</a>
+      <a href="/collaborating-physician-alabama.html">Collaborating Physician in Alabama</a>
+      <a href="/collaborating-physician-california.html">Collaborating Physician in California</a>
+      <a href="/collaborating-physician-virginia.html">Collaborating Physician in Virginia</a>
+      <a href="/collaborating-physician-north-carolina.html">Collaborating Physician in North Carolina</a>
+      <a href="/collaborating-physician-missouri.html">Collaborating Physician in Missouri</a>
+      <a href="/collaborating-physician-tennessee.html">Collaborating Physician in Tennessee</a>
+      <a href="/collaborating-physician-mississippi.html">Collaborating Physician in Mississippi</a>
+      <a href="/collaborating-physician-illinois.html">Collaborating Physician in Illinois</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2025 MD-Match · Founded by Dr. Philip Wasef, MD · All rights reserved.</div>
+    <div class="footer-copy">Confidential · Not for redistribution</div>
+  </div>
+</footer>
+
+<script>
+  function toggleMenu() { document.getElementById('mobileMenu').classList.toggle('open'); }
+  function closeMenu() { document.getElementById('mobileMenu').classList.remove('open'); }
+  document.querySelectorAll('.faq-q').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const answer = btn.nextElementSibling;
+      const expanded = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', !expanded);
+      answer.classList.toggle('open', !expanded);
+    });
+  });
+</script>
+</body>
+</html>
