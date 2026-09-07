@@ -1966,6 +1966,7 @@ async function handleNpPaIntakeStep1(request, env) {
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Phone</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Phone Number'] || '—'}</td></tr>
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">State(s)</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${statesList}</td></tr>
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Specialty</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${resolveSpecialty(fields) || '—'}</td></tr>
+    <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Years of Experience</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Years of Experience'] || '—'}</td></tr>
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Practice Setting</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['practice_setting_step1'] || '—'}</td></tr>
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Patient Population</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Patient Population'] || '—'}</td></tr>
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Weekly Hours</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Weekly Hours Per Week'] || '—'}</td></tr>
@@ -2071,6 +2072,7 @@ async function handleNpPaIntakeStep2(request, env) {
       'Provider Type': providerTypeMap[step1Fields['Provider Type']] || step1Fields['Provider Type'] || '—',
       'Specialty': resolveSpecialty(step1Fields),
       'States Needing Collaboration': statesList,
+      'Years of Experience': step1Fields['Years of Experience'] || '—',
       'Practice Setting': step1Fields['practice_setting_step1'] || '—',
       'Patient Population': step1Fields['Patient Population'] || '—',
       'Weekly Hours Per Week': step1Fields['Weekly Hours Per Week'] || '—',
@@ -2182,6 +2184,7 @@ function buildStep2Summary(f) {
     ${row('Specialty', f['Specialty'])}
     ${section('Collaboration & Practice')}
     ${row('States Needing Collaboration', f['States Needing Collaboration'])}
+    ${row('Years of Experience', f['Years of Experience'])}
     ${row('Practice Setting', f['Practice Setting'])}
     ${row('Patient Population', f['Patient Population'])}
     ${row('Weekly Hours Per Week', f['Weekly Hours Per Week'])}
