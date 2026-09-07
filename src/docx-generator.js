@@ -241,6 +241,7 @@ export async function generateNpPaIntakeDocx(f) {
         sectionHeader('Collaboration & Practice'),
         dataTable([
           labelRow('States Needing Collaboration', f['States Needing Collaboration']),
+          labelRow('Years of Experience', f['Years of Experience']),
           labelRow('Practice Setting', f['Practice Setting']),
           labelRow('Patient Population', f['Patient Population']),
           labelRow('Weekly Hours Per Week', f['Weekly Hours Per Week']),
