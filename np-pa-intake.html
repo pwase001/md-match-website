@@ -567,9 +567,9 @@
     </div>
     <div class="why-block">
       <div class="why-row">
-        <div class="why-label">What brings you to MD-Match? (optional)</div>
+        <div class="why-label">What brings you to MD-Match? <span class="req">*</span></div>
         <div class="radio-row" style="flex-direction:column;gap:0.3rem;">
-          <label><input type="radio" name="Why Seeking Collaboration" value="Looking to start my own private practice" onchange="toggleSwitchReason(false)"> <span>Looking to start my own private practice</span></label>
+          <label><input type="radio" name="Why Seeking Collaboration" value="Looking to start my own private practice" required onchange="toggleSwitchReason(false)"> <span>Looking to start my own private practice</span></label>
           <label><input type="radio" name="Why Seeking Collaboration" value="Joining a group practice" onchange="toggleSwitchReason(false)"> <span>Joining a group practice</span></label>
           <label><input type="radio" name="Why Seeking Collaboration" value="Switching to a new collaborator" onchange="toggleSwitchReason(true)"> <span>Switching to a new collaborator</span></label>
         </div>
@@ -811,7 +811,7 @@
     const btn = this.querySelector('.btn-submit');
 
     // Validate required radio groups
-    const requiredRadios = ['Years of Experience', 'practice_setting_step1', 'Weekly Hours Per Week', 'First Patient Timeline', 'boardAction', 'licenseSuspension', 'deaAction', 'malpractice'];
+    const requiredRadios = ['Why Seeking Collaboration', 'Years of Experience', 'practice_setting_step1', 'Weekly Hours Per Week', 'First Patient Timeline', 'boardAction', 'licenseSuspension', 'deaAction', 'malpractice'];
     for (const name of requiredRadios) {
       if (!document.querySelector(`input[name="${name}"]:checked`)) {
         alert('Please answer all required questions before continuing.');
