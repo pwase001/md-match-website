@@ -232,9 +232,6 @@ export async function generateNpPaIntakeDocx(f) {
         }),
         sectionHeader('Provider Information'),
         dataTable([
-          labelRow('Full Name', f['Full Name']),
-          labelRow('Email', f['Email']),
-          labelRow('Phone', f['Phone']),
           labelRow('Provider Type', f['Provider Type']),
           labelRow('Specialty', f['Specialty']),
         ]),
