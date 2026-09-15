@@ -618,6 +618,9 @@ async function handlePhysicianSubmit(request, env) {
       'Intranasal Interventional Comfort': comfortMap[fields['ketamineIN']] || fields['ketamineIN'] || '—',
       'TMS Comfort': comfortMap[fields['tms']] || fields['tms'] || '—',
       'Credentialing Willingness': comfortMap[fields['credentialing']] || fields['credentialing'] || '—',
+      'Collaboration Modalities': fields['modalities'] || 'None selected',
+      'Medical Director Roles': yesNoMap[fields['medicalDirector']] || fields['medicalDirector'] || '—',
+      'Physician-Owned Arrangements': yesNoMap[fields['physicianOwned']] || fields['physicianOwned'] || '—',
       'Board Action': yesNoMap[fields['boardAction']] || 'No',
       'Board Action Details': fields['Board Action Details'] || '',
       'License Suspension': yesNoMap[fields['licenseSuspension']] || 'No',
@@ -1827,6 +1830,9 @@ function buildPhysicianSummary(f) {
     ${row('Intranasal Interventional Comfort', f['Intranasal Interventional Comfort'])}
     ${row('TMS Comfort', f['TMS Comfort'])}
     ${row('Credentialing Willingness', f['Credentialing Willingness'])}
+    ${row('Collaboration Modalities', f['Collaboration Modalities'])}
+    ${row('Open to Medical Director Roles', f['Medical Director Roles'])}
+    ${row('Open to Physician-Owned Arrangements', f['Physician-Owned Arrangements'])}
     ${section('Legal & Board Standing')}
     ${row('Board Disciplinary Action', f['Board Action'])}
     ${f['Board Action'] === 'Yes' ? row('Board Action Details', f['Board Action Details']) : ''}

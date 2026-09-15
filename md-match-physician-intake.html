@@ -331,6 +331,34 @@
     width: 15px; height: 15px;
     cursor: pointer;
   }
+  .i-check-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .i-check-row label {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 13px;
+    color: var(--text);
+    cursor: pointer;
+    font-weight: 500;
+    padding: 0.45rem 0.85rem;
+    border: 1px solid var(--border);
+    background: var(--white);
+    user-select: none;
+    transition: border-color 0.13s, background 0.13s;
+  }
+  .i-check-row label:hover {
+    border-color: var(--teal-light);
+    background: var(--off-white);
+  }
+  .i-check-row input[type="checkbox"] {
+    accent-color: var(--teal);
+    width: 14px; height: 14px;
+    cursor: pointer;
+  }
   .i-legal-detail {
     display: none;
     margin-top: 1rem;
@@ -644,6 +672,37 @@
             <label><input type="radio" name="credentialing" value="yes"> <span>Yes</span></label>
             <label><input type="radio" name="credentialing" value="no"> <span>No</span></label>
             <label><input type="radio" name="credentialing" value="case"> <span>Case-by-case</span></label>
+          </div>
+        </div>
+
+        <div class="i-legal-question">
+          <div class="i-legal-question-label">Which of the following treatment modalities are you comfortable collaborating on? Check all that apply — leave blank if none.</div>
+          <div class="i-check-row">
+            <label><input type="checkbox" name="modalities" value="HRT"> <span>HRT</span></label>
+            <label><input type="checkbox" name="modalities" value="TRT"> <span>TRT</span></label>
+            <label><input type="checkbox" name="modalities" value="Weight Loss"> <span>Weight Loss</span></label>
+            <label><input type="checkbox" name="modalities" value="Aesthetic Services"> <span>Aesthetic Services</span></label>
+            <label><input type="checkbox" name="modalities" value="IV Hydration"> <span>IV Hydration</span></label>
+            <label><input type="checkbox" name="modalities" value="Peptide Therapy"> <span>Peptide Therapy</span></label>
+            <label><input type="checkbox" name="modalities" value="Sexual Health / Men's Health"> <span>Sexual Health / Men's Health</span></label>
+            <label><input type="checkbox" name="modalities" value="Functional / Longevity Medicine"> <span>Functional / Longevity Medicine</span></label>
+            <label><input type="checkbox" name="modalities" value="Regenerative Medicine"> <span>Regenerative Medicine</span></label>
+          </div>
+        </div>
+
+        <div class="i-legal-question">
+          <div class="i-legal-question-label">Are you open to taking on medical director roles? <span class="req">*</span></div>
+          <div class="i-radio-row">
+            <label><input type="radio" name="medicalDirector" value="yes"> <span>Yes</span></label>
+            <label><input type="radio" name="medicalDirector" value="no"> <span>No</span></label>
+          </div>
+        </div>
+
+        <div class="i-legal-question">
+          <div class="i-legal-question-label">Are you open to physician-owned arrangements? <span class="req">*</span></div>
+          <div class="i-radio-row">
+            <label><input type="radio" name="physicianOwned" value="yes"> <span>Yes</span></label>
+            <label><input type="radio" name="physicianOwned" value="no"> <span>No</span></label>
           </div>
         </div>
 

@@ -323,6 +323,9 @@ export async function generatePhysicianDocx(f) {
           labelRow('Intranasal Interventional Comfort', f['Intranasal Interventional Comfort']),
           labelRow('TMS Comfort', f['TMS Comfort']),
           labelRow('Credentialing Willingness', f['Credentialing Willingness']),
+          labelRow('Collaboration Modalities', f['Collaboration Modalities']),
+          labelRow('Open to Medical Director Roles', f['Medical Director Roles']),
+          labelRow('Open to Physician-Owned Arrangements', f['Physician-Owned Arrangements']),
         ]),
 
         sectionHeader('Legal & Board Standing'),
