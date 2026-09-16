@@ -326,6 +326,7 @@ export async function generatePhysicianDocx(f) {
           labelRow('Collaboration Modalities', f['Collaboration Modalities']),
           labelRow('Open to Medical Director Roles', f['Medical Director Roles']),
           labelRow('Open to Physician-Owned Arrangements', f['Physician-Owned Arrangements']),
+          labelRow('Insurance Credentialing', f['Insurance Credentialing']),
         ]),
 
         sectionHeader('Legal & Board Standing'),
