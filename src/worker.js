@@ -613,9 +613,9 @@ async function handlePhysicianSubmit(request, env) {
       'DEA States': fields['dea_states'] || 'None specified',
       'Controlled Substances Comfort': comfortMap[fields['controlledSub']] || fields['controlledSub'] || '—',
       'Schedule II Signoff': comfortMap[fields['scheduleIISignoff']] || fields['scheduleIISignoff'] || '—',
-      'IV Interventional Comfort': comfortMap[fields['ketamineIV']] || fields['ketamineIV'] || '—',
-      'IM Interventional Comfort': comfortMap[fields['ketamineIM']] || fields['ketamineIM'] || '—',
-      'Intranasal Interventional Comfort': comfortMap[fields['ketamineIN']] || fields['ketamineIN'] || '—',
+      'IV Ketamine Comfort': comfortMap[fields['ketamineIV']] || fields['ketamineIV'] || '—',
+      'IM Ketamine Comfort': comfortMap[fields['ketamineIM']] || fields['ketamineIM'] || '—',
+      'Intranasal Esketamine Comfort': comfortMap[fields['ketamineIN']] || fields['ketamineIN'] || '—',
       'TMS Comfort': comfortMap[fields['tms']] || fields['tms'] || '—',
       'Credentialing Willingness': comfortMap[fields['credentialing']] || fields['credentialing'] || '—',
       'Collaboration Modalities': fields['modalities'] || 'None selected',
@@ -1825,9 +1825,9 @@ function buildPhysicianSummary(f) {
     ${section('Clinical Preferences')}
     ${row('Controlled Substances Comfort', f['Controlled Substances Comfort'])}
     ${f['Controlled Substances Comfort'] !== 'No' ? row('Schedule II Signoff', f['Schedule II Signoff']) : ''}
-    ${row('IV Interventional Comfort', f['IV Interventional Comfort'])}
-    ${row('IM Interventional Comfort', f['IM Interventional Comfort'])}
-    ${row('Intranasal Interventional Comfort', f['Intranasal Interventional Comfort'])}
+    ${row('IV Ketamine Comfort', f['IV Ketamine Comfort'])}
+    ${row('IM Ketamine Comfort', f['IM Ketamine Comfort'])}
+    ${row('Intranasal Esketamine Comfort', f['Intranasal Esketamine Comfort'])}
     ${row('TMS Comfort', f['TMS Comfort'])}
     ${row('Credentialing Willingness', f['Credentialing Willingness'])}
     ${row('Collaboration Modalities', f['Collaboration Modalities'])}
