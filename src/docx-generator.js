@@ -318,9 +318,9 @@ export async function generatePhysicianDocx(f) {
         dataTable([
           labelRow('Controlled Substances Comfort', f['Controlled Substances Comfort']),
           ...(f['Controlled Substances Comfort'] !== 'No' ? [labelRow('Schedule II Signoff', f['Schedule II Signoff'])] : []),
-          labelRow('IV Interventional Comfort', f['IV Interventional Comfort']),
-          labelRow('IM Interventional Comfort', f['IM Interventional Comfort']),
-          labelRow('Intranasal Interventional Comfort', f['Intranasal Interventional Comfort']),
+          labelRow('IV Ketamine Comfort', f['IV Ketamine Comfort']),
+          labelRow('IM Ketamine Comfort', f['IM Ketamine Comfort']),
+          labelRow('Intranasal Esketamine Comfort', f['Intranasal Esketamine Comfort']),
           labelRow('TMS Comfort', f['TMS Comfort']),
           labelRow('Credentialing Willingness', f['Credentialing Willingness']),
           labelRow('Collaboration Modalities', f['Collaboration Modalities']),
