@@ -312,6 +312,8 @@ export async function generatePhysicianDocx(f) {
           labelRow('Licensed States', f['Licensed States']),
           labelRow('Available to Collaborate', f['Collab States']),
           labelRow('DEA States', f['DEA States'] || 'None specified'),
+          labelRow('Willing to Get Additional Licenses', f['Willing to Get Additional Licenses']),
+          labelRow('Willing to Get Additional DEAs', f['Willing to Get Additional DEAs']),
         ]),
 
         sectionHeader('Clinical Preferences'),

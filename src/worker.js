@@ -611,6 +611,8 @@ async function handlePhysicianSubmit(request, env) {
       'Licensed States': fields['licensed_states'] || '—',
       'Collab States': fields['collab_states'] || '—',
       'DEA States': fields['dea_states'] || 'None specified',
+      'Willing to Get Additional Licenses': comfortMap[fields['willGetLicense']] || fields['willGetLicense'] || '—',
+      'Willing to Get Additional DEAs': comfortMap[fields['willGetDEA']] || fields['willGetDEA'] || '—',
       'Controlled Substances Comfort': comfortMap[fields['controlledSub']] || fields['controlledSub'] || '—',
       'Schedule II Signoff': comfortMap[fields['scheduleIISignoff']] || fields['scheduleIISignoff'] || '—',
       'IV Ketamine Comfort': comfortMap[fields['ketamineIV']] || fields['ketamineIV'] || '—',
@@ -1823,6 +1825,8 @@ function buildPhysicianSummary(f) {
     ${row('Licensed States', f['Licensed States'])}
     ${row('Available to Collaborate', f['Collab States'])}
     ${row('DEA States', f['DEA States'])}
+    ${row('Willing to Get Additional Licenses', f['Willing to Get Additional Licenses'])}
+    ${row('Willing to Get Additional DEAs', f['Willing to Get Additional DEAs'])}
     ${section('Clinical Preferences')}
     ${row('Controlled Substances Comfort', f['Controlled Substances Comfort'])}
     ${f['Controlled Substances Comfort'] !== 'No' ? row('Schedule II Signoff', f['Schedule II Signoff']) : ''}
