@@ -624,6 +624,7 @@ async function handlePhysicianSubmit(request, env) {
       'Medical Director Roles': yesNoMap[fields['medicalDirector']] || fields['medicalDirector'] || '—',
       'Physician-Owned Arrangements': yesNoMap[fields['physicianOwned']] || fields['physicianOwned'] || '—',
       'Insurance Credentialing': fields['Insurance Credentialing'] || '—',
+      'Mental Health Collaboration Experience': fields['Mental Health Collaboration Experience'] || '—',
       'Board Action': yesNoMap[fields['boardAction']] || 'No',
       'Board Action Details': fields['Board Action Details'] || '',
       'License Suspension': yesNoMap[fields['licenseSuspension']] || 'No',
@@ -1839,6 +1840,7 @@ function buildPhysicianSummary(f) {
     ${row('Open to Medical Director Roles', f['Medical Director Roles'])}
     ${row('Open to Physician-Owned Arrangements', f['Physician-Owned Arrangements'])}
     ${row('Insurance Credentialing', f['Insurance Credentialing'])}
+    ${row('Mental Health Collaboration Experience', f['Mental Health Collaboration Experience'])}
     ${section('Legal & Board Standing')}
     ${row('Board Disciplinary Action', f['Board Action'])}
     ${f['Board Action'] === 'Yes' ? row('Board Action Details', f['Board Action Details']) : ''}
