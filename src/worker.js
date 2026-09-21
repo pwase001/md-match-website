@@ -1412,12 +1412,36 @@ async function sendPhysicianOnboardingEmail(env, origin, physician, collaboratio
 async function handleCreateCollaboration(request, env) {
   try {
     const {
-      clientId, physicianId, totalAmountUsd, platformFeeUsd, startDate, paymentTermsDays,
+      clientId, physicianId, physicianPayoutUsd, netFeeUsd, coverStripeFees,
+      startDate, paymentTermsDays,
       providerName, promoPayoutUsd, promoTotalUsd, promoEndDate, notes,
     } = await request.json();
 
-    const totalAmountCents = Math.round(Number(totalAmountUsd) * 100);
-    const platformFeeCents = Math.round(Number(platformFeeUsd || 200) * 100);
+    // The form asks for the two figures that are actually negotiated -- what the
+    // physician is paid, and what this is worth to the platform -- and the client's
+    // total is derived from them. It used to ask for the total and the fee, which
+    // meant the platform's real earnings were whatever was left after Stripe took
+    // its cut, discovered weeks later in a payout rather than at creation.
+    //
+    // With coverStripeFees the total is grossed up so the stated fee is what the
+    // platform actually keeps; without it the client pays exactly payout + fee and
+    // Stripe's cut comes out of the platform's share, which is the old behaviour
+    // kept deliberately for collaborations whose price is already agreed.
+    const physicianPayoutCents = Math.round(Number(physicianPayoutUsd) * 100);
+    const netFeeCents = Math.round(Number(netFeeUsd ?? 200) * 100);
+    if (!Number.isFinite(physicianPayoutCents) || physicianPayoutCents <= 0) {
+      return jsonResponse({ success: false, error: 'Physician payout must be greater than zero' }, 400);
+    }
+    if (!Number.isFinite(netFeeCents) || netFeeCents <= 0) {
+      return jsonResponse({ success: false, error: 'Your fee must be greater than zero' }, 400);
+    }
+
+    const totalAmountCents = coverStripeFees
+      ? stripeHelpers.grossUpTotalCents(physicianPayoutCents, netFeeCents)
+      : physicianPayoutCents + netFeeCents;
+    // Stored as the gross fee, since that is what Stripe is instructed to collect.
+    // The net the platform keeps is this less Stripe's cut.
+    const platformFeeCents = totalAmountCents - physicianPayoutCents;
     if (!totalAmountCents || totalAmountCents <= platformFeeCents) {
       return jsonResponse({ success: false, error: 'Invalid amount' }, 400);
     }
