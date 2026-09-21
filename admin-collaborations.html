@@ -257,11 +257,16 @@
   // rather than fetched so the preview updates as you type, but they are money:
   // change both together.
   const STRIPE_ACH_PERCENT = 0.008, STRIPE_ACH_CAP_CENTS = 500,
-        STRIPE_BILLING_PERCENT = 0.007, STRIPE_RADAR_CENTS = 5;
+        STRIPE_INVOICING_PERCENT = 0.004, STRIPE_RADAR_CENTS = 5;
 
   function estimateStripeFeeCents(total) {
+    // Invoicing, not Billing. Every collaboration this form creates is billed by
+    // the app, which Stripe prices at 0.4% rather than the 0.7% it charges on a
+    // subscription invoice. The server uses the same rate, so the total previewed
+    // here is the total that gets created -- this preview quoting 0.7% while the
+    // server used 0.4% is exactly the drift the duplicated rates invite.
     return Math.min(Math.round(total * STRIPE_ACH_PERCENT), STRIPE_ACH_CAP_CENTS)
-      + Math.round(total * STRIPE_BILLING_PERCENT) + STRIPE_RADAR_CENTS;
+      + Math.round(total * STRIPE_INVOICING_PERCENT) + STRIPE_RADAR_CENTS;
   }
 
   function grossUpTotalCents(payout, netFee, share) {
