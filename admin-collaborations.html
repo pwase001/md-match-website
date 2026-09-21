@@ -292,6 +292,12 @@
       + (share > 0 && share < 1
           ? `<br><span style="opacity:.75">Of Stripe's ${money(stripeFee)}, the client covers `
             + `${money(clientShare)} and you cover ${money(stripeFee - clientShare)}.</span>`
+          : '')
+      // What the client will actually read on the invoice, rather than only the
+      // total they will be asked for.
+      + (total - payout - netFee > 0
+          ? `<br><span style="opacity:.75">Their invoice reads ${money(total - (total - payout - netFee))} `
+            + `for collaboration services plus ${money(total - payout - netFee)} processing fee.</span>`
           : '');
 
     // The introductory months are their own rate, billed by the app on the same
