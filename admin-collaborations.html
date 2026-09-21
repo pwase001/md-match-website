@@ -129,12 +129,25 @@
       </div>
       <div class="field-row">
         <div class="field">
-          <label>Total Monthly Amount (USD)</label>
-          <input type="number" id="totalAmount" placeholder="900" min="1" step="0.01">
+          <label>Physician Payout (USD/month)</label>
+          <input type="number" id="physicianPayout" placeholder="700" min="1" step="0.01" oninput="updateAmountPreview()">
         </div>
         <div class="field">
-          <label>Platform Fee (USD)</label>
-          <input type="number" id="platformFee" value="200" min="0" step="0.01">
+          <label>Your Fee, after Stripe (USD/month)</label>
+          <input type="number" id="netFee" value="200" min="1" step="0.01" oninput="updateAmountPreview()">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label style="font-weight:normal">
+            <input type="checkbox" id="coverStripeFees" checked onchange="updateAmountPreview()">
+            Add Stripe's fees to the client's total, so your fee is what you keep
+          </label>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <div id="amountPreview" style="display:none;padding:10px 12px;border-left:2px solid #2E6B5E;background:#EDF3F0;font-size:13px;line-height:1.6"></div>
         </div>
       </div>
       <div class="field-row">
@@ -230,6 +243,47 @@
 
   function money(cents) { return '$' + (cents / 100).toFixed(2); }
 
+  // Display-only mirror of the rates in src/stripe-helpers.js, which stays the
+  // source of truth -- the server recomputes these figures on submit. Duplicated
+  // rather than fetched so the preview updates as you type, but they are money:
+  // change both together.
+  const STRIPE_ACH_PERCENT = 0.008, STRIPE_ACH_CAP_CENTS = 500,
+        STRIPE_BILLING_PERCENT = 0.007, STRIPE_RADAR_CENTS = 5;
+
+  function estimateStripeFeeCents(total) {
+    return Math.min(Math.round(total * STRIPE_ACH_PERCENT), STRIPE_ACH_CAP_CENTS)
+      + Math.round(total * STRIPE_BILLING_PERCENT) + STRIPE_RADAR_CENTS;
+  }
+
+  function grossUpTotalCents(payout, netFee) {
+    let total = payout + netFee;
+    for (let i = 0; i < 8; i++) {
+      const next = payout + netFee + estimateStripeFeeCents(total);
+      if (next === total) break;
+      total = next;
+    }
+    return total;
+  }
+
+  function updateAmountPreview() {
+    const el = document.getElementById('amountPreview');
+    const payout = Math.round(Number(document.getElementById('physicianPayout').value) * 100);
+    const netFee = Math.round(Number(document.getElementById('netFee').value) * 100);
+    if (!payout || !netFee || payout < 0 || netFee < 0) { el.style.display = 'none'; return; }
+
+    const cover = document.getElementById('coverStripeFees').checked;
+    const total = cover ? grossUpTotalCents(payout, netFee) : payout + netFee;
+    const stripeFee = estimateStripeFeeCents(total);
+    const net = (total - payout) - stripeFee;
+
+    el.style.display = 'block';
+    el.innerHTML = `Client is invoiced <b>${money(total)}</b> per month.<br>`
+      + `Physician receives ${money(payout)} &middot; Stripe takes about ${money(stripeFee)} `
+      + `&middot; you keep about <b>${money(net)}</b>`
+      + (cover ? '' : `<br><span style="opacity:.75">Tick the box above to invoice `
+          + `${money(grossUpTotalCents(payout, netFee))} instead and keep the full ${money(netFee)}.</span>`);
+  }
+
   function togglePromo() {
     const on = document.getElementById('hasPromo').checked;
     document.getElementById('promoFields').style.display = on ? 'flex' : 'none';
@@ -282,8 +336,9 @@
     const body = {
       clientId: Number(document.getElementById('clientSelect').value),
       physicianId: Number(document.getElementById('physicianSelect').value),
-      totalAmountUsd: document.getElementById('totalAmount').value,
-      platformFeeUsd: document.getElementById('platformFee').value,
+      physicianPayoutUsd: document.getElementById('physicianPayout').value,
+      netFeeUsd: document.getElementById('netFee').value,
+      coverStripeFees: document.getElementById('coverStripeFees').checked,
       startDate: document.getElementById('startDate').value,
       paymentTermsDays: Number(document.getElementById('paymentTerms').value),
       providerName: document.getElementById('providerName').value,
@@ -301,9 +356,9 @@
         return;
       }
     }
-    if (!body.clientId || !body.physicianId || !body.totalAmountUsd || !body.startDate) {
+    if (!body.clientId || !body.physicianId || !body.physicianPayoutUsd || !body.netFeeUsd || !body.startDate) {
       msg.className = 'msg err';
-      msg.textContent = 'Please fill in client, physician, amount, and start date.';
+      msg.textContent = 'Please fill in client, physician, physician payout, your fee, and start date.';
       return;
     }
 

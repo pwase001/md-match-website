@@ -100,6 +100,47 @@ export async function attachDefaultPaymentMethodFromSetup(stripe, checkoutSessio
 // setting. Matches the net-14 terms originally applied to every collaboration.
 export const DEFAULT_PAYMENT_TERMS_DAYS = 14;
 
+// What Stripe takes out of a paid invoice. All of it lands on the platform's side,
+// because the physician's share is a fixed dollar figure rather than a percentage --
+// so every cent Stripe charges comes out of the platform fee and none out of theirs.
+// That is what turned an intended $200 into $188.58 on the first invoice to settle.
+//
+// Rates are taken from live invoices rather than a pricing page: a $700 invoice cost
+// $7.90 and a $900 invoice cost $11.40, itemised in the payout ledger.
+//
+// The billing rate is the uncertain one, and deliberately the pessimistic reading. A
+// one-off invoice was charged 0.4% ("Invoicing Starter") while a subscription invoice
+// was charged 0.7% ("Billing - Usage Fee") in the same week on the same account.
+// Every invoice the app generates today comes from a subscription, so 0.7% applies;
+// if collaborations ever move to standalone invoices this drops to 0.4%.
+export const STRIPE_ACH_PERCENT = 0.008;
+export const STRIPE_ACH_CAP_CENTS = 500;
+export const STRIPE_BILLING_PERCENT = 0.007;
+export const STRIPE_RADAR_CENTS = 5;
+
+export function estimateStripeFeeCents(totalAmountCents) {
+  const ach = Math.min(Math.round(totalAmountCents * STRIPE_ACH_PERCENT), STRIPE_ACH_CAP_CENTS);
+  return ach + Math.round(totalAmountCents * STRIPE_BILLING_PERCENT) + STRIPE_RADAR_CENTS;
+}
+
+// The client total that leaves the platform with netFeeCents once Stripe has taken
+// its cut, holding the physician's payout at the figure they actually agreed to.
+//
+// Settled by iteration rather than algebra: the fee depends on the total it is being
+// used to compute, and the ACH cap makes that relationship piecewise, so a closed
+// form needs a separate branch either side of the cap. Starting below the answer and
+// adding the fee each pass gives a sequence that only increases and converges within
+// two or three rounds; the loop bound is there so a future rate change cannot spin.
+export function grossUpTotalCents(physicianPayoutCents, netFeeCents) {
+  let total = physicianPayoutCents + netFeeCents;
+  for (let i = 0; i < 8; i++) {
+    const next = physicianPayoutCents + netFeeCents + estimateStripeFeeCents(total);
+    if (next === total) break;
+    total = next;
+  }
+  return total;
+}
+
 // Stops a collaboration billing. Cancels immediately rather than at period end:
 // ending a collaboration should not leave one more invoice queued behind it.
 // Already-issued invoices are unaffected -- work delivered before the end is
