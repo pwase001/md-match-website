@@ -150,7 +150,7 @@ export function nextMonthlyDate(isoDate, anchorDay) {
 // only pass application_fee_percent and land a cent or two out.
 export async function createCollaborationInvoice(stripe, {
   customerId, physicianAccountId, totalAmountCents, platformFeeCents,
-  paymentTermsDays, description,
+  paymentTermsDays, description, processingFeeCents,
 }) {
   const invoice = await stripe.invoices.create({
     customer: customerId,
@@ -163,13 +163,29 @@ export async function createCollaborationInvoice(stripe, {
     auto_advance: true,
   });
 
+  // The client's share of Stripe's cut is already inside totalAmountCents. Naming
+  // it as its own line changes only what the invoice reads: the two items still sum
+  // to the same total, and application_fee_amount is untouched, so the physician is
+  // paid the same figure either way.
+  const processing = processingFeeCents > 0 ? processingFeeCents : 0;
+
   await stripe.invoiceItems.create({
     customer: customerId,
     invoice: invoice.id,
-    amount: totalAmountCents,
+    amount: totalAmountCents - processing,
     currency: 'usd',
     description,
   });
+
+  if (processing > 0) {
+    await stripe.invoiceItems.create({
+      customer: customerId,
+      invoice: invoice.id,
+      amount: processing,
+      currency: 'usd',
+      description: 'Processing fee',
+    });
+  }
 
   // Finalising is what sends it. Left to auto_advance alone the invoice would sit
   // as a draft for about an hour, which makes the billing date the app promises

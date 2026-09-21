@@ -1484,6 +1484,11 @@ async function handleCreateCollaboration(request, env) {
     // Stored as the gross fee, since that is what Stripe is instructed to collect.
     // The net the platform keeps is this less Stripe's cut.
     const platformFeeCents = totalAmountCents - physicianPayoutCents;
+    // Whatever the gross-up added on top of the payout and the stated fee is the
+    // client's share of Stripe's cut, and it gets its own line on the invoice so it
+    // can be named rather than buried in the collaboration fee. Zero when the
+    // platform absorbs the whole fee, which leaves a single-line invoice.
+    const processingFeeCents = totalAmountCents - (physicianPayoutCents + netFeeCents);
     if (!totalAmountCents || totalAmountCents <= platformFeeCents) {
       return jsonResponse({ success: false, error: 'Invalid amount' }, 400);
     }
@@ -1515,6 +1520,7 @@ async function handleCreateCollaboration(request, env) {
     }
 
     let promoTotalCents = null;
+    let promoProcessingFeeCents = null;
     if (promoPayoutCents !== null) {
       if (!Number.isFinite(promoPayoutCents) || promoPayoutCents <= 0
         || !Number.isFinite(promoNetFeeCents) || promoNetFeeCents <= 0) {
@@ -1527,6 +1533,7 @@ async function handleCreateCollaboration(request, env) {
       promoTotalCents = stripeHelpers.grossUpTotalCents(
         promoPayoutCents, promoNetFeeCents, stripeFeeShare ?? 1, billingMode
       );
+      promoProcessingFeeCents = promoTotalCents - (promoPayoutCents + promoNetFeeCents);
       // The promotional payout is what the physician receives instead of the full
       // amount, so a figure at or above the standard payout is a typo rather than a
       // generous promotion -- and the notice would tell them their rate improves
@@ -1565,6 +1572,7 @@ async function handleCreateCollaboration(request, env) {
     const collaboration = await db.createCollaboration(env.DB, {
       clientId, physicianId, totalAmountCents, platformFeeCents, applicationFeePercent, startDate,
       paymentTermsDays: termsDays, providerName, promoPayoutCents, promoTotalCents,
+      processingFeeCents, promoProcessingFeeCents,
       promoEndDate: promoEnd, notes,
       // The billing day is taken from the start date and then held, so 9/20 bills
       // on 10/20 and 11/20 rather than drifting.
@@ -1759,11 +1767,13 @@ function collaborationRateOn(collaboration, invoiceDate) {
       promotional: true,
       totalCents: collaboration.promo_total_cents,
       feeCents: collaboration.promo_total_cents - collaboration.promo_payout_cents,
+      processingFeeCents: collaboration.promo_processing_fee_cents || 0,
     }
     : {
       promotional: false,
       totalCents: collaboration.total_amount_cents,
       feeCents: collaboration.platform_fee_cents,
+      processingFeeCents: collaboration.processing_fee_cents || 0,
     };
 }
 
@@ -1814,6 +1824,7 @@ async function runCollaborationBilling(env, today) {
         totalAmountCents: rate.totalCents,
         platformFeeCents: rate.feeCents,
         paymentTermsDays: c.payment_terms_days,
+        processingFeeCents: rate.processingFeeCents,
         description: rate.promotional
           ? `Collaboration services — ${c.physician_name} (introductory rate)`
           : `Collaboration services — ${c.physician_name}`,
