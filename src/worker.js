@@ -1304,7 +1304,7 @@ async function sendClientBillingEmail(env, collaboration, client, physician) {
 
   const scheduleHtml = isPromo
     ? `<div style="${RATE_RAIL}">`
-      + `<p style="margin:0 0 4px">Through ${collaboration.promo_end_date}: <strong>${usd(collaboration.promo_total_cents)}</strong> / month</p>`
+      + `<p style="margin:0 0 4px">Until ${collaboration.promo_end_date}: <strong>${usd(collaboration.promo_total_cents)}</strong> / month</p>`
       + `<p style="margin:0">From ${collaboration.promo_end_date}: <strong>${standard}</strong> / month</p>`
       + `</div>`
       + `<p>There is nothing to set up. You'll receive an invoice by email each month with a secure link to pay by bank transfer, ${termsDays}-day terms. Nothing is ever charged automatically — you pay each invoice when you're ready.</p>`
@@ -1353,7 +1353,7 @@ async function sendCollaborationNoticeEmail(env, { collaboration, client, physic
   let rateHtml;
   if (newIsPromo) {
     const rates =
-      `<p style="margin:0 0 4px">Through ${collaboration.promo_end_date}: <strong>${usd(collaboration.promo_payout_cents)}</strong> per month</p>`
+      `<p style="margin:0 0 4px">Until ${collaboration.promo_end_date}: <strong>${usd(collaboration.promo_payout_cents)}</strong> per month</p>`
       + `<p style="margin:0">From ${collaboration.promo_end_date}: <strong>${standardPayout}</strong> per month</p>`;
     if (prevIsPromo) {
       rateHtml = `<p>This one also starts on an introductory rate, on its own timeline:</p>`
@@ -1420,7 +1420,7 @@ async function sendPhysicianOnboardingEmail(env, origin, physician, collaboratio
     scheduleHtml =
       `<p>Your payment schedule:</p>`
       + `<div style="${RATE_RAIL}">`
-      + `<p style="margin:0 0 4px">Through ${collaboration.promo_end_date}: <strong>${usd(collaboration.promo_payout_cents)}</strong> / month</p>`
+      + `<p style="margin:0 0 4px">Until ${collaboration.promo_end_date}: <strong>${usd(collaboration.promo_payout_cents)}</strong> / month</p>`
       + `<p style="margin:0">From ${collaboration.promo_end_date}: <strong>${standardPayout}</strong> / month</p>`
       + `</div>`
       + `<p>The provider is on an introductory rate until ${collaboration.promo_end_date}.</p>`
@@ -1452,7 +1452,7 @@ async function handleCreateCollaboration(request, env) {
     const {
       clientId, physicianId, physicianPayoutUsd, netFeeUsd, stripeFeeShare,
       startDate, paymentTermsDays,
-      providerName, promoPayoutUsd, promoTotalUsd, promoEndDate, notes,
+      providerName, promoPayoutUsd, promoNetFeeUsd, promoEndDate, notes,
     } = await request.json();
 
     // The form asks for the two figures that are actually negotiated -- what the
@@ -1504,33 +1504,34 @@ async function handleCreateCollaboration(request, env) {
     // with no rate -- worse than not offering the option at all.
     const toCents = (v) => (v === '' || v == null ? null : Math.round(Number(v) * 100));
     const promoPayoutCents = toCents(promoPayoutUsd);
-    const promoTotalCents = toCents(promoTotalUsd);
+    const promoNetFeeCents = toCents(promoNetFeeUsd);
     const promoEnd = promoEndDate || null;
-    const promoParts = [promoPayoutCents, promoTotalCents, promoEnd];
+    const promoParts = [promoPayoutCents, promoNetFeeCents, promoEnd];
     if (promoParts.some((p) => p === null) && promoParts.some((p) => p !== null)) {
       return jsonResponse({
         success: false,
-        error: 'An introductory rate needs the client amount, the physician payout, and the date it ends',
+        error: 'An introductory rate needs the physician payout, your fee, and the date it ends',
       }, 400);
     }
+
+    let promoTotalCents = null;
     if (promoPayoutCents !== null) {
       if (!Number.isFinite(promoPayoutCents) || promoPayoutCents <= 0
-        || !Number.isFinite(promoTotalCents) || promoTotalCents <= 0) {
+        || !Number.isFinite(promoNetFeeCents) || promoNetFeeCents <= 0) {
         return jsonResponse({ success: false, error: 'Introductory amounts must be greater than zero' }, 400);
       }
-      // The physician cannot be paid more than the client is invoiced, or the
-      // promotion would cost more to run than it brings in.
-      if (promoPayoutCents > promoTotalCents) {
-        return jsonResponse({
-          success: false,
-          error: 'Introductory payout cannot exceed what the client pays during the introductory period',
-        }, 400);
-      }
+      // The promotional client total is derived the same way the standard one is,
+      // and carries the same share of Stripe's cut -- a promotional invoice costs
+      // the platform a fee too, and leaving it out would quietly make the
+      // promotional months less profitable than the figure entered for them.
+      promoTotalCents = stripeHelpers.grossUpTotalCents(
+        promoPayoutCents, promoNetFeeCents, stripeFeeShare ?? 1, billingMode
+      );
       // The promotional payout is what the physician receives instead of the full
       // amount, so a figure at or above the standard payout is a typo rather than a
       // generous promotion -- and the notice would tell them their rate improves
       // when the promotion ends.
-      if (promoPayoutCents >= totalAmountCents - platformFeeCents) {
+      if (promoPayoutCents >= physicianPayoutCents) {
         return jsonResponse({
           success: false,
           error: 'Introductory payout must be less than the standard payout',
@@ -1538,6 +1539,16 @@ async function handleCreateCollaboration(request, env) {
       }
       if (!/^\d{4}-\d{2}-\d{2}$/.test(promoEnd)) {
         return jsonResponse({ success: false, error: 'Introductory end date must be a valid date' }, 400);
+      }
+      // The introductory period runs from the start date up to, but not including,
+      // this date -- which is the first invoice charged at the standard rate. An end
+      // date on or before the start date would describe a promotion with no months
+      // in it while still telling both parties there was one.
+      if (promoEnd <= startDate) {
+        return jsonResponse({
+          success: false,
+          error: 'The introductory rate must end after the billing start date',
+        }, 400);
       }
     }
 
@@ -1728,6 +1739,34 @@ function easternDateString(now) {
   }).format(now);
 }
 
+// What a given invoice date should charge.
+//
+// The introductory period runs from the start date up to but NOT including
+// promo_end_date, so that date is the first invoice at the standard rate. Handling
+// it this way means a promotion is described by one date rather than by counting
+// months, and the emails can name the same date as the changeover.
+//
+// Dates are ISO strings, so a plain string comparison orders them correctly and
+// avoids constructing Date objects whose timezone would have to be reasoned about.
+function collaborationRateOn(collaboration, invoiceDate) {
+  const promotional = !!collaboration.promo_end_date
+    && collaboration.promo_total_cents != null
+    && collaboration.promo_payout_cents != null
+    && invoiceDate < collaboration.promo_end_date;
+
+  return promotional
+    ? {
+      promotional: true,
+      totalCents: collaboration.promo_total_cents,
+      feeCents: collaboration.promo_total_cents - collaboration.promo_payout_cents,
+    }
+    : {
+      promotional: false,
+      totalCents: collaboration.total_amount_cents,
+      feeCents: collaboration.platform_fee_cents,
+    };
+}
+
 // Issues every invoice that is due, one collaboration at a time.
 //
 // The month is claimed in the database before Stripe is called, and the claim is
@@ -1746,9 +1785,10 @@ async function runCollaborationBilling(env, today) {
 
   for (const c of due) {
     const period = c.next_invoice_date.slice(0, 7);
+    const rate = collaborationRateOn(c, c.next_invoice_date);
     const entry = {
       collaborationId: c.id, period, client: c.client_name, physician: c.physician_name,
-      amount: c.total_amount_cents,
+      amount: rate.totalCents, promotional: rate.promotional,
     };
 
     if (!c.stripe_customer_id || !c.stripe_account_id) {
@@ -1771,10 +1811,12 @@ async function runCollaborationBilling(env, today) {
       const invoice = await stripeHelpers.createCollaborationInvoice(stripe, {
         customerId: c.stripe_customer_id,
         physicianAccountId: c.stripe_account_id,
-        totalAmountCents: c.total_amount_cents,
-        platformFeeCents: c.platform_fee_cents,
+        totalAmountCents: rate.totalCents,
+        platformFeeCents: rate.feeCents,
         paymentTermsDays: c.payment_terms_days,
-        description: `Collaboration services — ${c.physician_name}`,
+        description: rate.promotional
+          ? `Collaboration services — ${c.physician_name} (introductory rate)`
+          : `Collaboration services — ${c.physician_name}`,
       });
       await db.recordInvoiceRunResult(env.DB, c.id, period, { invoiceId: invoice.id });
       await db.setCollaborationBillingSchedule(env.DB, c.id, {
