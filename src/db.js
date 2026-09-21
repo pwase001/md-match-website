@@ -66,17 +66,19 @@ export async function setPhysicianTransfersActive(db, stripeAccountId, active) {
 export async function createCollaboration(db, {
   clientId, physicianId, totalAmountCents, platformFeeCents, applicationFeePercent, startDate,
   paymentTermsDays, providerName, promoPayoutCents, promoTotalCents, promoEndDate, notes,
+  billingMode, billingDay,
 }) {
   const res = await db
     .prepare(
       `INSERT INTO collaborations
         (client_id, physician_id, total_amount_cents, platform_fee_cents, application_fee_percent, start_date,
-         payment_terms_days, provider_name, promo_payout_cents, promo_total_cents, promo_end_date, notes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+         payment_terms_days, provider_name, promo_payout_cents, promo_total_cents, promo_end_date, notes,
+         billing_mode, billing_day)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
     )
     .bind(clientId, physicianId, totalAmountCents, platformFeeCents, applicationFeePercent, startDate,
       paymentTermsDays, providerName || null, promoPayoutCents ?? null, promoTotalCents ?? null,
-      promoEndDate || null, notes || null)
+      promoEndDate || null, notes || null, billingMode || 'subscription', billingDay ?? null)
     .first();
   return res;
 }
@@ -98,6 +100,88 @@ export async function getPreviousCollaborationForPhysician(db, physicianId, excl
     )
     .bind(physicianId, excludeId)
     .first();
+}
+
+// ---- App-driven monthly invoicing ----
+// Collaborations with billing_mode 'app_invoice' are billed by the scheduled
+// handler rather than by a Stripe subscription. Rows left on 'subscription' are
+// untouched by all of this.
+
+export async function setCollaborationBillingSchedule(db, id, { billingDay, nextInvoiceDate }) {
+  await db
+    .prepare(`UPDATE collaborations SET billing_day = ?, next_invoice_date = ?,
+              updated_at = datetime('now') WHERE id = ?`)
+    .bind(billingDay, nextInvoiceDate, id)
+    .run();
+}
+
+export async function listCollaborationsDueForInvoice(db, onDate) {
+  const res = await db
+    .prepare(
+      `SELECT c.*, cl.full_name AS client_name, cl.email AS client_email,
+              cl.stripe_customer_id, p.full_name AS physician_name, p.stripe_account_id
+       FROM collaborations c
+       JOIN clients cl ON cl.id = c.client_id
+       JOIN physicians p ON p.id = c.physician_id
+       WHERE c.billing_mode = 'app_invoice'
+         AND c.status = 'active'
+         AND c.next_invoice_date IS NOT NULL
+         AND c.next_invoice_date <= ?
+       ORDER BY c.next_invoice_date, c.id`
+    )
+    .bind(onDate)
+    .all();
+  return res.results;
+}
+
+// Claims a month for a collaboration, returning false when it is already claimed.
+// This is the whole defence against billing a client twice for one month: a
+// retried cron, a redeploy mid-run, or a manual run racing the scheduled one all
+// lose the race here and stop.
+export async function claimInvoiceRun(db, collaborationId, period) {
+  const res = await db
+    .prepare(
+      `INSERT INTO invoice_runs (collaboration_id, period) VALUES (?, ?)
+       ON CONFLICT(collaboration_id, period) DO NOTHING`
+    )
+    .bind(collaborationId, period)
+    .run();
+  return (res.meta?.changes ?? 0) > 0;
+}
+
+export async function recordInvoiceRunResult(db, collaborationId, period, { invoiceId, error }) {
+  await db
+    .prepare(`UPDATE invoice_runs SET stripe_invoice_id = ?, error = ?
+              WHERE collaboration_id = ? AND period = ?`)
+    .bind(invoiceId || null, error || null, collaborationId, period)
+    .run();
+}
+
+// Months that were claimed and then failed. These stay claimed on purpose, so they
+// need surfacing somewhere a person will see them -- otherwise a collaboration
+// quietly stops billing and the first anyone knows is the money not arriving.
+export async function listFailedInvoiceRuns(db) {
+  const res = await db
+    .prepare(
+      `SELECT r.*, cl.full_name AS client_name, p.full_name AS physician_name
+       FROM invoice_runs r
+       JOIN collaborations c ON c.id = r.collaboration_id
+       JOIN clients cl ON cl.id = c.client_id
+       JOIN physicians p ON p.id = c.physician_id
+       WHERE r.stripe_invoice_id IS NULL AND r.error IS NOT NULL
+       ORDER BY r.created_at DESC`
+    )
+    .all();
+  return res.results;
+}
+
+// Releases a failed month so it can be attempted again. Only safe once somebody
+// has checked in Stripe that the failed attempt left no invoice behind.
+export async function clearInvoiceRun(db, collaborationId, period) {
+  await db
+    .prepare('DELETE FROM invoice_runs WHERE collaboration_id = ? AND period = ? AND stripe_invoice_id IS NULL')
+    .bind(collaborationId, period)
+    .run();
 }
 
 export async function getCollaboration(db, id) {

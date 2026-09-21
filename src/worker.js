@@ -94,6 +94,13 @@ export default {
 
   async scheduled(event, env) {
     const now = new Date(event.scheduledTime);
+
+    // Runs on every firing, not just the daily one. It is idempotent -- a month
+    // already billed is claimed and skipped -- so an extra tick costs a query, and
+    // a missed daily tick is covered by the next firing of anything.
+    const billed = await runCollaborationBilling(env, easternDateString(now));
+    if (billed.length) console.log('Collaboration billing:', JSON.stringify(billed));
+
     const { weekday, day, hour, monthLabel } = easternParts(now);
     const proceeding = isFourthMondayAt9amEastern(now);
     // Logged on every firing, not just the ones that send. A schedule pointed at
@@ -1201,6 +1208,37 @@ async function handleAdminApi(request, env, url) {
     return handleActivateCollaboration(request, env);
   }
 
+  // What the scheduled handler would do today, and anything it failed at before.
+  // Failed months stay claimed and stop that collaboration billing, so they need a
+  // place a person actually looks.
+  if (url.pathname === '/admin/api/billing/preview' && request.method === 'GET') {
+    const today = easternDateString(new Date());
+    const [due, failed] = await Promise.all([
+      db.listCollaborationsDueForInvoice(env.DB, today),
+      db.listFailedInvoiceRuns(env.DB),
+    ]);
+    return jsonResponse({ success: true, today, due, failed });
+  }
+
+  // Runs the sweep by hand. Safe to press: the same per-month claim that protects
+  // the scheduled run protects this one, so pressing it twice bills nobody twice.
+  if (url.pathname === '/admin/api/billing/run' && request.method === 'POST') {
+    const results = await runCollaborationBilling(env, easternDateString(new Date()));
+    return jsonResponse({ success: true, results });
+  }
+
+  // Releases a month that failed, so it can be attempted again. Deliberately
+  // manual: only safe once somebody has confirmed in Stripe that the failed
+  // attempt left no invoice behind.
+  if (url.pathname === '/admin/api/billing/clear-failure' && request.method === 'POST') {
+    const { collaborationId, period } = await request.json();
+    if (!collaborationId || !period) {
+      return jsonResponse({ success: false, error: 'Missing collaborationId or period' }, 400);
+    }
+    await db.clearInvoiceRun(env.DB, collaborationId, period);
+    return jsonResponse({ success: true });
+  }
+
   if (url.pathname === '/admin/api/collaborations/cancel' && request.method === 'POST') {
     return handleCancelCollaboration(request, env);
   }
@@ -1436,8 +1474,12 @@ async function handleCreateCollaboration(request, env) {
       return jsonResponse({ success: false, error: 'Your fee must be greater than zero' }, 400);
     }
 
+    // Every collaboration created from here is billed by the app rather than by a
+    // Stripe subscription, which prices the same invoice at 0.4% instead of 0.7%.
+    // Existing rows stay on 'subscription' and are untouched.
+    const billingMode = 'app_invoice';
     const totalAmountCents = stripeHelpers.grossUpTotalCents(
-      physicianPayoutCents, netFeeCents, stripeFeeShare ?? 1
+      physicianPayoutCents, netFeeCents, stripeFeeShare ?? 1, billingMode
     );
     // Stored as the gross fee, since that is what Stripe is instructed to collect.
     // The net the platform keeps is this less Stripe's cut.
@@ -1513,6 +1555,9 @@ async function handleCreateCollaboration(request, env) {
       clientId, physicianId, totalAmountCents, platformFeeCents, applicationFeePercent, startDate,
       paymentTermsDays: termsDays, providerName, promoPayoutCents, promoTotalCents,
       promoEndDate: promoEnd, notes,
+      // The billing day is taken from the start date and then held, so 9/20 bills
+      // on 10/20 and 11/20 rather than drifting.
+      billingMode, billingDay: Number(String(startDate).slice(8, 10)),
     });
 
     const stripe = stripeHelpers.getStripe(env);
@@ -1674,6 +1719,84 @@ async function handleResendOnboarding(request, env) {
   }
 }
 
+// Today in Eastern, as YYYY-MM-DD. Billing dates are calendar dates a person chose
+// from a calendar, so they have to be compared in the timezone that person is in --
+// UTC would bill a day early every evening after 8pm.
+function easternDateString(now) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(now);
+}
+
+// Issues every invoice that is due, one collaboration at a time.
+//
+// The month is claimed in the database before Stripe is called, and the claim is
+// kept even when the call fails. The two failures are not symmetric: a missed
+// invoice shows up in the billing panel and can be issued by hand, while a
+// duplicate has already asked a client for money twice and needs a credit note and
+// an apology. So a failure stops that month rather than leaving it open to a retry
+// that cannot tell whether the first attempt reached Stripe.
+//
+// Anything checkable is checked before the claim, so the recoverable failures --
+// a client with no customer record, a physician who never finished onboarding --
+// leave the month open to try again rather than burning it.
+async function runCollaborationBilling(env, today) {
+  const due = await db.listCollaborationsDueForInvoice(env.DB, today);
+  const results = [];
+
+  for (const c of due) {
+    const period = c.next_invoice_date.slice(0, 7);
+    const entry = {
+      collaborationId: c.id, period, client: c.client_name, physician: c.physician_name,
+      amount: c.total_amount_cents,
+    };
+
+    if (!c.stripe_customer_id || !c.stripe_account_id) {
+      entry.error = !c.stripe_customer_id
+        ? 'client has no Stripe customer'
+        : 'physician has no connected account';
+      console.error(`Billing skipped for collaboration ${c.id} (${period}): ${entry.error}`);
+      results.push(entry);
+      continue;
+    }
+
+    if (!(await db.claimInvoiceRun(env.DB, c.id, period))) {
+      entry.skipped = 'already billed for this period';
+      results.push(entry);
+      continue;
+    }
+
+    try {
+      const stripe = stripeHelpers.getStripe(env);
+      const invoice = await stripeHelpers.createCollaborationInvoice(stripe, {
+        customerId: c.stripe_customer_id,
+        physicianAccountId: c.stripe_account_id,
+        totalAmountCents: c.total_amount_cents,
+        platformFeeCents: c.platform_fee_cents,
+        paymentTermsDays: c.payment_terms_days,
+        description: `Collaboration services — ${c.physician_name}`,
+      });
+      await db.recordInvoiceRunResult(env.DB, c.id, period, { invoiceId: invoice.id });
+      await db.setCollaborationBillingSchedule(env.DB, c.id, {
+        billingDay: c.billing_day,
+        nextInvoiceDate: stripeHelpers.nextMonthlyDate(c.next_invoice_date, c.billing_day),
+      });
+      entry.invoiceId = invoice.id;
+      entry.number = invoice.number;
+    } catch (err) {
+      const message = err?.message || String(err);
+      // Loud, because the month stays claimed and this collaboration will not bill
+      // again until somebody clears it.
+      console.error(`Billing FAILED for collaboration ${c.id} (${period}):`, message);
+      await db.recordInvoiceRunResult(env.DB, c.id, period, { error: message });
+      entry.error = message;
+    }
+    results.push(entry);
+  }
+
+  return results;
+}
+
 async function handleActivateCollaboration(request, env) {
   try {
     const { collaborationId } = await request.json();
@@ -1699,6 +1822,21 @@ async function handleActivateCollaboration(request, env) {
     // No client-side gate: the subscription invoices the client rather than
     // charging a saved payment method, so there is nothing they must complete
     // before it can be activated.
+
+    // App-billed collaborations have no subscription to create. Activation just
+    // opens the billing schedule; the scheduled handler issues the invoices, and
+    // is called straight away so a start date that has already arrived bills now
+    // rather than waiting for tomorrow's tick.
+    if (collaboration.billing_mode === 'app_invoice') {
+      await db.activateCollaboration(env.DB, collaboration.id, null);
+      await db.setCollaborationBillingSchedule(env.DB, collaboration.id, {
+        billingDay: collaboration.billing_day || Number(collaboration.start_date.slice(8, 10)),
+        nextInvoiceDate: collaboration.start_date,
+      });
+      const billed = await runCollaborationBilling(env, easternDateString(new Date()));
+      const mine = billed.find((r) => r.collaborationId === collaboration.id);
+      return jsonResponse({ success: true, billingMode: 'app_invoice', firstInvoice: mine || null });
+    }
 
     const subscription = await stripeHelpers.createCollaborationSubscription(stripe, {
       customerId: client.stripe_customer_id,

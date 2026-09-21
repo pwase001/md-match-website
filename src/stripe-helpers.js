@@ -115,12 +115,66 @@ export const DEFAULT_PAYMENT_TERMS_DAYS = 14;
 // if collaborations ever move to standalone invoices this drops to 0.4%.
 export const STRIPE_ACH_PERCENT = 0.008;
 export const STRIPE_ACH_CAP_CENTS = 500;
-export const STRIPE_BILLING_PERCENT = 0.007;
+export const STRIPE_BILLING_PERCENT = 0.007;   // subscription invoice
+export const STRIPE_INVOICING_PERCENT = 0.004; // standalone invoice
 export const STRIPE_RADAR_CENTS = 5;
 
-export function estimateStripeFeeCents(totalAmountCents) {
+export function estimateStripeFeeCents(totalAmountCents, billingMode = 'subscription') {
   const ach = Math.min(Math.round(totalAmountCents * STRIPE_ACH_PERCENT), STRIPE_ACH_CAP_CENTS);
-  return ach + Math.round(totalAmountCents * STRIPE_BILLING_PERCENT) + STRIPE_RADAR_CENTS;
+  const rate = billingMode === 'app_invoice' ? STRIPE_INVOICING_PERCENT : STRIPE_BILLING_PERCENT;
+  return ach + Math.round(totalAmountCents * rate) + STRIPE_RADAR_CENTS;
+}
+
+// Advances a YYYY-MM-DD by one month, landing on anchorDay where the month has one
+// and on the month's last day where it does not.
+//
+// Anchored to a stored day rather than derived from the previous date, so a
+// collaboration billing on the 31st returns to the 31st after February instead of
+// ratcheting a day earlier at every short month until it has walked to the 28th.
+export function nextMonthlyDate(isoDate, anchorDay) {
+  const [y, m] = isoDate.split('-').map(Number);
+  const year = m === 12 ? y + 1 : y;
+  const month = m === 12 ? 1 : m + 1;
+  const lastDayOfMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const day = Math.min(anchorDay || Number(isoDate.slice(8, 10)), lastDayOfMonth);
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+// Issues one month's invoice directly, rather than letting a subscription do it.
+//
+// The invoice is created before its line item, with pending items excluded, so the
+// item can be bound to this invoice by id. Letting Stripe sweep in whatever items
+// are pending would put two collaborations on one invoice for a client who has two.
+//
+// Takes application_fee_amount, an exact figure, where the subscription path could
+// only pass application_fee_percent and land a cent or two out.
+export async function createCollaborationInvoice(stripe, {
+  customerId, physicianAccountId, totalAmountCents, platformFeeCents,
+  paymentTermsDays, description,
+}) {
+  const invoice = await stripe.invoices.create({
+    customer: customerId,
+    collection_method: 'send_invoice',
+    days_until_due: paymentTermsDays || DEFAULT_PAYMENT_TERMS_DAYS,
+    application_fee_amount: platformFeeCents,
+    transfer_data: { destination: physicianAccountId },
+    payment_settings: { payment_method_types: ['us_bank_account'] },
+    pending_invoice_items_behavior: 'exclude',
+    auto_advance: true,
+  });
+
+  await stripe.invoiceItems.create({
+    customer: customerId,
+    invoice: invoice.id,
+    amount: totalAmountCents,
+    currency: 'usd',
+    description,
+  });
+
+  // Finalising is what sends it. Left to auto_advance alone the invoice would sit
+  // as a draft for about an hour, which makes the billing date the app promises
+  // differ from the one the client sees.
+  return stripe.invoices.finalizeInvoice(invoice.id);
 }
 
 // The client total that leaves the platform with netFeeCents once Stripe has taken
@@ -134,12 +188,13 @@ export function estimateStripeFeeCents(totalAmountCents) {
 // clientFeeShare is how much of Stripe's cut the client carries: 1 puts all of it
 // on the invoice, 0 leaves the platform absorbing it as before, and anything
 // between splits it. The platform keeps netFeeCents less whatever share it kept.
-export function grossUpTotalCents(physicianPayoutCents, netFeeCents, clientFeeShare = 1) {
+export function grossUpTotalCents(physicianPayoutCents, netFeeCents, clientFeeShare = 1,
+  billingMode = 'subscription') {
   const share = Math.min(1, Math.max(0, Number(clientFeeShare) || 0));
   let total = physicianPayoutCents + netFeeCents;
   for (let i = 0; i < 8; i++) {
     const next = physicianPayoutCents + netFeeCents
-      + Math.round(estimateStripeFeeCents(total) * share);
+      + Math.round(estimateStripeFeeCents(total, billingMode) * share);
     if (next === total) break;
     total = next;
   }

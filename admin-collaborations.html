@@ -204,6 +204,13 @@
     </div>
 
     <div class="card">
+      <div class="card-title">Monthly Billing</div>
+      <div id="billingPanel" style="font-size:13px;line-height:1.7">Loading…</div>
+      <button class="btn btn-small" style="margin-top:0.8rem" id="runBillingBtn" onclick="runBilling()">Run billing now</button>
+      <div class="msg" id="billingMsg"></div>
+    </div>
+
+    <div class="card">
       <div class="card-title">All Collaborations</div>
       <table>
         <thead>
@@ -289,6 +296,72 @@
           : '');
   }
 
+  async function loadBilling() {
+    const el = document.getElementById('billingPanel');
+    try {
+      const res = await fetch('/admin/api/billing/preview', { credentials: 'include' });
+      const data = await res.json();
+      if (!data.success) { el.textContent = data.error || 'Could not load billing status.'; return; }
+
+      let html = '';
+      if (data.failed.length) {
+        html += `<div style="padding:10px 12px;margin-bottom:10px;border-left:2px solid #c0392b;background:#fdf5f3">`
+          + `<b>${data.failed.length} month${data.failed.length > 1 ? 's' : ''} failed and ${data.failed.length > 1 ? 'are' : 'is'} blocking billing.</b><br>`
+          + data.failed.map(f =>
+              `${f.client_name} / ${f.physician_name} — ${f.period}: ${f.error}<br>`
+              + `<span style="opacity:.8">Check Stripe for an invoice dated ${f.period}. If there is none, </span>`
+              + `<button class="btn btn-small" onclick="clearFailure(${f.collaboration_id}, '${f.period}', this)">clear and retry</button>`
+            ).join('<br>')
+          + `</div>`;
+      }
+      html += data.due.length
+        ? `<b>Due today (${data.today}):</b><br>` + data.due.map(c =>
+            `${c.client_name} / ${c.physician_name} — ${money(c.total_amount_cents)}, due date ${c.next_invoice_date}`
+          ).join('<br>')
+        : `Nothing due today (${data.today}).`;
+      el.innerHTML = html;
+    } catch {
+      el.textContent = 'Network error loading billing status.';
+    }
+  }
+
+  async function runBilling() {
+    const btn = document.getElementById('runBillingBtn');
+    const msg = document.getElementById('billingMsg');
+    btn.disabled = true;
+    msg.className = 'msg';
+    msg.textContent = 'Running…';
+    try {
+      const res = await fetch('/admin/api/billing/run', { method: 'POST', credentials: 'include' });
+      const data = await res.json();
+      const issued = (data.results || []).filter(r => r.invoiceId);
+      const failed = (data.results || []).filter(r => r.error);
+      msg.className = failed.length ? 'msg err' : 'msg ok';
+      msg.textContent = `${issued.length} invoice(s) issued`
+        + (failed.length ? `, ${failed.length} failed — see above` : '')
+        + ((data.results || []).length ? '' : ' — nothing was due');
+      loadBilling();
+      loadData();
+    } catch {
+      msg.className = 'msg err';
+      msg.textContent = 'Network error';
+    }
+    btn.disabled = false;
+  }
+
+  async function clearFailure(collaborationId, period, btn) {
+    if (!confirm(`Clear the failed ${period} month for collaboration ${collaborationId}?\n\n`
+      + `Only do this if you have checked Stripe and there is NO invoice for that month. `
+      + `Clearing it lets billing try again, which would bill twice if one already exists.`)) return;
+    btn.disabled = true;
+    await fetch('/admin/api/billing/clear-failure', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ collaborationId, period }),
+    });
+    loadBilling();
+  }
+
   function togglePromo() {
     const on = document.getElementById('hasPromo').checked;
     document.getElementById('promoFields').style.display = on ? 'flex' : 'none';
@@ -302,6 +375,9 @@
       return;
     }
     const data = await res.json();
+    // Refreshed alongside the table, so a failed month is on screen the next time
+    // the page is opened rather than waiting to be looked for.
+    loadBilling();
 
     const clientSelect = document.getElementById('clientSelect');
     clientSelect.innerHTML = data.clients.map(c => `<option value="${c.id}">${c.full_name} (${c.email})</option>`).join('');
@@ -315,7 +391,7 @@
         <td>${c.physician_name}</td>
         <td>${money(c.total_amount_cents)}</td>
         <td>${money(c.platform_fee_cents)}</td>
-        <td>${c.start_date}${c.promo_end_date ? `<div style="font-size:11px;opacity:.7">intro until ${c.promo_end_date}: client ${money(c.promo_total_cents)}, physician ${money(c.promo_payout_cents)}</div>` : ''}</td>
+        <td>${c.start_date}${c.promo_end_date ? `<div style="font-size:11px;opacity:.7">intro until ${c.promo_end_date}: client ${money(c.promo_total_cents)}, physician ${money(c.promo_payout_cents)}</div>` : ''}${c.billing_mode === 'app_invoice' && c.next_invoice_date ? `<div style="font-size:11px;opacity:.7">next invoice ${c.next_invoice_date}</div>` : ''}</td>
         <td>Net ${c.payment_terms_days ?? 14}</td>
         <td><span class="badge ${c.transfers_active ? 'ready' : 'notready'}">${c.transfers_active ? 'Ready' : 'Pending'}</span></td>
         <td><span class="badge ${c.status}">${c.status}</span></td>

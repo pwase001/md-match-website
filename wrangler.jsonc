@@ -18,7 +18,9 @@
   // so the Unix-style "* * * * 1" for Monday silently scheduled these a day early.
   // The dashboard's Cron Triggers panel should read "on Monday".
   "triggers": {
-    "crons": ["0 13 * * MON", "0 14 * * MON"]
+    // 12:00 UTC is 8am Eastern in summer and 7am in winter, so an invoice dated
+    // today goes out on the morning of that date either way.
+    "crons": ["0 12 * * *", "0 13 * * MON", "0 14 * * MON"]
   },
   "compatibility_flags": [
     "nodejs_compat"
