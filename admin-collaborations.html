@@ -155,7 +155,7 @@
       <div class="field-row">
         <div class="field">
           <label>Billing Start Date</label>
-          <input type="date" id="startDate">
+          <input type="date" id="startDate" oninput="updateAmountPreview()">
         </div>
         <div class="field">
           <label>Payment Terms</label>
@@ -187,16 +187,16 @@
       </div>
       <div class="field-row" id="promoFields" style="display:none">
         <div class="field">
-          <label>Client Pays During Intro (USD/month)</label>
-          <input type="number" id="promoTotal" placeholder="350" step="0.01">
-        </div>
-        <div class="field">
           <label>Physician Payout During Intro (USD/month)</label>
-          <input type="number" id="promoPayout" placeholder="250" step="0.01">
+          <input type="number" id="promoPayout" placeholder="250" step="0.01" oninput="updateAmountPreview()">
         </div>
         <div class="field">
-          <label>Intro Rate Ends</label>
-          <input type="date" id="promoEndDate">
+          <label>Your Fee During Intro, after Stripe (USD/month)</label>
+          <input type="number" id="promoNetFee" placeholder="100" step="0.01" oninput="updateAmountPreview()">
+        </div>
+        <div class="field">
+          <label>First Invoice at Standard Rate</label>
+          <input type="date" id="promoEndDate" oninput="updateAmountPreview()">
         </div>
       </div>
       <button class="btn" id="createBtn" onclick="createCollaboration()">Create &amp; Send Setup Emails</button>
@@ -286,14 +286,33 @@
     const net = (total - payout) - stripeFee;
     const clientShare = Math.round(stripeFee * share);
 
-    el.style.display = 'block';
-    el.innerHTML = `Client is invoiced <b>${money(total)}</b> per month.<br>`
+    let html = `Client is invoiced <b>${money(total)}</b> per month.<br>`
       + `Physician receives ${money(payout)} &middot; Stripe takes about ${money(stripeFee)} `
       + `&middot; you keep about <b>${money(net)}</b>`
       + (share > 0 && share < 1
           ? `<br><span style="opacity:.75">Of Stripe's ${money(stripeFee)}, the client covers `
             + `${money(clientShare)} and you cover ${money(stripeFee - clientShare)}.</span>`
           : '');
+
+    // The introductory months are their own rate, billed by the app on the same
+    // schedule, so they belong in the same preview rather than being described
+    // only in the emails.
+    const promoPayout = Math.round(Number(document.getElementById('promoPayout').value) * 100);
+    const promoNetFee = Math.round(Number(document.getElementById('promoNetFee').value) * 100);
+    const promoEnd = document.getElementById('promoEndDate').value;
+    const start = document.getElementById('startDate').value;
+    if (document.getElementById('hasPromo').checked && promoPayout && promoNetFee && promoEnd) {
+      const pTotal = grossUpTotalCents(promoPayout, promoNetFee, share);
+      const pFee = estimateStripeFeeCents(pTotal);
+      html += `<hr style="border:none;border-top:1px solid #cfdcd7;margin:8px 0">`
+        + `Introductory: client is invoiced <b>${money(pTotal)}</b> per month`
+        + (start ? ` from ${start}` : '') + ` until ${promoEnd}.<br>`
+        + `Physician receives ${money(promoPayout)} &middot; you keep about `
+        + `<b>${money(pTotal - promoPayout - pFee)}</b><br>`
+        + `<span style="opacity:.75">${promoEnd} is the first invoice at the standard rate.</span>`;
+    }
+    el.style.display = 'block';
+    el.innerHTML = html;
   }
 
   async function loadBilling() {
@@ -365,6 +384,7 @@
   function togglePromo() {
     const on = document.getElementById('hasPromo').checked;
     document.getElementById('promoFields').style.display = on ? 'flex' : 'none';
+    updateAmountPreview();
   }
 
   async function loadData() {
@@ -428,12 +448,12 @@
     // Sent only when the box is ticked, so clearing it discards whatever was typed
     // rather than quietly applying an introductory rate nobody meant to set.
     if (document.getElementById('hasPromo').checked) {
-      body.promoTotalUsd = document.getElementById('promoTotal').value;
+      body.promoNetFeeUsd = document.getElementById('promoNetFee').value;
       body.promoPayoutUsd = document.getElementById('promoPayout').value;
       body.promoEndDate = document.getElementById('promoEndDate').value;
-      if (!body.promoTotalUsd || !body.promoPayoutUsd || !body.promoEndDate) {
+      if (!body.promoNetFeeUsd || !body.promoPayoutUsd || !body.promoEndDate) {
         msg.className = 'msg err';
-        msg.textContent = 'Introductory rate needs the client amount, the physician payout, and an end date.';
+        msg.textContent = 'Introductory rate needs the physician payout, your fee, and the first standard invoice date.';
         return;
       }
     }
