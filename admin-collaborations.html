@@ -392,6 +392,19 @@
     loadBilling();
   }
 
+  function resetCreateForm() {
+    ['physicianPayout', 'startDate', 'providerName', 'notes',
+     'promoPayout', 'promoNetFee', 'promoEndDate'].forEach((id) => {
+      document.getElementById(id).value = '';
+    });
+    // Back to the defaults the page loads with, rather than blank.
+    document.getElementById('netFee').value = '200';
+    document.getElementById('paymentTerms').value = '14';
+    document.getElementById('stripeFeeShare').value = '1';
+    document.getElementById('hasPromo').checked = false;
+    togglePromo();
+  }
+
   function togglePromo() {
     const on = document.getElementById('hasPromo').checked;
     document.getElementById('promoFields').style.display = on ? 'flex' : 'none';
@@ -421,7 +434,7 @@
         <td>${c.client_name}</td>
         <td>${c.physician_name}</td>
         <td>${money(c.total_amount_cents)}</td>
-        <td>${money(c.platform_fee_cents)}</td>
+        <td>${money(c.platform_fee_cents)}${c.processing_fee_cents > 0 ? `<div style="font-size:11px;opacity:.7">you keep ${money(c.platform_fee_cents - estimateStripeFeeCents(c.total_amount_cents))}<br>incl. ${money(c.processing_fee_cents)} processing</div>` : ''}</td>
         <td>${c.start_date}${c.promo_end_date ? `<div style="font-size:11px;opacity:.7">intro until ${c.promo_end_date}: client ${money(c.promo_total_cents)}, physician ${money(c.promo_payout_cents)}</div>` : ''}${c.billing_mode === 'app_invoice' && c.next_invoice_date ? `<div style="font-size:11px;opacity:.7">next invoice ${c.next_invoice_date}</div>` : ''}</td>
         <td>Net ${c.payment_terms_days ?? 14}</td>
         <td><span class="badge ${c.transfers_active ? 'ready' : 'notready'}">${c.transfers_active ? 'Ready' : 'Pending'}</span></td>
@@ -486,6 +499,11 @@
       if (data.success) {
         msg.className = 'msg ok';
         msg.textContent = 'Collaboration created — onboarding emails sent to physician and client.';
+        // Cleared before the table reloads. Refreshing the dropdowns resets the
+        // client selection to whoever is first in the list while the typed amounts
+        // stay put, which leaves the form primed to create a second collaboration
+        // for the wrong client at the right price.
+        resetCreateForm();
         loadData();
       } else {
         msg.className = 'msg err';
