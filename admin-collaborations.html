@@ -139,10 +139,12 @@
       </div>
       <div class="field-row">
         <div class="field">
-          <label style="font-weight:normal">
-            <input type="checkbox" id="coverStripeFees" checked onchange="updateAmountPreview()">
-            Add Stripe's fees to the client's total, so your fee is what you keep
-          </label>
+          <label>Who pays Stripe's fees?</label>
+          <select id="stripeFeeShare" onchange="updateAmountPreview()">
+            <option value="1" selected>Client pays them — you keep your full fee</option>
+            <option value="0.5">Split them with the client</option>
+            <option value="0">You absorb them — client pays payout + fee exactly</option>
+          </select>
         </div>
       </div>
       <div class="field-row">
@@ -255,10 +257,10 @@
       + Math.round(total * STRIPE_BILLING_PERCENT) + STRIPE_RADAR_CENTS;
   }
 
-  function grossUpTotalCents(payout, netFee) {
+  function grossUpTotalCents(payout, netFee, share) {
     let total = payout + netFee;
     for (let i = 0; i < 8; i++) {
-      const next = payout + netFee + estimateStripeFeeCents(total);
+      const next = payout + netFee + Math.round(estimateStripeFeeCents(total) * share);
       if (next === total) break;
       total = next;
     }
@@ -271,17 +273,20 @@
     const netFee = Math.round(Number(document.getElementById('netFee').value) * 100);
     if (!payout || !netFee || payout < 0 || netFee < 0) { el.style.display = 'none'; return; }
 
-    const cover = document.getElementById('coverStripeFees').checked;
-    const total = cover ? grossUpTotalCents(payout, netFee) : payout + netFee;
+    const share = Number(document.getElementById('stripeFeeShare').value);
+    const total = grossUpTotalCents(payout, netFee, share);
     const stripeFee = estimateStripeFeeCents(total);
     const net = (total - payout) - stripeFee;
+    const clientShare = Math.round(stripeFee * share);
 
     el.style.display = 'block';
     el.innerHTML = `Client is invoiced <b>${money(total)}</b> per month.<br>`
       + `Physician receives ${money(payout)} &middot; Stripe takes about ${money(stripeFee)} `
       + `&middot; you keep about <b>${money(net)}</b>`
-      + (cover ? '' : `<br><span style="opacity:.75">Tick the box above to invoice `
-          + `${money(grossUpTotalCents(payout, netFee))} instead and keep the full ${money(netFee)}.</span>`);
+      + (share > 0 && share < 1
+          ? `<br><span style="opacity:.75">Of Stripe's ${money(stripeFee)}, the client covers `
+            + `${money(clientShare)} and you cover ${money(stripeFee - clientShare)}.</span>`
+          : '');
   }
 
   function togglePromo() {
@@ -338,7 +343,7 @@
       physicianId: Number(document.getElementById('physicianSelect').value),
       physicianPayoutUsd: document.getElementById('physicianPayout').value,
       netFeeUsd: document.getElementById('netFee').value,
-      coverStripeFees: document.getElementById('coverStripeFees').checked,
+      stripeFeeShare: Number(document.getElementById('stripeFeeShare').value),
       startDate: document.getElementById('startDate').value,
       paymentTermsDays: Number(document.getElementById('paymentTerms').value),
       providerName: document.getElementById('providerName').value,

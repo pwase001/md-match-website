@@ -1412,7 +1412,7 @@ async function sendPhysicianOnboardingEmail(env, origin, physician, collaboratio
 async function handleCreateCollaboration(request, env) {
   try {
     const {
-      clientId, physicianId, physicianPayoutUsd, netFeeUsd, coverStripeFees,
+      clientId, physicianId, physicianPayoutUsd, netFeeUsd, stripeFeeShare,
       startDate, paymentTermsDays,
       providerName, promoPayoutUsd, promoTotalUsd, promoEndDate, notes,
     } = await request.json();
@@ -1423,10 +1423,10 @@ async function handleCreateCollaboration(request, env) {
     // meant the platform's real earnings were whatever was left after Stripe took
     // its cut, discovered weeks later in a payout rather than at creation.
     //
-    // With coverStripeFees the total is grossed up so the stated fee is what the
-    // platform actually keeps; without it the client pays exactly payout + fee and
-    // Stripe's cut comes out of the platform's share, which is the old behaviour
-    // kept deliberately for collaborations whose price is already agreed.
+    // stripeFeeShare decides who carries Stripe's cut: 1 adds all of it to the
+    // client's total so the stated fee is what the platform keeps, 0 leaves the
+    // platform absorbing it as before, and 0.5 splits it. Anything in between works;
+    // the figure is a proportion, not a menu.
     const physicianPayoutCents = Math.round(Number(physicianPayoutUsd) * 100);
     const netFeeCents = Math.round(Number(netFeeUsd ?? 200) * 100);
     if (!Number.isFinite(physicianPayoutCents) || physicianPayoutCents <= 0) {
@@ -1436,9 +1436,9 @@ async function handleCreateCollaboration(request, env) {
       return jsonResponse({ success: false, error: 'Your fee must be greater than zero' }, 400);
     }
 
-    const totalAmountCents = coverStripeFees
-      ? stripeHelpers.grossUpTotalCents(physicianPayoutCents, netFeeCents)
-      : physicianPayoutCents + netFeeCents;
+    const totalAmountCents = stripeHelpers.grossUpTotalCents(
+      physicianPayoutCents, netFeeCents, stripeFeeShare ?? 1
+    );
     // Stored as the gross fee, since that is what Stripe is instructed to collect.
     // The net the platform keeps is this less Stripe's cut.
     const platformFeeCents = totalAmountCents - physicianPayoutCents;
