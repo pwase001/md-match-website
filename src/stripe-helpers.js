@@ -131,10 +131,15 @@ export function estimateStripeFeeCents(totalAmountCents) {
 // form needs a separate branch either side of the cap. Starting below the answer and
 // adding the fee each pass gives a sequence that only increases and converges within
 // two or three rounds; the loop bound is there so a future rate change cannot spin.
-export function grossUpTotalCents(physicianPayoutCents, netFeeCents) {
+// clientFeeShare is how much of Stripe's cut the client carries: 1 puts all of it
+// on the invoice, 0 leaves the platform absorbing it as before, and anything
+// between splits it. The platform keeps netFeeCents less whatever share it kept.
+export function grossUpTotalCents(physicianPayoutCents, netFeeCents, clientFeeShare = 1) {
+  const share = Math.min(1, Math.max(0, Number(clientFeeShare) || 0));
   let total = physicianPayoutCents + netFeeCents;
   for (let i = 0; i < 8; i++) {
-    const next = physicianPayoutCents + netFeeCents + estimateStripeFeeCents(total);
+    const next = physicianPayoutCents + netFeeCents
+      + Math.round(estimateStripeFeeCents(total) * share);
     if (next === total) break;
     total = next;
   }
