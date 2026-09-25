@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Mental Health Intake</title>
+<link rel="icon" type="image/svg+xml" href="/logo.svg">
+<!-- No analytics or third-party requests on this page: it collects health information. -->
+<style>
+  :root {
+    --ink: #0e1117;
+    --paper: #f5f0e8;
+    --card: #fffdf9;
+    --teal: #2a6b6b;
+    --teal-dark: #1d5050;
+    --teal-soft: #e3efec;
+    --muted: #6b665d;
+    --border: #d9d1c1;
+    --rust: #9c4a2b;
+    --crisis-bg: #fbeae5;
+    --crisis-border: #e2b3a3;
+    --note-bg: #fff6e6;
+    --note-border: #ecd5ad;
+    --note-ink: #6b5426;
+    --serif: Georgia, 'Times New Roman', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+    background: var(--paper);
+  }
+  header img { width: 28px; height: 28px; }
+  header .brand { font-family: var(--serif); font-size: 18px; }
+  header .save-state { margin-left: auto; font-size: 13px; color: var(--muted); }
+  .progress { height: 4px; background: #e6dfd1; }
+  .progress > div { height: 100%; background: var(--teal); width: 0; transition: width 0.3s ease; }
+
+  main { flex: 1; width: 100%; max-width: 640px; margin: 0 auto; padding: 28px 16px 40px; }
+  .section { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--teal); font-weight: 700; margin-bottom: 6px; }
+  .step { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+  .lead { color: var(--muted); margin: 0 0 6px; }
+  h1, .prompt { font-family: var(--serif); font-weight: normal; font-size: 26px; line-height: 1.3; margin: 0 0 8px; outline: none; }
+  .help { color: var(--muted); font-size: 14px; margin: 0 0 18px; }
+
+  .options { display: grid; gap: 10px; margin-top: 18px; }
+  .opt {
+    display: flex; align-items: flex-start; gap: 12px;
+    width: 100%; text-align: left;
+    padding: 14px 16px; border-radius: 10px;
+    border: 1.5px solid var(--border); background: var(--card);
+    font: inherit; color: inherit; cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .opt:hover { border-color: var(--teal); }
+  .opt:focus-visible { outline: 3px solid rgba(42,107,107,0.35); outline-offset: 2px; }
+  .opt .mark {
+    flex: none; width: 20px; height: 20px; margin-top: 2px;
+    border: 1.5px solid #a79f90; background: white;
+    display: grid; place-items: center;
+  }
+  .opt[role="radio"] .mark { border-radius: 50%; }
+  .opt[role="checkbox"] .mark { border-radius: 5px; }
+  .opt[aria-checked="true"] { border-color: var(--teal); background: var(--teal-soft); }
+  .opt[aria-checked="true"] .mark { border-color: var(--teal); background: var(--teal); }
+  .opt[aria-checked="true"] .mark::after { content: ''; width: 8px; height: 8px; background: white; border-radius: inherit; }
+  .opt[role="checkbox"][aria-checked="true"] .mark::after { width: 10px; height: 6px; background: none; border: solid white; border-width: 0 0 2px 2px; transform: rotate(-45deg) translate(1px, -1px); border-radius: 0; }
+
+  input[type=text], input[type=email], input[type=tel], input[type=date], input[type=number], textarea {
+    width: 100%; font: inherit; color: inherit;
+    padding: 12px 14px; border-radius: 10px;
+    border: 1.5px solid var(--border); background: var(--card);
+  }
+  input:focus, textarea:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(42,107,107,0.15); }
+  textarea { min-height: 120px; resize: vertical; }
+  .field { margin-top: 18px; }
+  .inline { display: flex; gap: 12px; align-items: center; }
+  .inline input { max-width: 140px; }
+  .unit { color: var(--muted); }
+  label.small { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+
+  .medrow { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); margin-top: 10px; }
+  .medrow .remove { justify-self: end; background: none; border: none; color: var(--rust); font: inherit; font-size: 14px; cursor: pointer; padding: 0; }
+  .add-row { margin-top: 12px; background: none; border: 1.5px dashed var(--border); border-radius: 10px; padding: 10px 14px; width: 100%; font: inherit; color: var(--teal); cursor: pointer; }
+
+  .statements { margin: 16px 0; padding-left: 20px; }
+  .statements li { margin-bottom: 6px; }
+
+  .msg { margin-top: 18px; padding: 14px 16px; border-radius: 10px; font-size: 15px; background: var(--note-bg); border: 1px solid var(--note-border); color: var(--note-ink); }
+  .msg.crisis { background: var(--crisis-bg); border-color: var(--crisis-border); color: #6d2a17; }
+  .msg.crisis strong { display: block; margin-bottom: 4px; }
+  .msg a { color: inherit; font-weight: 700; }
+  .error { color: var(--rust); font-size: 14px; margin-top: 12px; min-height: 1em; }
+
+  .nav { display: flex; gap: 12px; margin-top: 28px; align-items: center; }
+  .btn {
+    font: inherit; font-weight: 600;
+    padding: 13px 26px; border-radius: 10px; border: none;
+    background: var(--teal); color: white; cursor: pointer;
+  }
+  .btn:hover { background: var(--teal-dark); }
+  .btn:disabled { background: #9fb8b5; cursor: default; }
+  .btn.secondary { background: transparent; color: var(--teal); border: 1.5px solid var(--border); }
+  .btn.secondary:hover { background: var(--card); }
+  .nav .spacer { flex: 1; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .chips .opt { width: auto; padding: 8px 14px; }
+  .chips .opt .mark { display: none; }
+
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-top: 20px; }
+  .muted { color: var(--muted); }
+  footer { font-size: 13px; color: var(--muted); text-align: center; padding: 16px; border-top: 1px solid var(--border); }
+  footer a { color: inherit; }
+  .hidden { display: none !important; }
+  @media (max-width: 480px) {
+    h1, .prompt { font-size: 22px; }
+    .nav .btn { flex: 1; }
+    .nav .spacer { display: none; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <img src="/logo.svg" alt="">
+  <span class="brand">Mental Health Intake</span>
+  <span class="save-state" id="saveState" aria-live="polite"></span>
+</header>
+<div class="progress" aria-hidden="true"><div id="bar"></div></div>
+
+<main id="app" aria-live="polite"></main>
+
+<footer>
+  If you are in crisis, call or text <a href="tel:988">988</a> or call <a href="tel:911">911</a>.
+</footer>
+
+<script type="module">
+import { QUESTIONS, QUESTION_BY_ID, visibleQuestions, isAnswered, patientMessages } from '/mh-intake-questions.js';
+
+const app = document.getElementById('app');
+const bar = document.getElementById('bar');
+const saveState = document.getElementById('saveState');
+
+let token = new URLSearchParams(location.search).get('t');
+let answers = {};
+let currentId = null;
+let draft;
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+async function api(route, body) {
+  const res = await fetch(`/api/mh-intake/${route}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ t: token, ...body }),
+  });
+  const data = await res.json().catch(() => ({ success: false, error: 'Unexpected response from the server.' }));
+  if (!res.ok || !data.success) {
+    const err = new Error(data.error || 'Something went wrong. Please try again.');
+    err.data = data;
+    throw err;
+  }
+  return data;
+}
+
+// ------------------------------------------------------------------ screens
+
+function welcome(resuming) {
+  bar.style.width = '0';
+  app.innerHTML = `
+    <div class="section">Welcome</div>
+    <h1 tabindex="-1">${resuming ? 'Welcome back' : 'Let’s get to know you'}</h1>
+    <p>${resuming
+      ? 'Your earlier answers were saved. We’ll pick up where you left off.'
+      : 'We’ll ask one question at a time about your symptoms, history, and medications. It usually takes 15–20 minutes. A licensed psychiatric provider will review your answers after you finish.'}</p>
+    <div class="panel">
+      <p style="margin-top:0"><strong>Your progress is saved as you go.</strong> To come back later, use the link in your address bar once you start. Keep that link private — anyone with it can continue your intake.</p>
+      <p class="muted" style="margin-bottom:0">This intake is not monitored in real time. If you are in crisis, call or text <a href="tel:988">988</a> or call <a href="tel:911">911</a>.</p>
+    </div>
+    <div class="nav"><button class="btn" id="go">${resuming ? 'Continue' : 'Start intake'}</button></div>
+    <div class="error" id="err"></div>`;
+  app.querySelector('h1').focus();
+  document.getElementById('go').onclick = async (e) => {
+    e.target.disabled = true;
+    try {
+      if (!token) {
+        const data = await api('start', {});
+        token = data.token;
+        history.replaceState(null, '', `?t=${encodeURIComponent(token)}`);
+      }
+      const visible = visibleQuestions(answers);
+      const first = visible.find((q) => !isAnswered(q, answers[q.id])) || visible[visible.length - 1];
+      show(first.id);
+    } catch (err) {
+      document.getElementById('err').textContent = err.message;
+      e.target.disabled = false;
+    }
+  };
+}
+
+function show(id) {
+  currentId = id;
+  const q = QUESTION_BY_ID[id];
+  draft = structuredClone(answers[id] ?? defaultValue(q));
+  render();
+}
+
+function defaultValue(q) {
+  if (q.type === 'multi') return [];
+  if (q.type === 'medlist') return [{}];
+  if (q.type === 'height') return { ft: '', in: '' };
+  if (q.type === 'consent') return { agree: false, signature: '' };
+  return '';
+}
+
+function render() {
+  const q = QUESTION_BY_ID[currentId];
+  app.dataset.q = q.id;
+  const visible = visibleQuestions({ ...answers, [q.id]: draft });
+  const idx = visible.findIndex((v) => v.id === q.id);
+  bar.style.width = `${Math.round((idx / visible.length) * 100)}%`;
+
+  app.innerHTML = `
+    <div class="section">${esc(q.section)}</div>
+    ${q.step ? `<div class="step">Question ${esc(q.step)}</div>` : ''}
+    ${q.lead ? `<p class="lead">${esc(q.lead)}</p>` : ''}
+    <h1 class="prompt" id="prompt" tabindex="-1">${esc(q.prompt)}</h1>
+    ${q.help ? `<p class="help">${esc(q.help)}</p>` : ''}
+    <div id="input">${inputHtml(q)}</div>
+    <div id="messages"></div>
+    <div class="error" id="err" role="alert"></div>
+    <div class="nav">
+      ${idx > 0 ? '<button class="btn secondary" id="back">Back</button>' : ''}
+      <span class="spacer"></span>
+      <button class="btn" id="next">Continue</button>
+    </div>`;
+  wire(q);
+  renderMessages(q);
+  document.getElementById('prompt').focus();
+}
+
+function inputHtml(q) {
+  switch (q.type) {
+    case 'info':
+      return '';
+    case 'single':
+    case 'multi': {
+      const role = q.type === 'single' ? 'radio' : 'checkbox';
+      return `<div class="options" role="${q.type === 'single' ? 'radiogroup' : 'group'}" aria-labelledby="prompt">
+        ${q.options.map((o) => {
+          const on = q.type === 'single' ? draft === o.value : draft.includes(o.value);
+          return `<button type="button" class="opt" role="${role}" aria-checked="${on}" data-v="${esc(o.value)}"><span class="mark"></span><span>${esc(o.label)}</span></button>`;
+        }).join('')}
+      </div>`;
+    }
+    case 'textarea':
+      return `<div class="field"><textarea id="f" aria-labelledby="prompt">${esc(draft)}</textarea></div>`;
+    case 'number':
+      return `<div class="field inline"><input type="number" inputmode="numeric" id="f" aria-labelledby="prompt" min="${q.min ?? ''}" max="${q.max ?? ''}" value="${esc(draft)}">${q.unit ? `<span class="unit">${esc(q.unit)}</span>` : ''}</div>`;
+    case 'height':
+      return `<div class="field inline">
+        <div><label class="small" for="ft">Feet</label><input type="number" inputmode="numeric" id="ft" min="3" max="8" value="${esc(draft.ft)}"></div>
+        <div><label class="small" for="in">Inches</label><input type="number" inputmode="numeric" id="in" min="0" max="11" value="${esc(draft.in)}"></div>
+      </div>`;
+    case 'date':
+      return `<div class="field"><input type="date" id="f" aria-labelledby="prompt" max="${new Date().toISOString().slice(0, 10)}" value="${esc(draft)}"></div>`;
+    case 'medlist':
+      return `<div id="rows">${draft.map((row, i) => `
+        <div class="medrow" data-i="${i}">
+          ${q.columns.map((c) => `<div><label class="small">${esc(c.label)}</label><input type="text" data-k="${c.key}" value="${esc(row[c.key])}"></div>`).join('')}
+          ${draft.length > 1 ? `<button type="button" class="remove" data-remove="${i}">Remove</button>` : ''}
+        </div>`).join('')}</div>
+        <button type="button" class="add-row" id="addRow">+ Add another medication</button>`;
+    case 'consent':
+      return `<p>I understand that:</p>
+        <ul class="statements">${q.statements.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>
+        <button type="button" class="opt" role="checkbox" id="agree" aria-checked="${draft.agree}"><span class="mark"></span><span>I understand and agree</span></button>
+        <div class="field"><label class="small" for="sig">Signature — type your full name</label><input type="text" id="sig" autocomplete="name" value="${esc(draft.signature)}"></div>
+        <p class="muted">Date: ${new Date().toLocaleDateString()}</p>`;
+    default: {
+      const type = { email: 'email', tel: 'tel' }[q.type] || 'text';
+      return `<div class="field"><input type="${type}" id="f" aria-labelledby="prompt" ${q.autocomplete ? `autocomplete="${q.autocomplete}"` : ''} value="${esc(draft)}"></div>`;
+    }
+  }
+}
+
+function wire(q) {
+  const next = document.getElementById('next');
+  next.onclick = () => advance(q);
+  const back = document.getElementById('back');
+  if (back) back.onclick = () => goBack(q);
+
+  if (q.type === 'single' || q.type === 'multi') {
+    app.querySelectorAll('.opt').forEach((btn) => {
+      btn.onclick = () => {
+        const v = btn.dataset.v;
+        if (q.type === 'single') {
+          draft = v;
+        } else {
+          const opt = q.options.find((o) => o.value === v);
+          if (draft.includes(v)) draft = draft.filter((x) => x !== v);
+          else if (opt.exclusive) draft = [v];
+          else draft = [...draft.filter((x) => !q.options.find((o) => o.value === x)?.exclusive), v];
+        }
+        app.querySelectorAll('.opt').forEach((b) => {
+          b.setAttribute('aria-checked', q.type === 'single' ? String(draft === b.dataset.v) : String(draft.includes(b.dataset.v)));
+        });
+        const shown = renderMessages(q);
+        // A single choice moves on by itself unless it brought up a message
+        // the patient should read first.
+        if (q.type === 'single' && !shown) setTimeout(() => currentId === q.id && draft === v && advance(q), 220);
+      };
+    });
+  } else if (q.type === 'height') {
+    ['ft', 'in'].forEach((k) => (document.getElementById(k).oninput = (e) => (draft[k] = e.target.value)));
+  } else if (q.type === 'medlist') {
+    const sync = () => app.querySelectorAll('.medrow').forEach((row) => {
+      row.querySelectorAll('input').forEach((inp) => (draft[+row.dataset.i][inp.dataset.k] = inp.value));
+    });
+    app.querySelectorAll('.medrow input').forEach((inp) => (inp.oninput = sync));
+    document.getElementById('addRow').onclick = () => { sync(); draft.push({}); render(); };
+    app.querySelectorAll('[data-remove]').forEach((b) => (b.onclick = () => { sync(); draft.splice(+b.dataset.remove, 1); render(); }));
+  } else if (q.type === 'consent') {
+    const agree = document.getElementById('agree');
+    agree.onclick = () => { draft.agree = !draft.agree; agree.setAttribute('aria-checked', String(draft.agree)); };
+    document.getElementById('sig').oninput = (e) => (draft.signature = e.target.value);
+  } else if (q.type !== 'info') {
+    const f = document.getElementById('f');
+    f.oninput = () => (draft = f.value);
+    if (q.type !== 'textarea') f.onkeydown = (e) => e.key === 'Enter' && advance(q);
+  }
+}
+
+function renderMessages(q) {
+  const msgs = patientMessages(q, { ...answers, [q.id]: draft });
+  document.getElementById('messages').innerHTML = msgs.map((m) => m.kind === 'crisis'
+    ? `<div class="msg crisis" role="alert"><strong>Your safety matters.</strong>${esc(m.text)
+        .replace('call 911', 'call <a href="tel:911">911</a>')
+        .replace('call or text 988', 'call or text <a href="tel:988">988</a>')}</div>`
+    : `<div class="msg">${esc(m.text)}</div>`).join('');
+  return msgs.length > 0;
+}
+
+function validate(q, v) {
+  if (!isAnswered(q, v)) {
+    if (q.type === 'consent') return 'Please check the box and type your full name to sign.';
+    if (q.type === 'multi') return 'Please select at least one option.';
+    if (q.type === 'single') return 'Please choose an answer.';
+    if (q.type === 'medlist') return 'Please list at least one medication.';
+    return 'Please answer this question.';
+  }
+  if (q.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return 'Please enter a valid email address.';
+  if (q.type === 'tel' && v.replace(/\D/g, '').length < 10) return 'Please enter a phone number with area code.';
+  if (q.type === 'date') {
+    const d = new Date(v);
+    if (isNaN(d) || d > new Date() || d.getFullYear() < 1900) return 'Please enter a valid date of birth.';
+  }
+  if (q.type === 'number') {
+    const n = Number(v);
+    if (!Number.isFinite(n) || (q.min !== undefined && n < q.min) || (q.max !== undefined && n > q.max)) return 'Please enter a valid number.';
+  }
+  if (q.type === 'height') {
+    const ft = Number(v.ft), inch = Number(v.in || 0);
+    if (ft < 3 || ft > 8 || inch < 0 || inch > 11) return 'Please enter your height in feet and inches.';
+  }
+  return null;
+}
+
+async function advance(q) {
+  const next = document.getElementById('next');
+  if (next.disabled) return;
+  const err = document.getElementById('err');
+  let value = draft;
+  if (typeof value === 'string') value = value.trim();
+  if (q.type === 'medlist') value = draft.filter((r) => Object.values(r).some((x) => String(x || '').trim()));
+
+  const problem = q.type === 'info' ? null : validate(q, value);
+  if (problem) { err.textContent = problem; return; }
+
+  next.disabled = true;
+  if (q.type !== 'info') {
+    saveState.textContent = 'Saving…';
+    try {
+      await api('answer', { id: q.id, value });
+      answers[q.id] = value;
+      saveState.textContent = 'Saved';
+    } catch (e) {
+      saveState.textContent = '';
+      err.textContent = e.message;
+      next.disabled = false;
+      return;
+    }
+  }
+  const visible = visibleQuestions(answers);
+  const idx = visible.findIndex((v) => v.id === q.id);
+  const following = visible[idx + 1];
+  if (following) show(following.id);
+  else finish();
+}
+
+function goBack(q) {
+  const visible = visibleQuestions({ ...answers, [q.id]: draft });
+  const idx = visible.findIndex((v) => v.id === q.id);
+  if (idx > 0) show(visible[idx - 1].id);
+}
+
+function finish() {
+  app.dataset.q = '';
+  bar.style.width = '100%';
+  app.innerHTML = `
+    <div class="section">Almost done</div>
+    <h1 tabindex="-1">You’ve answered every question</h1>
+    <p>When you submit, your answers are sent to our clinical team. You won’t be able to change them after submitting.</p>
+    <div class="nav">
+      <button class="btn secondary" id="back">Back</button>
+      <span class="spacer"></span>
+      <button class="btn" id="submit">Submit intake</button>
+    </div>
+    <div class="error" id="err" role="alert"></div>`;
+  app.querySelector('h1').focus();
+  document.getElementById('back').onclick = () => {
+    const visible = visibleQuestions(answers);
+    show(visible[visible.length - 1].id);
+  };
+  document.getElementById('submit').onclick = async (e) => {
+    e.target.disabled = true;
+    try {
+      const data = await api('submit', {});
+      done(data);
+    } catch (err) {
+      if (err.data && err.data.missing) return show(err.data.missing);
+      document.getElementById('err').textContent = err.message;
+      e.target.disabled = false;
+    }
+  };
+}
+
+function done(data) {
+  bar.style.width = '100%';
+  saveState.textContent = '';
+  if (data.outcome !== 'video_visit') {
+    app.innerHTML = `
+      <div class="section">Submitted</div>
+      <h1 tabindex="-1">Thank you — your intake is complete</h1>
+      <p>A licensed psychiatric provider will review your answers and reach out with next steps.</p>
+      <div class="panel"><p style="margin:0">Your patient ID is <strong>${esc(data.publicId)}</strong>. Please mention it if you contact us.</p></div>
+      <p class="muted">If your symptoms get worse before you hear from us, or you have thoughts of harming yourself, call or text <a href="tel:988">988</a> or call <a href="tel:911">911</a>.</p>`;
+    app.querySelector('h1').focus();
+    return;
+  }
+  schedule(data);
+}
+
+function schedule(data) {
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const times = ['Morning (8am–12pm)', 'Afternoon (12pm–5pm)', 'Evening (5pm–8pm)'];
+  const chip = (group, v) => `<button type="button" class="opt" role="checkbox" aria-checked="false" data-group="${group}" data-v="${esc(v)}"><span class="mark"></span><span>${esc(v)}</span></button>`;
+  app.innerHTML = `
+    <div class="section">Next step</div>
+    <h1 tabindex="-1">Let’s schedule a video visit</h1>
+    <p>Thank you for completing your intake. Based on your answers, the best next step is a live video visit with one of our mental health providers, so they can talk with you directly and make sure you get the right care.</p>
+    <div class="panel"><p style="margin:0">Your patient ID is <strong>${esc(data.publicId)}</strong>.</p></div>
+    ${data.schedulingUrl ? `
+      <div class="panel">
+        <p style="margin-top:0"><strong>Book a time now</strong></p>
+        <p class="muted">Pick any open slot on our providers’ calendar. Please enter your patient ID when booking.</p>
+        <a class="btn" style="display:inline-block;text-decoration:none" href="${esc(data.schedulingUrl)}" target="_blank" rel="noopener">Choose a time</a>
+      </div>
+      <p class="muted" style="margin-top:24px">Don’t see a time that works? Tell us when you’re available and we’ll reach out.</p>` : `
+      <p style="margin-top:24px"><strong>When are you usually available?</strong> We’ll contact you to confirm a time.</p>`}
+    <div id="requestForm">
+      <label class="small" style="margin-top:12px">Days</label>
+      <div class="chips">${days.map((d) => chip('days', d)).join('')}</div>
+      <label class="small" style="margin-top:16px">Times</label>
+      <div class="chips">${times.map((t) => chip('times', t)).join('')}</div>
+      <div class="field"><label class="small" for="tz">Time zone</label><input type="text" id="tz" value="${esc(tz)}"></div>
+      <div class="field"><label class="small" for="ph">Best phone number to reach you</label><input type="tel" id="ph" autocomplete="tel"></div>
+      <div class="field"><label class="small" for="notes">Anything else about scheduling? (optional)</label><textarea id="notes" style="min-height:80px"></textarea></div>
+      <div class="nav"><button class="btn" id="sendReq">Send my availability</button></div>
+      <div class="error" id="err" role="alert"></div>
+    </div>
+    <p class="muted" style="margin-top:28px">If you have thoughts of harming yourself before your visit, call or text <a href="tel:988">988</a> or call <a href="tel:911">911</a>.</p>`;
+  app.querySelector('h1').focus();
+  if (data.visitRequested) return requestSent();
+  app.querySelectorAll('.chips .opt').forEach((b) => (b.onclick = () => b.setAttribute('aria-checked', String(b.getAttribute('aria-checked') !== 'true'))));
+  document.getElementById('sendReq').onclick = async (e) => {
+    const picked = (g) => [...app.querySelectorAll(`.opt[data-group="${g}"][aria-checked="true"]`)].map((b) => b.dataset.v);
+    e.target.disabled = true;
+    try {
+      await api('visit-request', {
+        days: picked('days'),
+        times: picked('times'),
+        timezone: document.getElementById('tz').value,
+        phone: document.getElementById('ph').value,
+        notes: document.getElementById('notes').value,
+      });
+      requestSent();
+    } catch (err) {
+      document.getElementById('err').textContent = err.message;
+      e.target.disabled = false;
+    }
+  };
+}
+
+function requestSent() {
+  document.getElementById('requestForm').innerHTML = `<div class="msg" style="background:var(--teal-soft);border-color:#bcd7d1;color:var(--teal-dark)">Thanks — we have your availability and will contact you to confirm your video visit.</div>`;
+}
+
+// ------------------------------------------------------------------- start
+
+(async function init() {
+  if (!token) return welcome(false);
+  try {
+    const data = await api('state', {});
+    if (data.status !== 'in_progress') {
+      return done(data);
+    }
+    answers = data.answers || {};
+    welcome(Object.keys(answers).length > 0);
+  } catch (err) {
+    app.innerHTML = `<h1>We couldn’t open this intake</h1><p>${esc(err.message)}</p><p><a href="/mental-health-intake">Start a new intake</a></p>`;
+  }
+})();
+</script>
+</body>
+</html>

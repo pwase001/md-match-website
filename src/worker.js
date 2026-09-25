@@ -3,6 +3,7 @@ import * as db from './db.js';
 import * as tokens from './tokens.js';
 import * as stripeHelpers from './stripe-helpers.js';
 import { handlePlatformWebhook, handleConnectWebhook } from './stripe-webhook.js';
+import { handleMhIntakeApi, handleMhIntakeAdmin } from './mh-intake.js';
 
 export default {
   async fetch(request, env) {
@@ -66,6 +67,14 @@ export default {
 
     if (url.pathname === '/admin/login' && request.method === 'POST') {
       return handleAdminLogin(request, env);
+    }
+
+    if (url.pathname.startsWith('/api/mh-intake/')) {
+      return handleMhIntakeApi(request, env, url);
+    }
+
+    if (url.pathname.startsWith('/admin/api/mh-intakes')) {
+      return handleMhIntakeAdmin(request, env, url);
     }
 
     if (url.pathname.startsWith('/admin/api/')) {

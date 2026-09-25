@@ -310,3 +310,74 @@ export async function setCollaborationRemindersMuted(db, id, muted) {
     .bind(muted ? 1 : 0, id)
     .run();
 }
+
+// ---- Mental health intakes ----
+// Answers are stored as one JSON document per intake; the rules read the whole
+// set at once, and the question list changes more often than a schema should.
+
+export async function createMhIntake(db, { publicId, tokenHash }) {
+  return db
+    .prepare('INSERT INTO mh_intakes (public_id, token_hash) VALUES (?, ?) RETURNING *')
+    .bind(publicId, tokenHash)
+    .first();
+}
+
+export async function getMhIntakeByTokenHash(db, tokenHash) {
+  return db.prepare('SELECT * FROM mh_intakes WHERE token_hash = ?').bind(tokenHash).first();
+}
+
+export async function getMhIntakeByPublicId(db, publicId) {
+  return db.prepare('SELECT * FROM mh_intakes WHERE public_id = ?').bind(publicId).first();
+}
+
+export async function saveMhIntakeAnswers(db, id, { answers, changeLog }) {
+  await db
+    .prepare("UPDATE mh_intakes SET answers = ?, change_log = ?, updated_at = datetime('now') WHERE id = ? AND status = 'in_progress'")
+    .bind(JSON.stringify(answers), JSON.stringify(changeLog), id)
+    .run();
+}
+
+export async function setMhIntakeAlertsSent(db, id, alertsSent) {
+  await db.prepare('UPDATE mh_intakes SET alerts_sent = ? WHERE id = ?').bind(JSON.stringify(alertsSent), id).run();
+}
+
+export async function submitMhIntake(db, id, { evaluation, outcome }) {
+  const res = await db
+    .prepare(
+      `UPDATE mh_intakes SET status = 'submitted', evaluation = ?, outcome = ?,
+         submitted_at = datetime('now'), updated_at = datetime('now')
+       WHERE id = ? AND status = 'in_progress'`
+    )
+    .bind(JSON.stringify(evaluation), outcome, id)
+    .run();
+  return res.meta.changes > 0;
+}
+
+export async function setMhIntakeVisitRequest(db, id, visitRequest) {
+  await db
+    .prepare("UPDATE mh_intakes SET visit_request = ?, updated_at = datetime('now') WHERE id = ?")
+    .bind(JSON.stringify(visitRequest), id)
+    .run();
+}
+
+export async function setMhIntakeReviewed(db, publicId, { reviewed, note }) {
+  await db
+    .prepare(
+      `UPDATE mh_intakes SET status = ?, review_note = ?, reviewed_at = CASE WHEN ? THEN datetime('now') ELSE NULL END,
+         updated_at = datetime('now')
+       WHERE public_id = ? AND status != 'in_progress'`
+    )
+    .bind(reviewed ? 'reviewed' : 'submitted', note || null, reviewed ? 1 : 0, publicId)
+    .run();
+}
+
+export async function listMhIntakes(db) {
+  const res = await db
+    .prepare(
+      `SELECT public_id, status, outcome, alerts_sent, visit_request, created_at, updated_at, submitted_at, reviewed_at,
+         json_extract(answers, '$.full_name') AS full_name
+       FROM mh_intakes ORDER BY COALESCE(submitted_at, updated_at) DESC LIMIT 500`
+    )
+    .all();
+  return res.results;
+}

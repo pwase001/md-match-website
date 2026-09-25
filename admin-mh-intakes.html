@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>MD-Match — Mental Health Intakes</title>
+<link rel="icon" type="image/svg+xml" href="/logo.svg">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f0f4f4;
+    color: #1a3333;
+    padding: 2rem 1rem 4rem;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .page { max-width: 1080px; margin: 0 auto; }
+  h1 { font-size: 1.3rem; color: #0b3535; margin-bottom: 0.3rem; }
+  h2 { font-size: 1.1rem; color: #0b3535; }
+  .subtitle { color: #4a6b6b; font-size: 13px; margin-bottom: 1.5rem; }
+  .card { background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-bottom: 1.25rem; }
+  .card-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #1a6b6b; margin-bottom: 0.9rem; }
+  input, textarea, select {
+    padding: 0.5rem 0.7rem; border: 1.5px solid #d0e2e2; border-radius: 6px;
+    font-size: 13px; font-family: inherit; color: #1a3333; outline: none; width: 100%;
+  }
+  input:focus, textarea:focus, select:focus { border-color: #1a6b6b; }
+  label { font-size: 12px; font-weight: 600; color: #4a6b6b; display: block; margin-bottom: 0.3rem; }
+  .btn { background: #0b3535; color: white; border: none; padding: 0.6rem 1.3rem; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .btn:hover { background: #145050; }
+  .btn-secondary { background: white; color: #0b3535; border: 1.5px solid #d0e2e2; }
+  .btn-secondary:hover { background: #f0f4f4; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #4a6b6b; border-bottom: 2px solid #e2ecec; padding: 0.5rem 0.6rem; white-space: nowrap; }
+  td { padding: 0.6rem; border-bottom: 1px solid #eef4f4; vertical-align: top; }
+  tr.row { cursor: pointer; }
+  tr.row:hover { background: #f6fafa; }
+  .tag { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+  .t-async { background: #e2f0e6; color: #1d6b35; }
+  .t-video { background: #e2e8f5; color: #2c4a8a; }
+  .t-progress { background: #eef0f0; color: #5a6b6b; }
+  .t-reviewed { background: #e8e8e8; color: #555; }
+  .t-alert { background: #fbe3dd; color: #a3312a; }
+  .t-new { background: #fff1d6; color: #8a6a1a; }
+  .filters { display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .filters > * { width: auto; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.9rem; }
+  .stat .k { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #4a6b6b; }
+  .stat .v { font-size: 18px; font-weight: 700; color: #0b3535; }
+  .stat .s { font-size: 12px; color: #4a6b6b; }
+  .blue { border-left: 4px solid #2c64c4; }
+  .green { border-left: 4px solid #1d8a45; }
+  .red { border-left: 4px solid #c43a2c; }
+  .urgent { background: #fdf0ec; }
+  ul.list { list-style: none; }
+  ul.list li { padding: 0.55rem 0; border-bottom: 1px solid #eef4f4; }
+  ul.list li:last-child { border-bottom: none; }
+  .src { font-size: 11px; font-weight: 700; color: #4a6b6b; text-transform: uppercase; letter-spacing: 0.04em; }
+  .lvl { font-weight: 700; font-size: 12px; }
+  .lvl-avoid { color: #a3312a; }
+  .lvl-caution { color: #9a6a10; }
+  .lvl-first { color: #1d6b35; }
+  .lvl-consider { color: #2c6a8a; }
+  .muted { color: #6b8585; }
+  .qa { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem 1.5rem; }
+  .qa .q { color: #4a6b6b; }
+  .qa .a { white-space: pre-wrap; }
+  .qa-section { grid-column: 1 / -1; font-weight: 700; color: #1a6b6b; margin-top: 0.9rem; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+  #loginCard { max-width: 360px; margin: 4rem auto; }
+  .msg { margin-top: 0.8rem; font-size: 13px; }
+  .err { color: #a3312a; }
+  .hidden { display: none !important; }
+  .back { background: none; border: none; color: #1a6b6b; font: inherit; font-weight: 600; cursor: pointer; margin-bottom: 1rem; }
+  @media (max-width: 700px) {
+    .qa { grid-template-columns: 1fr; }
+    .qa .a { margin-bottom: 0.6rem; }
+    .hide-sm { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="card" id="loginCard">
+    <div class="card-title">Admin Login</div>
+    <div style="margin-bottom:0.9rem">
+      <label for="password">Password</label>
+      <input type="password" id="password" onkeydown="if(event.key==='Enter') login()">
+    </div>
+    <button class="btn" onclick="login()">Log In</button>
+    <div class="msg err" id="loginMsg"></div>
+  </div>
+
+  <div id="listView" class="hidden">
+    <h1>Mental Health Intakes</h1>
+    <p class="subtitle">Patient link: <code id="patientLink"></code></p>
+    <div class="card">
+      <div class="filters">
+        <select id="fStatus" onchange="renderList()">
+          <option value="needs_review">Needs review</option>
+          <option value="all">All</option>
+          <option value="in_progress">In progress</option>
+          <option value="reviewed">Reviewed</option>
+        </select>
+        <select id="fOutcome" onchange="renderList()">
+          <option value="all">Any outcome</option>
+          <option value="async">Asynchronous</option>
+          <option value="video_visit">Video visit</option>
+        </select>
+        <input id="fSearch" placeholder="Search name or ID" oninput="renderList()" style="max-width:240px">
+      </div>
+      <table>
+        <thead><tr><th>Patient ID</th><th>Name</th><th>Status</th><th>Outcome</th><th class="hide-sm">Submitted</th><th>Flags</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <p class="muted" id="empty" style="margin-top:1rem"></p>
+    </div>
+  </div>
+
+  <div id="detailView" class="hidden"></div>
+</div>
+
+<script>
+  let intakes = [];
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const fmt = (d) => (d ? new Date(d.replace(' ', 'T') + (d.includes('Z') ? '' : 'Z')).toLocaleString() : '—');
+  const LEVEL_LABEL = { avoid: 'Avoid', caution: 'Caution', first: '1st line', consider: 'Consider' };
+
+  async function login() {
+    const msg = document.getElementById('loginMsg');
+    msg.textContent = '';
+    const res = await fetch('/admin/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+      body: JSON.stringify({ password: document.getElementById('password').value }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (data.success) start();
+    else msg.textContent = data.error || 'Login failed';
+  }
+
+  async function start() {
+    document.getElementById('loginCard').classList.add('hidden');
+    document.getElementById('patientLink').textContent = `${location.origin}/mental-health-intake`;
+    await loadList();
+    route();
+  }
+
+  async function loadList() {
+    const res = await fetch('/admin/api/mh-intakes', { credentials: 'include' });
+    if (res.status === 401) return showLogin();
+    intakes = (await res.json()).intakes || [];
+    renderList();
+  }
+
+  function showLogin() {
+    document.getElementById('loginCard').classList.remove('hidden');
+    document.getElementById('listView').classList.add('hidden');
+    document.getElementById('detailView').classList.add('hidden');
+  }
+
+  function statusTag(s) {
+    return { in_progress: '<span class="tag t-progress">In progress</span>', submitted: '<span class="tag t-new">Needs review</span>', reviewed: '<span class="tag t-reviewed">Reviewed</span>' }[s] || esc(s);
+  }
+  function outcomeTag(o) {
+    if (o === 'video_visit') return '<span class="tag t-video">Video visit</span>';
+    if (o === 'async') return '<span class="tag t-async">Asynchronous</span>';
+    return '<span class="muted">—</span>';
+  }
+
+  function renderList() {
+    const st = document.getElementById('fStatus').value;
+    const oc = document.getElementById('fOutcome').value;
+    const term = document.getElementById('fSearch').value.trim().toLowerCase();
+    const rows = intakes.filter((i) => {
+      // Safety alerts on unfinished intakes belong in the review queue.
+      if (st === 'needs_review' && !(i.status === 'submitted' || (i.status === 'in_progress' && i.alerts_sent.length))) return false;
+      if (st !== 'all' && st !== 'needs_review' && i.status !== st) return false;
+      if (oc !== 'all' && i.outcome !== oc) return false;
+      if (term && !`${i.public_id} ${i.full_name || ''}`.toLowerCase().includes(term)) return false;
+      return true;
+    });
+    document.getElementById('rows').innerHTML = rows.map((i) => `
+      <tr class="row" onclick="location.hash='${esc(i.public_id)}'">
+        <td><strong>${esc(i.public_id)}</strong></td>
+        <td>${esc(i.full_name || '—')}</td>
+        <td>${statusTag(i.status)}</td>
+        <td>${outcomeTag(i.outcome)}</td>
+        <td class="hide-sm">${fmt(i.submitted_at)}</td>
+        <td>${i.alerts_sent.map((a) => `<span class="tag t-alert">${a === 'suicide' ? 'Suicide risk' : 'Homicide risk'}</span>`).join(' ')}
+            ${i.visit_request ? '<span class="tag t-video">Availability sent</span>' : ''}</td>
+      </tr>`).join('');
+    document.getElementById('empty').textContent = rows.length ? '' : 'No intakes match these filters.';
+  }
+
+  window.addEventListener('hashchange', route);
+  function route() {
+    const id = location.hash.slice(1);
+    document.getElementById('listView').classList.toggle('hidden', !!id);
+    document.getElementById('detailView').classList.toggle('hidden', !id);
+    if (id) loadDetail(id);
+    else loadList();
+  }
+
+  async function loadDetail(id) {
+    const view = document.getElementById('detailView');
+    view.innerHTML = '<p class="muted">Loading…</p>';
+    const res = await fetch(`/admin/api/mh-intakes/${encodeURIComponent(id)}`, { credentials: 'include' });
+    if (res.status === 401) return showLogin();
+    const data = await res.json();
+    if (!data.success) { view.innerHTML = `<button class="back" onclick="location.hash=''">← All intakes</button><p class="err">${esc(data.error)}</p>`; return; }
+    renderDetail(data.intake);
+  }
+
+  function renderDetail(it) {
+    const e = it.evaluation;
+    const name = (it.transcript.find((t) => t.id === 'full_name') || {}).answer || '—';
+    const dob = (it.transcript.find((t) => t.id === 'dob') || {}).answer;
+    const sex = (it.transcript.find((t) => t.id === 'sex') || {}).answer;
+    const guided = e.medicationGuidance.filter((m) => m.status || m.familyResponse || m.patientInterest);
+
+    let lastSection = '';
+    const qa = it.transcript.map((t) => {
+      const head = t.section !== lastSection ? `<div class="qa-section">${esc(t.section)}</div>` : '';
+      lastSection = t.section;
+      return `${head}<div class="q">${esc(t.question)}</div><div class="a">${esc(t.answer)}</div>`;
+    }).join('');
+
+    document.getElementById('detailView').innerHTML = `
+      <button class="back" onclick="location.hash=''">← All intakes</button>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;align-items:flex-start">
+          <div>
+            <h1>${esc(name)} <span class="muted" style="font-weight:400">· ${esc(it.publicId)}</span></h1>
+            <p class="subtitle" style="margin-bottom:0">${dob ? `DOB ${esc(dob)} · ` : ''}${sex ? esc(sex) + ' · ' : ''}Started ${fmt(it.createdAt)} · Submitted ${fmt(it.submittedAt)}</p>
+          </div>
+          <div>${statusTag(it.status)} ${outcomeTag(it.outcome)}</div>
+        </div>
+        ${it.status === 'in_progress' ? '<p class="msg err">The patient has not finished this intake. Recommendations below reflect answers so far.</p>' : ''}
+        <div class="grid" style="margin-top:1.2rem">
+          <div class="stat"><div class="k">Age</div><div class="v">${e.age ?? '—'}</div></div>
+          <div class="stat"><div class="k">BMI</div><div class="v">${e.bmi ?? '—'}</div>${e.bmi !== null && e.bmi < 18.5 ? '<div class="s err">Below 18.5</div>' : ''}</div>
+          <div class="stat"><div class="k">PHQ-9</div><div class="v">${e.scores.phq9.complete ? e.scores.phq9.score : '—'}</div><div class="s">${e.scores.phq9.complete ? esc(e.scores.phq9.severity) : 'Incomplete'}</div></div>
+          <div class="stat"><div class="k">GAD-7</div><div class="v">${e.scores.gad7.complete ? e.scores.gad7.score : '—'}</div><div class="s">${e.scores.gad7.complete ? esc(e.scores.gad7.severity) : 'Incomplete'}</div></div>
+        </div>
+      </div>
+
+      ${e.safety.length || it.alertsSent.length ? `
+      <div class="card red ${e.safety.some((s) => s.urgent) ? 'urgent' : ''}">
+        <div class="card-title" style="color:#a3312a">Safety</div>
+        ${it.alertsSent.length ? `<p style="margin-bottom:0.6rem"><strong>Clinical lead was emailed automatically:</strong> ${it.alertsSent.map((a) => (a === 'suicide' ? 'suicide risk' : 'homicide risk')).join(', ')}.</p>` : ''}
+        <ul class="list">${e.safety.map((s) => `<li><div class="src">${esc(s.source)}</div>${s.urgent ? '<strong>URGENT — </strong>' : ''}${esc(s.text)}</li>`).join('')}</ul>
+      </div>` : ''}
+
+      <div class="card blue">
+        <div class="card-title" style="color:#2c64c4">Video visit referral</div>
+        ${e.referralReasons.length
+          ? `<p style="margin-bottom:0.5rem">This patient was directed to schedule a synchronous video visit because:</p><ul style="margin-left:1.2rem">${e.referralReasons.map((r) => `<li>${esc(r)}</li>`).join('')}</ul>`
+          : '<p class="muted">No referral criteria met. Appropriate for asynchronous review.</p>'}
+        ${it.visitRequest ? `
+          <div style="margin-top:1rem;padding-top:0.8rem;border-top:1px solid #eef4f4">
+            <strong>Availability sent by patient</strong> <span class="muted">(${fmt(it.visitRequest.requestedAt)})</span>
+            <div>Days: ${esc(it.visitRequest.days.join(', '))}</div>
+            <div>Times: ${esc(it.visitRequest.times.join(', '))}</div>
+            <div>Time zone: ${esc(it.visitRequest.timezone || '—')} · Phone: ${esc(it.visitRequest.phone || '—')}</div>
+            ${it.visitRequest.notes ? `<div>Notes: ${esc(it.visitRequest.notes)}</div>` : ''}
+          </div>` : (e.outcome === 'video_visit' && it.status !== 'in_progress' ? '<p class="muted" style="margin-top:0.8rem">Patient has not sent availability (they may have booked through the scheduling link).</p>' : '')}
+      </div>
+
+      <div class="card green">
+        <div class="card-title" style="color:#1d8a45">Medication guidance</div>
+        ${guided.length ? `
+        <table>
+          <thead><tr><th>Medication</th><th>Status</th><th>Why</th><th class="hide-sm">Patient</th></tr></thead>
+          <tbody>${guided.map((m) => `
+            <tr>
+              <td><strong>${esc(m.label)}</strong></td>
+              <td>${m.status ? `<span class="lvl lvl-${m.status}">${LEVEL_LABEL[m.status]}</span>` : '<span class="muted">—</span>'}
+                  ${m.conflict ? '<div class="tag t-alert" style="margin-top:4px">Conflict</div>' : ''}</td>
+              <td>${m.entries.map((x) => `<div><span class="lvl lvl-${x.level}">${LEVEL_LABEL[x.level]}</span> · ${esc(x.source)}${x.note ? ` <span class="muted">(${esc(x.note)})</span>` : ''}</div>`).join('') || '<span class="muted">No rule applied</span>'}</td>
+              <td class="hide-sm">${m.patientInterest ? `<div${m.interestConflict ? ' class="err"' : ''}>Interested${m.interestConflict ? ' — but flagged Avoid' : ''}</div>` : ''}${m.familyResponse ? '<div>Family responded well</div>' : ''}</td>
+            </tr>`).join('')}</tbody>
+        </table>
+        <p class="muted" style="margin-top:0.6rem">“Avoid” overrides any recommendation for the same medication; conflicts are shown so you can see both sides.</p>` : '<p class="muted">No medication-specific rules applied.</p>'}
+      </div>
+
+      <div class="card green">
+        <div class="card-title" style="color:#1d8a45">Treatment considerations</div>
+        ${e.recommendations.length ? `<ul class="list">${e.recommendations.map((r) => `<li><div class="src">${esc(r.source)}</div>${esc(r.text)}</li>`).join('')}</ul>` : '<p class="muted">None.</p>'}
+      </div>
+
+      ${e.freeText.length ? `
+      <div class="card">
+        <div class="card-title">Free-text answers to read</div>
+        <ul class="list">${e.freeText.map((f) => `<li><div class="src">${esc(f.label)}</div>${esc(f.text)}</li>`).join('')}</ul>
+      </div>` : ''}
+
+      ${e.messagesShown.length ? `
+      <div class="card red">
+        <div class="card-title" style="color:#a3312a">Messages shown to the patient</div>
+        <ul class="list">${e.messagesShown.map((m) => `<li><div class="src">${esc(m.question)}</div>${esc(m.text)}</li>`).join('')}</ul>
+      </div>` : ''}
+
+      ${it.changeLog.length ? `
+      <div class="card">
+        <div class="card-title">Answers the patient changed</div>
+        <table><thead><tr><th>Question</th><th>From</th><th>To</th><th class="hide-sm">When</th></tr></thead>
+        <tbody>${it.changeLog.map((c) => `<tr><td>${esc(c.question)}</td><td>${esc(JSON.stringify(c.from))}</td><td>${esc(JSON.stringify(c.to))}</td><td class="hide-sm">${fmt(c.at)}</td></tr>`).join('')}</tbody></table>
+      </div>` : ''}
+
+      <div class="card">
+        <div class="card-title">All answers</div>
+        <div class="qa">${qa}</div>
+      </div>
+
+      ${it.status !== 'in_progress' ? `
+      <div class="card">
+        <div class="card-title">Review</div>
+        <label for="note">Review note (internal)</label>
+        <textarea id="note" rows="3">${esc(it.reviewNote || '')}</textarea>
+        <div style="margin-top:0.8rem;display:flex;gap:0.6rem">
+          ${it.status === 'reviewed'
+            ? `<button class="btn btn-secondary" onclick="setReviewed('${esc(it.publicId)}', false)">Mark as needing review</button><button class="btn" onclick="setReviewed('${esc(it.publicId)}', true)">Save note</button>`
+            : `<button class="btn" onclick="setReviewed('${esc(it.publicId)}', true)">Mark reviewed</button>`}
+        </div>
+        ${it.reviewedAt ? `<p class="muted" style="margin-top:0.6rem">Reviewed ${fmt(it.reviewedAt)}</p>` : ''}
+      </div>` : ''}`;
+    window.scrollTo(0, 0);
+  }
+
+  async function setReviewed(id, reviewed) {
+    await fetch(`/admin/api/mh-intakes/${encodeURIComponent(id)}/review`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+      body: JSON.stringify({ reviewed, note: document.getElementById('note').value }),
+    });
+    loadDetail(id);
+  }
+
+  // Already logged in from another admin page?
+  fetch('/admin/api/mh-intakes', { credentials: 'include' }).then((res) => { if (res.ok) start(); });
+</script>
+</body>
+</html>
