@@ -140,6 +140,16 @@ export function nextMonthlyDate(isoDate, anchorDay) {
   return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
+// Every invoice Stripe still considers unpaid. Asked of Stripe rather than
+// assembled from the app's own records, because the app only knows about invoices
+// it issued -- the collaborations still running on subscriptions have their
+// invoices created by Stripe, and those are exactly the ones that have gone
+// unchased before.
+export async function listOpenInvoices(stripe) {
+  const res = await stripe.invoices.list({ status: 'open', limit: 100 });
+  return res.data;
+}
+
 // Issues one month's invoice directly, rather than letting a subscription do it.
 //
 // The invoice is created before its line item, with pending items excluded, so the
