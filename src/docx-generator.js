@@ -181,11 +181,6 @@ export async function generateDocx(f) {
             }),
           ],
         }),
-        ...(f['How Did You Hear About MD-Match']
-          ? [new Paragraph({
-            children: [new TextRun({ text: `Referral source: ${f['How Did You Hear About MD-Match']}${f['Referred By'] ? ` (${f['Referred By']})` : ''}`, size: 16, color: '888888', font: 'Calibri', italics: true })],
-          })]
-          : []),
       ],
     }],
   });
@@ -257,7 +252,6 @@ export async function generateNpPaIntakeDocx(f) {
           border: { top: { style: BorderStyle.SINGLE, size: 4, color: 'DDDDDD' } },
           children: [new TextRun({ text: `Submitted via MD-Match.com  ·  ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, size: 16, color: '888888', font: 'Calibri', italics: true })],
         }),
-        ...(f['How Did You Hear About MD-Match'] ? [new Paragraph({ children: [new TextRun({ text: `How they heard about us: ${f['How Did You Hear About MD-Match']}${f['Referred By'] ? ` — ${f['Referred By']}` : ''}`, size: 16, color: '888888', font: 'Calibri', italics: true })] })] : []),
       ],
     }],
   });
