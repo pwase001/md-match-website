@@ -2311,6 +2311,7 @@ async function handleNpPaIntakeStep2(request, env) {
       'Why Seeking Collaboration': step1Fields['Why Seeking Collaboration'] || '',
       'Why Switching': step1Fields['Why Switching'] || '',
       'Referred By': step1Fields['Referred By'] || '',
+      'How Did You Hear About MD-Match': step1Fields['How Did You Hear About MD-Match'] || '',
       // Background screening (step 1 — email only, not in docx)
       'Board Action': step1Fields['boardAction'] === 'yes' ? 'Yes' : 'No',
       'Board Action Details': step1Fields['Board Action Details'] || '',
