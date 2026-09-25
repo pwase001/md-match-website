@@ -185,6 +185,20 @@ export async function clearInvoiceRun(db, collaborationId, period) {
     .run();
 }
 
+// Claims one nudge for one invoice, returning false if it is already claimed.
+// The scheduled handler fires several times on a Monday and every firing would
+// otherwise draft the same reminder again.
+export async function claimPaymentNudge(db, stripeInvoiceId, kind) {
+  const res = await db
+    .prepare(
+      `INSERT INTO payment_nudges (stripe_invoice_id, kind) VALUES (?, ?)
+       ON CONFLICT(stripe_invoice_id, kind) DO NOTHING`
+    )
+    .bind(stripeInvoiceId, kind)
+    .run();
+  return (res.meta?.changes ?? 0) > 0;
+}
+
 export async function getCollaboration(db, id) {
   return db.prepare('SELECT * FROM collaborations WHERE id = ?').bind(id).first();
 }

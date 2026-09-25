@@ -206,6 +206,7 @@
     <div class="card">
       <div class="card-title">Monthly Billing</div>
       <div id="billingPanel" style="font-size:13px;line-height:1.7">Loading…</div>
+      <div id="nudgePanel" style="display:none;font-size:13px;line-height:1.7"></div>
       <button class="btn btn-small" style="margin-top:0.8rem" id="runBillingBtn" onclick="runBilling()">Run billing now</button>
       <div class="msg" id="billingMsg"></div>
     </div>
@@ -350,8 +351,32 @@
           ).join('<br>')
         : `Nothing due today (${data.today}).`;
       el.innerHTML = html;
+      loadNudges();
     } catch {
       el.textContent = 'Network error loading billing status.';
+    }
+  }
+
+  // Invoices falling due tomorrow, with a ready-written reminder for each. The
+  // same list the scheduled handler emails; shown here so it can be acted on
+  // without waiting for that mail, or after it has been buried.
+  async function loadNudges() {
+    const el = document.getElementById('nudgePanel');
+    try {
+      const res = await fetch('/admin/api/nudges/preview', { credentials: 'include' });
+      const data = await res.json();
+      if (!data.success || !data.nudges.length) { el.style.display = 'none'; return; }
+      el.style.display = 'block';
+      el.innerHTML = `<div style="margin-top:14px;padding-top:12px;border-top:1px solid #dbe5e1">`
+        + `<b>Due tomorrow and unpaid — ${data.nudges.length} reminder${data.nudges.length > 1 ? 's' : ''} ready:</b><br>`
+        + data.nudges.map(n =>
+            `<div style="margin-top:8px">${n.client || n.email} — ${n.amount} `
+            + `<a href="${n.gmailUrl}" target="_blank" rel="noopener" class="btn btn-small" `
+            + `style="text-decoration:none;display:inline-block;margin-left:6px">Open draft in Gmail</a></div>`
+          ).join('')
+        + `</div>`;
+    } catch {
+      el.style.display = 'none';
     }
   }
 

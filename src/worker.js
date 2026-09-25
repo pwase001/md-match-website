@@ -101,6 +101,16 @@ export default {
     const billed = await runCollaborationBilling(env, easternDateString(now));
     if (billed.length) console.log('Collaboration billing:', JSON.stringify(billed));
 
+    // Drafted rather than sent, so it can go out from a person's own address.
+    // Wrapped because a Stripe outage should not also stop the billing tick above
+    // from having counted, nor stop the compliance reminders below from running.
+    try {
+      const nudged = await runPaymentNudges(env, now);
+      if (nudged.length) console.log('Payment reminder drafts:', JSON.stringify(nudged));
+    } catch (err) {
+      console.error('Payment reminder drafts failed:', err?.message || String(err));
+    }
+
     const { weekday, day, hour, monthLabel } = easternParts(now);
     const proceeding = isFourthMondayAt9amEastern(now);
     // Logged on every firing, not just the ones that send. A schedule pointed at
@@ -1220,6 +1230,20 @@ async function handleAdminApi(request, env, url) {
     return jsonResponse({ success: true, today, due, failed });
   }
 
+  // The drafts for anything falling due tomorrow, without claiming them, so the
+  // panel can show what is coming and the button below can still send it.
+  if (url.pathname === '/admin/api/nudges/preview' && request.method === 'GET') {
+    const nudges = await findPaymentNudges(env, new Date());
+    return jsonResponse({
+      success: true,
+      nudges: nudges.map((n) => ({
+        invoiceId: n.invoice.id, number: n.invoice.number,
+        client: n.invoice.customer_name, email: n.invoice.customer_email,
+        amount: n.amount, dueOn: n.dueOn, gmailUrl: n.gmailUrl, body: n.body,
+      })),
+    });
+  }
+
   // Runs the sweep by hand. Safe to press: the same per-month claim that protects
   // the scheduled run protects this one, so pressing it twice bills nobody twice.
   if (url.pathname === '/admin/api/billing/run' && request.method === 'POST') {
@@ -1745,6 +1769,106 @@ function easternDateString(now) {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit',
   }).format(now);
+}
+
+// The address the drafts are written to be sent from, and sent to.
+const OWNER_EMAIL = 'philipwasef@md-match.com';
+
+function easternDateFromUnix(seconds) {
+  return easternDateString(new Date(seconds * 1000));
+}
+
+function prettyDate(isoDate) {
+  const [y, m, d] = isoDate.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-US', {
+    timeZone: 'UTC', weekday: 'long', month: 'long', day: 'numeric',
+  });
+}
+
+// A reminder written to come from a person rather than from Stripe.
+//
+// Clients ignore Stripe's own dunning mail and answer a note from someone they
+// have met, so the app does not send this: it drafts it and hands it over. The
+// Gmail compose link opens the draft already addressed and written, in the
+// account the client recognises, one review and one click from sent.
+function buildPaymentNudge(invoice) {
+  const firstName = String(invoice.customer_name || '').trim().split(' ')[0] || 'there';
+  const amount = '$' + (invoice.amount_remaining / 100).toFixed(2);
+  const dueOn = prettyDate(easternDateFromUnix(invoice.due_date));
+
+  const subject = `Invoice ${invoice.number || ''} — due ${dueOn}`.replace('  ', ' ');
+  const body = [
+    `Hi ${firstName},`,
+    '',
+    `Quick note that your invoice for ${amount} is due tomorrow, ${dueOn}.`,
+    '',
+    'You can pay it here:',
+    invoice.hosted_invoice_url || '',
+    '',
+    'If you have already sent it, please ignore this. If anything looks wrong, just reply and I will sort it out.',
+    '',
+    'Best,',
+    'Philip',
+  ].join('\n');
+
+  const gmailUrl = 'https://mail.google.com/mail/?view=cm&fs=1'
+    + `&to=${encodeURIComponent(invoice.customer_email || '')}`
+    + `&su=${encodeURIComponent(subject)}`
+    + `&body=${encodeURIComponent(body)}`;
+
+  return { invoice, firstName, amount, dueOn, subject, body, gmailUrl };
+}
+
+// Finds invoices falling due tomorrow that nobody has paid, and drafts one
+// reminder each. Returns what it found whether or not it sent, so the admin page
+// can show the same list without claiming anything.
+async function findPaymentNudges(env, now) {
+  const stripe = stripeHelpers.getStripe(env);
+  const tomorrow = easternDateString(new Date(now.getTime() + 86400000));
+  const open = await stripeHelpers.listOpenInvoices(stripe);
+
+  return open
+    .filter((inv) => inv.due_date && inv.amount_remaining > 0
+      && easternDateFromUnix(inv.due_date) === tomorrow)
+    .map(buildPaymentNudge);
+}
+
+async function runPaymentNudges(env, now) {
+  const nudges = await findPaymentNudges(env, now);
+  const sent = [];
+
+  for (const n of nudges) {
+    if (!(await db.claimPaymentNudge(env.DB, n.invoice.id, 'due_tomorrow'))) continue;
+    sent.push(n);
+  }
+  if (!sent.length) return [];
+
+  const blocks = sent.map((n) => `
+    <div style="margin:0 0 28px;padding:16px 18px;border:1px solid #d5ded9;border-radius:6px">
+      <p style="margin:0 0 4px;font-size:15px"><strong>${n.invoice.customer_name || n.invoice.customer_email}</strong>
+        &mdash; ${n.amount}, due ${n.dueOn}</p>
+      <p style="margin:0 0 14px;font-size:13px;color:#6b7b76">${n.invoice.number || ''} &middot; ${n.invoice.customer_email}</p>
+      <p style="margin:0 0 14px">
+        <a href="${n.gmailUrl}" style="background:#0b3535;color:#fff;text-decoration:none;padding:10px 18px;border-radius:6px;font-weight:600;display:inline-block">Open this draft in Gmail</a>
+      </p>
+      <pre style="margin:0;padding:12px;background:#f4f7f6;border-radius:4px;font-family:inherit;font-size:13px;white-space:pre-wrap">${esc(n.body)}</pre>
+    </div>`).join('');
+
+  await sendEmail(env, {
+    to: [OWNER_EMAIL],
+    from: 'MD-Match <noreply@md-match.com>',
+    replyTo: OWNER_EMAIL,
+    subject: sent.length === 1
+      ? `Due tomorrow: ${sent[0].invoice.customer_name || sent[0].invoice.customer_email} (${sent[0].amount})`
+      : `${sent.length} invoices due tomorrow`,
+    html: `<p>These invoices fall due tomorrow and are still unpaid. The button opens each
+      draft in Gmail, already addressed and written &mdash; review it and press send.</p>${blocks}`,
+  });
+
+  return sent.map((n) => ({
+    invoiceId: n.invoice.id, number: n.invoice.number,
+    client: n.invoice.customer_name, amount: n.amount, dueOn: n.dueOn,
+  }));
 }
 
 // What a given invoice date should charge.
