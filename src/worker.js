@@ -2329,6 +2329,7 @@ async function handleNpPaIntakeStep1(request, env) {
     ${fields['Why Seeking Collaboration'] ? `<tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">What Brings Them</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Why Seeking Collaboration']}</td></tr>` : ''}
     ${fields['Why Switching'] ? `<tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Reason for Switching</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Why Switching']}</td></tr>` : ''}
     ${fields['Referred By'] ? `<tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Referred By</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Referred By']}</td></tr>` : ''}
+    ${fields['How Did You Hear About MD-Match'] ? `<tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">How Did You Hear About Us</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['How Did You Hear About MD-Match']}</td></tr>` : ''}
     <tr><td colspan="2" style="padding:10px 12px 4px;font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.08em;color:#1B6CA8;font-family:sans-serif;border-bottom:2px solid #1B6CA8">Background Screening</td></tr>
     <tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Board Disciplinary Action</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['boardAction'] === 'yes' ? 'Yes' : 'No'}</td></tr>
     ${fields['boardAction'] === 'yes' && fields['Board Action Details'] ? `<tr><td style="padding:6px 12px;font-weight:600;background:#f2f4f6;font-size:13px;border-bottom:1px solid #ddd">Board Action Details</td><td style="padding:6px 12px;font-size:13px;border-bottom:1px solid #ddd">${fields['Board Action Details']}</td></tr>` : ''}
@@ -2557,6 +2558,7 @@ function buildStep2Summary(f) {
     ${f['Family Medicine Services'] ? row('Family Medicine Services', f['Family Medicine Services']) : ''}
     ${f['Why Seeking Collaboration'] ? row('What Brought Them', f['Why Seeking Collaboration']) : ''}
     ${f['Why Switching'] ? row('Reason for Switching', f['Why Switching']) : ''}
+    ${f['How Did You Hear About MD-Match'] ? row('How Did You Hear About Us', f['How Did You Hear About MD-Match']) : ''}
     ${section('Background Screening')}
     ${row('Board Disciplinary Action', f['Board Action'])}
     ${f['Board Action'] === 'Yes' ? row('Board Action Details', f['Board Action Details']) : ''}
