@@ -119,11 +119,15 @@
       <div class="card-title">Create Collaboration</div>
       <div class="field-row">
         <div class="field">
-          <label>Client (NP/PA)</label>
+          <label>Client (NP/PA) <span id="clientCount" style="font-weight:normal;opacity:.6"></span></label>
+          <input type="text" id="clientSearch" placeholder="Type a name or email to narrow the list"
+                 oninput="renderPicker('client')" style="margin-bottom:0.35rem">
           <select id="clientSelect"></select>
         </div>
         <div class="field">
-          <label>Collaborating Physician</label>
+          <label>Collaborating Physician <span id="physicianCount" style="font-weight:normal;opacity:.6"></span></label>
+          <input type="text" id="physicianSearch" placeholder="Type a name or email to narrow the list"
+                 oninput="renderPicker('physician')" style="margin-bottom:0.35rem">
           <select id="physicianSelect"></select>
         </div>
       </div>
@@ -252,6 +256,43 @@
   }
 
   function money(cents) { return '$' + (cents / 100).toFixed(2); }
+
+  function esc(s) {
+    return String(s ?? '').replace(/[&<>"]/g, (c) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;',
+    }[c]));
+  }
+
+  let allClients = [], allPhysicians = [];
+
+  // Filters one of the two pickers against what has been typed above it, matching
+  // on name or email so a half-remembered practice address finds someone too.
+  //
+  // The select is kept rather than replaced with a combobox, so everything that
+  // reads .value carries on working and the keyboard behaviour stays the one the
+  // browser already provides.
+  function renderPicker(which) {
+    const isClient = which === 'client';
+    const list = isClient ? allClients : allPhysicians;
+    const sel = document.getElementById(isClient ? 'clientSelect' : 'physicianSelect');
+    const q = document.getElementById(isClient ? 'clientSearch' : 'physicianSearch')
+      .value.trim().toLowerCase();
+
+    const matches = q
+      ? list.filter((r) => `${r.full_name || ''} ${r.email || ''}`.toLowerCase().includes(q))
+      : list;
+
+    // Remembered across the re-render, so narrowing the list cannot quietly change
+    // who is selected underneath an unchanged-looking box.
+    const wasSelected = sel.value;
+    sel.innerHTML = matches.length
+      ? matches.map((r) => `<option value="${r.id}">${esc(r.full_name)} (${esc(r.email)})</option>`).join('')
+      : '<option value="">No match</option>';
+    if (matches.some((r) => String(r.id) === wasSelected)) sel.value = wasSelected;
+
+    document.getElementById(isClient ? 'clientCount' : 'physicianCount').textContent =
+      q ? `— ${matches.length} of ${list.length}` : `— ${list.length}`;
+  }
 
   // Display-only mirror of the rates in src/stripe-helpers.js, which stays the
   // source of truth -- the server recomputes these figures on submit. Duplicated
@@ -419,9 +460,12 @@
 
   function resetCreateForm() {
     ['physicianPayout', 'startDate', 'providerName', 'notes',
-     'promoPayout', 'promoNetFee', 'promoEndDate'].forEach((id) => {
+     'promoPayout', 'promoNetFee', 'promoEndDate',
+     'clientSearch', 'physicianSearch'].forEach((id) => {
       document.getElementById(id).value = '';
     });
+    renderPicker('client');
+    renderPicker('physician');
     // Back to the defaults the page loads with, rather than blank.
     document.getElementById('netFee').value = '200';
     document.getElementById('paymentTerms').value = '14';
@@ -448,11 +492,15 @@
     // the page is opened rather than waiting to be looked for.
     loadBilling();
 
-    const clientSelect = document.getElementById('clientSelect');
-    clientSelect.innerHTML = data.clients.map(c => `<option value="${c.id}">${c.full_name} (${c.email})</option>`).join('');
-
-    const physicianSelect = document.getElementById('physicianSelect');
-    physicianSelect.innerHTML = data.physicians.map(p => `<option value="${p.id}">${p.full_name} (${p.email})</option>`).join('');
+    // Held so typing filters what is already loaded rather than refetching, and
+    // sorted by name: the list is long enough that arrival order is no help in
+    // finding anybody.
+    const byName = (a, b) => String(a.full_name || '').trim()
+      .localeCompare(String(b.full_name || '').trim(), undefined, { sensitivity: 'base' });
+    allClients = [...data.clients].sort(byName);
+    allPhysicians = [...data.physicians].sort(byName);
+    renderPicker('client');
+    renderPicker('physician');
 
     const rows = data.collaborations.map(c => `
       <tr>
