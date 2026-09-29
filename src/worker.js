@@ -1738,11 +1738,8 @@ async function handleResendClientEmail(request, env) {
 // Corrects the email on a physician, in both places it is stored. A physician who
 // typed the wrong address at signup usually asks to start over; they should not,
 // because starting over discards the bank details they already entered, and the
-// email is the one field in Stripe's onboarding that can be fixed from outside it.
-//
-// Stripe is updated before D1 on purpose. If Stripe fails, nothing has changed
-// anywhere and the caller can simply try again; the reverse order would leave the
-// app believing an address that Stripe would still be mailing past.
+// address that decides where the next onboarding link goes is this app's, not
+// Stripe's.
 async function handleUpdatePhysicianEmail(request, env) {
   try {
     const { physicianId, email } = await request.json();
@@ -1770,11 +1767,29 @@ async function handleUpdatePhysicianEmail(request, env) {
       }, 409);
     }
 
+    // Stripe first, because the app's copy is the recoverable one: if Stripe takes
+    // the change and D1 does not, a retry fixes it, whereas the reverse would leave
+    // the app believing an address Stripe was still mailing past.
+    //
+    // On an Express account Stripe refuses outright -- the email belongs to the
+    // account holder, not to the platform, and the API answers StripePermissionError.
+    // That refusal is not a failure of this action. The address the app itself sends
+    // to is the one that decides where the next onboarding link goes, so it is worth
+    // correcting on its own; the physician changes Stripe's copy inside the onboarding
+    // flow, where they set it in the first place. Any other Stripe error is a real
+    // fault and still aborts before D1 is touched.
     let stripeUpdated = false;
+    let stripeRefusal = null;
     if (physician.stripe_account_id) {
-      const stripe = stripeHelpers.getStripe(env);
-      await stripeHelpers.updatePhysicianAccountEmail(stripe, physician.stripe_account_id, next);
-      stripeUpdated = true;
+      try {
+        const stripe = stripeHelpers.getStripe(env);
+        await stripeHelpers.updatePhysicianAccountEmail(stripe, physician.stripe_account_id, next);
+        stripeUpdated = true;
+      } catch (err) {
+        if (err?.type !== 'StripePermissionError') throw err;
+        console.warn('Stripe would not take the email change:', err?.message);
+        stripeRefusal = err?.message || 'Stripe would not take the change';
+      }
     }
 
     await db.updatePhysicianEmail(env.DB, physician.id, next);
@@ -1785,6 +1800,7 @@ async function handleUpdatePhysicianEmail(request, env) {
       previousEmail: physician.email,
       email: next,
       stripeUpdated,
+      stripeRefusal,
       stripeAccountId: physician.stripe_account_id || null,
     });
   } catch (err) {

@@ -210,10 +210,11 @@
     <div class="card">
       <div class="card-title">Correct a Physician's Email</div>
       <p style="font-size:13px;line-height:1.7;margin:0 0 0.8rem;opacity:.75">
-        For a physician who signed up under the wrong address. Changes it here and on their
-        Stripe account, so Stripe's mail and the next setup link both reach them. They do
-        <strong>not</strong> need to start their Stripe signup over — restarting would discard
-        the bank details they already entered.
+        For a physician who signed up under the wrong address. Changes where <em>this app</em>
+        writes to them, so the next setup link reaches them. They do <strong>not</strong> need to
+        start their Stripe signup over — restarting would discard the bank details they already
+        entered. Stripe's own copy of the address belongs to the physician and can only be
+        changed by them, inside the setup flow.
       </p>
       <div class="field-row">
         <div class="field">
@@ -583,10 +584,20 @@
       const data = await res.json();
       if (data.success) {
         msg.className = 'msg ok';
+        // Three outcomes worth telling apart: both sides changed, only this app's
+        // side changed because Stripe owns the physician's copy, and no Stripe
+        // account to change. The middle one needs the physician to act, so it says so.
+        let tail;
+        if (data.stripeUpdated) tail = ' (Stripe account updated too).';
+        else if (data.stripeRefusal) {
+          tail = '. Stripe keeps its own copy of the address and only the physician can'
+            + ' change it — they do that in the setup flow. Setup links from this app now'
+            + ' go to the new address.';
+        } else tail = ' (no Stripe account yet).';
+
         msg.textContent = data.unchanged
           ? 'That is already their email — nothing changed.'
-          : `${data.physician}: ${data.previousEmail} → ${data.email}`
-            + (data.stripeUpdated ? ' (Stripe account updated too).' : ' (no Stripe account yet).');
+          : `${data.physician}: ${data.previousEmail} → ${data.email}${tail}`;
         document.getElementById('fixEmailValue').value = '';
         // Reloaded so the other two pickers stop offering the old address.
         loadData();

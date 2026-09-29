@@ -31,9 +31,12 @@ export async function createPhysicianAccount(stripe, physician) {
 // The email a physician typed at signup is only Stripe's contact and login
 // address -- it has no bearing on where payouts land or on tax reporting -- but
 // it is where Stripe's own mail goes, so a physician who used the wrong one
-// stops hearing from Stripe entirely. Editable on an Express account at any
-// point in onboarding, so correcting it never costs the bank details they have
-// already entered.
+// stops hearing from Stripe entirely.
+//
+// On an Express account this raises StripePermissionError: the field belongs to
+// the account holder, and a platform may not edit it. Kept anyway because the
+// restriction is per account type rather than per platform, and the caller treats
+// that particular refusal as an expected answer rather than a failure.
 export async function updatePhysicianAccountEmail(stripe, accountId, email) {
   return stripe.accounts.update(accountId, { email });
 }
