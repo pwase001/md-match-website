@@ -1788,8 +1788,14 @@ async function handleUpdatePhysicianEmail(request, env) {
       stripeAccountId: physician.stripe_account_id || null,
     });
   } catch (err) {
+    // Stripe's own message names the cause -- a permission the key lacks, a field
+    // it will not take -- and its code says which of those it is. Both go back to
+    // the caller, because the page showing this is the only place anybody looks.
     console.error('Update physician email error:', err);
-    return jsonResponse({ success: false, error: 'Server error', detail: err?.message || String(err) }, 500);
+    const parts = [err?.message || String(err)];
+    if (err?.code) parts.push(`code: ${err.code}`);
+    else if (err?.type) parts.push(`type: ${err.type}`);
+    return jsonResponse({ success: false, error: 'Server error', detail: parts.join(' — ') }, 500);
   }
 }
 
