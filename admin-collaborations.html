@@ -592,7 +592,13 @@
         loadData();
       } else {
         msg.className = 'msg err';
-        msg.textContent = data.error || 'Update failed';
+        // "Server error" on its own says nothing actionable, and the thing that
+        // fails here is a Stripe call whose own message names the cause. The
+        // server sends it as detail; showing it is the difference between a
+        // report anybody can act on and one that needs the logs.
+        msg.textContent = data.detail
+          ? `${data.error || 'Update failed'}: ${data.detail}`
+          : (data.error || 'Update failed');
       }
     } catch {
       msg.className = 'msg err';
