@@ -50,6 +50,13 @@ export async function listPhysicians(db) {
   return res.results;
 }
 
+// Every physician email the app sends -- onboarding links included -- reads this
+// column, so correcting a Stripe account's email without correcting this one
+// would send the replacement link straight back to the wrong address.
+export async function updatePhysicianEmail(db, id, email) {
+  await db.prepare('UPDATE physicians SET email = ? WHERE id = ?').bind(email, id).run();
+}
+
 export async function setPhysicianStripeAccountId(db, id, stripeAccountId) {
   await db.prepare('UPDATE physicians SET stripe_account_id = ?, onboarding_status = ? WHERE id = ?')
     .bind(stripeAccountId, 'started', id)

@@ -208,6 +208,30 @@
     </div>
 
     <div class="card">
+      <div class="card-title">Correct a Physician's Email</div>
+      <p style="font-size:13px;line-height:1.7;margin:0 0 0.8rem;opacity:.75">
+        For a physician who signed up under the wrong address. Changes it here and on their
+        Stripe account, so Stripe's mail and the next setup link both reach them. They do
+        <strong>not</strong> need to start their Stripe signup over — restarting would discard
+        the bank details they already entered.
+      </p>
+      <div class="field-row">
+        <div class="field">
+          <label>Physician <span id="fixEmailCount" style="font-weight:normal;opacity:.6"></span></label>
+          <input type="text" id="fixEmailSearch" placeholder="Type a name or email to narrow the list"
+                 oninput="renderPicker('fixEmail')" style="margin-bottom:0.35rem">
+          <select id="fixEmailSelect"></select>
+        </div>
+        <div class="field">
+          <label>Correct Email Address</label>
+          <input type="email" id="fixEmailValue" placeholder="name@practice.com">
+        </div>
+      </div>
+      <button class="btn btn-small" id="fixEmailBtn" onclick="updatePhysicianEmail()">Update Email</button>
+      <div class="msg" id="fixEmailMsg"></div>
+    </div>
+
+    <div class="card">
       <div class="card-title">Monthly Billing</div>
       <div id="billingPanel" style="font-size:13px;line-height:1.7">Loading…</div>
       <div id="nudgePanel" style="display:none;font-size:13px;line-height:1.7"></div>
@@ -265,18 +289,26 @@
 
   let allClients = [], allPhysicians = [];
 
-  // Filters one of the two pickers against what has been typed above it, matching
-  // on name or email so a half-remembered practice address finds someone too.
+  // The searchable pickers, by name. Each names the three elements it drives and
+  // which list it draws from; adding a fourth is a line here rather than another
+  // branch inside renderPicker.
+  const PICKERS = {
+    client:      { select: 'clientSelect',      search: 'clientSearch',      count: 'clientCount',      rows: () => allClients },
+    physician:   { select: 'physicianSelect',   search: 'physicianSearch',   count: 'physicianCount',   rows: () => allPhysicians },
+    fixEmail:    { select: 'fixEmailSelect',    search: 'fixEmailSearch',    count: 'fixEmailCount',    rows: () => allPhysicians },
+  };
+
+  // Filters one picker against what has been typed above it, matching on name or
+  // email so a half-remembered practice address finds someone too.
   //
   // The select is kept rather than replaced with a combobox, so everything that
   // reads .value carries on working and the keyboard behaviour stays the one the
   // browser already provides.
   function renderPicker(which) {
-    const isClient = which === 'client';
-    const list = isClient ? allClients : allPhysicians;
-    const sel = document.getElementById(isClient ? 'clientSelect' : 'physicianSelect');
-    const q = document.getElementById(isClient ? 'clientSearch' : 'physicianSearch')
-      .value.trim().toLowerCase();
+    const cfg = PICKERS[which];
+    const list = cfg.rows();
+    const sel = document.getElementById(cfg.select);
+    const q = document.getElementById(cfg.search).value.trim().toLowerCase();
 
     const matches = q
       ? list.filter((r) => `${r.full_name || ''} ${r.email || ''}`.toLowerCase().includes(q))
@@ -290,7 +322,7 @@
       : '<option value="">No match</option>';
     if (matches.some((r) => String(r.id) === wasSelected)) sel.value = wasSelected;
 
-    document.getElementById(isClient ? 'clientCount' : 'physicianCount').textContent =
+    document.getElementById(cfg.count).textContent =
       q ? `— ${matches.length} of ${list.length}` : `— ${list.length}`;
   }
 
@@ -501,6 +533,7 @@
     allPhysicians = [...data.physicians].sort(byName);
     renderPicker('client');
     renderPicker('physician');
+    renderPicker('fixEmail');
 
     const rows = data.collaborations.map(c => `
       <tr>
@@ -523,6 +556,49 @@
       </tr>
     `).join('');
     document.getElementById('collabRows').innerHTML = rows || '<tr><td colspan="10">No collaborations yet.</td></tr>';
+  }
+
+  async function updatePhysicianEmail() {
+    const btn = document.getElementById('fixEmailBtn');
+    const msg = document.getElementById('fixEmailMsg');
+    msg.className = 'msg';
+    msg.textContent = '';
+
+    const physicianId = Number(document.getElementById('fixEmailSelect').value);
+    const email = document.getElementById('fixEmailValue').value.trim();
+    if (!physicianId || !email) {
+      msg.className = 'msg err';
+      msg.textContent = 'Pick a physician and type the corrected email address.';
+      return;
+    }
+
+    btn.disabled = true;
+    try {
+      const res = await fetch('/admin/api/physicians/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ physicianId, email }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        msg.className = 'msg ok';
+        msg.textContent = data.unchanged
+          ? 'That is already their email — nothing changed.'
+          : `${data.physician}: ${data.previousEmail} → ${data.email}`
+            + (data.stripeUpdated ? ' (Stripe account updated too).' : ' (no Stripe account yet).');
+        document.getElementById('fixEmailValue').value = '';
+        // Reloaded so the other two pickers stop offering the old address.
+        loadData();
+      } else {
+        msg.className = 'msg err';
+        msg.textContent = data.error || 'Update failed';
+      }
+    } catch {
+      msg.className = 'msg err';
+      msg.textContent = 'Network error';
+    }
+    btn.disabled = false;
   }
 
   async function createCollaboration() {
