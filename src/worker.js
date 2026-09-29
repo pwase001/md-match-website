@@ -1267,6 +1267,10 @@ async function handleAdminApi(request, env, url) {
     return handleCancelCollaboration(request, env);
   }
 
+  if (url.pathname === '/admin/api/physicians/email' && request.method === 'POST') {
+    return handleUpdatePhysicianEmail(request, env);
+  }
+
   if (url.pathname === '/admin/api/collaborations/resend-onboarding' && request.method === 'POST') {
     return handleResendOnboarding(request, env);
   }
@@ -1731,6 +1735,64 @@ async function handleResendClientEmail(request, env) {
 // Re-sends the payout onboarding email for a collaboration that already exists.
 // Without this the only way to get a physician another link was to create a second
 // collaboration, which would bill the client twice.
+// Corrects the email on a physician, in both places it is stored. A physician who
+// typed the wrong address at signup usually asks to start over; they should not,
+// because starting over discards the bank details they already entered, and the
+// email is the one field in Stripe's onboarding that can be fixed from outside it.
+//
+// Stripe is updated before D1 on purpose. If Stripe fails, nothing has changed
+// anywhere and the caller can simply try again; the reverse order would leave the
+// app believing an address that Stripe would still be mailing past.
+async function handleUpdatePhysicianEmail(request, env) {
+  try {
+    const { physicianId, email } = await request.json();
+    const next = typeof email === 'string' ? email.trim() : '';
+    if (!physicianId || !next) {
+      return jsonResponse({ success: false, error: 'Missing physicianId or email' }, 400);
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(next)) {
+      return jsonResponse({ success: false, error: `"${next}" is not a valid email address` }, 400);
+    }
+
+    const physician = await db.getPhysician(env.DB, physicianId);
+    if (!physician) return jsonResponse({ success: false, error: 'Physician not found' }, 404);
+    if (physician.email === next) {
+      return jsonResponse({ success: true, email: next, unchanged: true });
+    }
+
+    // A second physician already holding this address would make getPhysicianByEmail
+    // ambiguous, and that lookup is what decides whether a signup reuses an account.
+    const existing = await db.getPhysicianByEmail(env.DB, next);
+    if (existing && existing.id !== physician.id) {
+      return jsonResponse({
+        success: false,
+        error: `${next} already belongs to ${existing.full_name}`,
+      }, 409);
+    }
+
+    let stripeUpdated = false;
+    if (physician.stripe_account_id) {
+      const stripe = stripeHelpers.getStripe(env);
+      await stripeHelpers.updatePhysicianAccountEmail(stripe, physician.stripe_account_id, next);
+      stripeUpdated = true;
+    }
+
+    await db.updatePhysicianEmail(env.DB, physician.id, next);
+
+    return jsonResponse({
+      success: true,
+      physician: physician.full_name,
+      previousEmail: physician.email,
+      email: next,
+      stripeUpdated,
+      stripeAccountId: physician.stripe_account_id || null,
+    });
+  } catch (err) {
+    console.error('Update physician email error:', err);
+    return jsonResponse({ success: false, error: 'Server error', detail: err?.message || String(err) }, 500);
+  }
+}
+
 async function handleResendOnboarding(request, env) {
   try {
     const { collaborationId } = await request.json();
