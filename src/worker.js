@@ -1267,6 +1267,26 @@ async function handleAdminApi(request, env, url) {
     return handleCancelCollaboration(request, env);
   }
 
+  // What pausing would leave behind, so the decision about unpaid invoices is made
+  // against the actual amounts rather than from memory.
+  if (url.pathname === '/admin/api/collaborations/pause-preview' && request.method === 'GET') {
+    const collaborationId = Number(url.searchParams.get('collaborationId'));
+    const collaboration = collaborationId ? await db.getCollaboration(env.DB, collaborationId) : null;
+    if (!collaboration) return jsonResponse({ success: false, error: 'Not found' }, 404);
+    const open = await findOpenInvoicesForCollaboration(env, collaboration);
+    return jsonResponse({
+      success: true,
+      openInvoices: open.map((i) => ({
+        id: i.id, number: i.number, amountCents: i.amount_remaining,
+        dueOn: i.due_date ? new Date(i.due_date * 1000).toISOString().slice(0, 10) : null,
+      })),
+    });
+  }
+
+  if (url.pathname === '/admin/api/collaborations/pause' && request.method === 'POST') {
+    return handlePauseCollaboration(request, env);
+  }
+
   if (url.pathname === '/admin/api/physicians/email' && request.method === 'POST') {
     return handleUpdatePhysicianEmail(request, env);
   }
@@ -1705,6 +1725,87 @@ async function handleCancelCollaboration(request, env) {
   }
 }
 
+// The unpaid invoices belonging to one collaboration. A subscription's are found
+// through Stripe; an app-billed collaboration's are the ones the app recorded when
+// it issued them, rather than the client's invoice list, which would also return
+// invoices from that client's other collaborations.
+async function findOpenInvoicesForCollaboration(env, collaboration) {
+  const stripe = stripeHelpers.getStripe(env);
+  if (collaboration.billing_mode === 'app_invoice') {
+    const ids = await db.listCollaborationInvoiceIds(env.DB, collaboration.id);
+    const invoices = await Promise.all(ids.map((id) => stripeHelpers.retrieveInvoice(stripe, id)));
+    return invoices.filter((i) => i.status === 'open');
+  }
+  if (!collaboration.stripe_subscription_id) return [];
+  return stripeHelpers.listOpenInvoicesForSubscription(stripe, collaboration.stripe_subscription_id);
+}
+
+// Stops a collaboration billing without ending it, for the ordinary case of an
+// NP who has not started seeing patients yet. It returns the collaboration to
+// pending_setup, which is not a workaround but the accurate description: this is
+// exactly the state it was in before it was first activated, and the same Activate
+// button restarts it.
+//
+// Stripe's own pause features both fail here. pause_collection keeps generating an
+// invoice every month, as drafts or auto-voided ones, which piles up over an
+// open-ended wait. The subscription pause endpoint can only be resumed on
+// charge_automatically subscriptions, and these invoice the client instead -- so
+// pausing that way would be a door that does not open again.
+//
+// Voiding the unpaid invoices is asked rather than assumed. When service never
+// started they should go; when a month was genuinely served before the pause,
+// voiding forgives a real debt. Only the person pausing knows which it is.
+async function handlePauseCollaboration(request, env) {
+  try {
+    const { collaborationId, voidOpenInvoices } = await request.json();
+    const collaboration = await db.getCollaboration(env.DB, collaborationId);
+    if (!collaboration) return jsonResponse({ success: false, error: 'Not found' }, 404);
+    if (collaboration.status === 'canceled') {
+      return jsonResponse({ success: false, error: 'This collaboration is cancelled, not active' }, 400);
+    }
+    if (collaboration.status !== 'active') {
+      return jsonResponse({ success: false, error: 'Only an active collaboration can be paused' }, 400);
+    }
+
+    // Voided first: the open invoice is the one with a live payment link in the
+    // client's inbox, and it stays payable right up until it is voided.
+    const voided = [];
+    const failedToVoid = [];
+    if (voidOpenInvoices) {
+      const stripe = stripeHelpers.getStripe(env);
+      for (const invoice of await findOpenInvoicesForCollaboration(env, collaboration)) {
+        try {
+          await stripeHelpers.voidInvoice(stripe, invoice.id);
+          voided.push(invoice.number || invoice.id);
+        } catch (err) {
+          // Reported, not thrown. Stopping here would leave the subscription live
+          // and billing again next month, which is the worse of the two failures;
+          // an invoice still open is visible and can be voided by hand.
+          console.error(`Could not void ${invoice.id} pausing collaboration ${collaboration.id}:`, err?.message);
+          failedToVoid.push(invoice.number || invoice.id);
+        }
+      }
+    }
+
+    let subscriptionCancelled = false;
+    if (collaboration.stripe_subscription_id) {
+      const stripe = stripeHelpers.getStripe(env);
+      await stripeHelpers.cancelCollaborationSubscription(stripe, collaboration.stripe_subscription_id);
+      subscriptionCancelled = true;
+    }
+
+    await db.pauseCollaboration(env.DB, collaboration.id);
+    return jsonResponse({ success: true, voided, failedToVoid, subscriptionCancelled });
+  } catch (err) {
+    console.error('Pause collaboration error:', err);
+    return jsonResponse({
+      success: false,
+      error: 'Could not pause the collaboration',
+      detail: err?.message || String(err),
+    }, 500);
+  }
+}
+
 // Re-sends the client's billing confirmation. Nothing depends on the client
 // reading it, but a bounced one leaves them unaware of what they will be invoiced
 // and when, which is how a first invoice turns into a surprise.
@@ -2058,6 +2159,32 @@ async function runCollaborationBilling(env, today) {
   return results;
 }
 
+// Where an app-billed collaboration should pick billing up when it is activated.
+//
+// A start date still in the future is the answer on its own: that is the date
+// somebody agreed to. Once it has passed, billing starts today, matching what the
+// subscription path already does with a past start date -- invoice now, rather than
+// back-bill months nobody charged for at the time.
+//
+// Then step over any month already claimed. This is what makes resuming after a
+// pause work: a claimed period can never bill again, so a resume that pointed at
+// one would leave the collaboration selected by the sweep every single day and
+// invoiced by it never. The billing day itself is left alone, so a collaboration
+// resumed on the 20th goes back to its own day of the month rather than moving to
+// the day it happened to restart on.
+async function firstUnbilledInvoiceDate(env, collaboration, billingDay) {
+  const today = easternDateString(new Date());
+  let date = collaboration.start_date > today ? collaboration.start_date : today;
+
+  const claimed = new Set(await db.listClaimedPeriods(env.DB, collaboration.id));
+  // Bounded rather than while(true): a bug that made every period look claimed
+  // would otherwise hang the request instead of failing visibly.
+  for (let i = 0; i < 120 && claimed.has(date.slice(0, 7)); i++) {
+    date = stripeHelpers.nextMonthlyDate(date, billingDay);
+  }
+  return date;
+}
+
 async function handleActivateCollaboration(request, env) {
   try {
     const { collaborationId } = await request.json();
@@ -2089,10 +2216,11 @@ async function handleActivateCollaboration(request, env) {
     // is called straight away so a start date that has already arrived bills now
     // rather than waiting for tomorrow's tick.
     if (collaboration.billing_mode === 'app_invoice') {
+      const billingDay = collaboration.billing_day || Number(collaboration.start_date.slice(8, 10));
       await db.activateCollaboration(env.DB, collaboration.id, null);
       await db.setCollaborationBillingSchedule(env.DB, collaboration.id, {
-        billingDay: collaboration.billing_day || Number(collaboration.start_date.slice(8, 10)),
-        nextInvoiceDate: collaboration.start_date,
+        billingDay,
+        nextInvoiceDate: await firstUnbilledInvoiceDate(env, collaboration, billingDay),
       });
       const billed = await runCollaborationBilling(env, easternDateString(new Date()));
       const mine = billed.find((r) => r.collaborationId === collaboration.id);
