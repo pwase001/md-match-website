@@ -88,6 +88,7 @@
   .badge.pending_setup { background: #fdf3e3; color: #a06a00; }
   .badge.active { background: #f0faf0; color: #1a7a1a; }
   .badge.canceled { background: #fdf5f3; color: #c0392b; }
+  .badge.paused { background: #eef2f7; color: #4a5a6a; }
   .badge.ready { background: #f0faf0; color: #1a7a1a; }
   .badge.notready { background: #fdf5f3; color: #c0392b; }
 
@@ -548,6 +549,8 @@
         <td><span class="badge ${c.status}">${c.status}</span></td>
         <td class="actions">
           ${c.status === 'pending_setup' ? `<button class="btn btn-small" onclick="activate(${c.id}, this)">Activate</button>` : ''}
+          ${c.status === 'paused' ? `<button class="btn btn-small" onclick="activate(${c.id}, this)" title="Restart billing from today">Resume</button>` : ''}
+          ${c.status === 'active' ? `<button class="btn btn-small" onclick="pauseCollaboration(${c.id}, this)" title="Stop billing until the NP/PA starts seeing patients">Pause</button>` : ''}
           ${c.status !== 'canceled' ? `<button class="btn btn-small" onclick="cancelCollaboration(${c.id}, ${!!c.stripe_subscription_id}, this)" title="End this collaboration">Cancel</button>` : ''}
         </td>
         <td class="actions">
@@ -746,6 +749,71 @@
 
   async function resendOnboarding(id, btn) {
     await resendEmail('/admin/api/collaborations/resend-onboarding', id, btn, 'Payout setup link re-sent to ');
+  }
+
+  // Pausing asks about the unpaid invoices by name and amount rather than in the
+  // abstract, because the right answer differs: an invoice for a month of service
+  // that never happened should be voided, and one for a month that was actually
+  // worked should not.
+  async function pauseCollaboration(id, btn) {
+    btn.disabled = true;
+    let open = [];
+    try {
+      const res = await fetch(`/admin/api/collaborations/pause-preview?collaborationId=${id}`,
+        { credentials: 'include' });
+      const data = await res.json();
+      if (!data.success) {
+        alert(data.error || 'Could not read this collaboration');
+        btn.disabled = false;
+        return;
+      }
+      open = data.openInvoices;
+    } catch {
+      alert('Network error');
+      btn.disabled = false;
+      return;
+    }
+
+    let voidOpenInvoices = false;
+    if (open.length) {
+      const list = open.map((i) => `  • ${i.number} — ${money(i.amountCents)}${i.dueOn ? ` (due ${i.dueOn})` : ''}`).join('\n');
+      voidOpenInvoices = confirm(
+        `This collaboration has ${open.length} unpaid invoice${open.length > 1 ? 's' : ''}:\n\n${list}\n\n`
+        + 'OK — cancel them too (the service was never provided).\n'
+        + 'Cancel — leave them payable (the month was worked and is still owed).\n\n'
+        + 'Either way, billing stops and no new invoices are created.');
+    } else if (!confirm('Pause billing for this collaboration? No new invoices will be created until you resume it.')) {
+      btn.disabled = false;
+      return;
+    }
+
+    btn.textContent = 'Pausing…';
+    try {
+      const res = await fetch('/admin/api/collaborations/pause', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ collaborationId: id, voidOpenInvoices }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        const notes = [];
+        if (data.voided.length) notes.push(`cancelled ${data.voided.join(', ')}`);
+        if (data.subscriptionCancelled) notes.push('stopped the Stripe subscription');
+        alert(`Billing paused${notes.length ? ` — ${notes.join(' and ')}` : ''}.`
+          + (data.failedToVoid.length
+            ? `\n\nSTILL OPEN and needs voiding by hand in Stripe: ${data.failedToVoid.join(', ')}`
+            : '')
+          + '\n\nPress Resume on this row when they start seeing patients.');
+        loadData();
+        return;
+      }
+      alert(data.detail ? `${data.error}: ${data.detail}` : (data.error || 'Could not pause'));
+    } catch {
+      alert('Network error');
+    }
+    btn.disabled = false;
+    btn.textContent = 'Pause';
   }
 
   async function activate(id, btn) {

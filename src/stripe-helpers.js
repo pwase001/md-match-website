@@ -244,6 +244,23 @@ export function grossUpTotalCents(physicianPayoutCents, netFeeCents, clientFeeSh
 // ending a collaboration should not leave one more invoice queued behind it.
 // Already-issued invoices are unaffected -- work delivered before the end is
 // still owed, and Stripe leaves those open.
+// Voiding leaves the invoice on the record as cancelled and kills its payment
+// link, which is what an invoice for a month of service that never happened
+// should become. Marking it uncollectible instead would record a debt written
+// off, which is a different and untrue story.
+export async function voidInvoice(stripe, invoiceId) {
+  return stripe.invoices.voidInvoice(invoiceId);
+}
+
+export async function retrieveInvoice(stripe, invoiceId) {
+  return stripe.invoices.retrieve(invoiceId);
+}
+
+export async function listOpenInvoicesForSubscription(stripe, subscriptionId) {
+  const res = await stripe.invoices.list({ subscription: subscriptionId, status: 'open', limit: 100 });
+  return res.data;
+}
+
 export async function cancelCollaborationSubscription(stripe, subscriptionId) {
   const existing = await stripe.subscriptions.retrieve(subscriptionId);
   if (existing.status === 'canceled') return existing;

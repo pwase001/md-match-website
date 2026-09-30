@@ -238,6 +238,44 @@ export async function activateCollaboration(db, id, stripeSubscriptionId) {
     .run();
 }
 
+// Puts a collaboration back to where it sat before it was ever activated, so the
+// same Activate button restarts it. The subscription id and the billing schedule
+// are cleared alongside the status: the id would point at a cancelled
+// subscription, and a next_invoice_date left behind would backdate the resume.
+export async function pauseCollaboration(db, id) {
+  await db
+    .prepare(`UPDATE collaborations
+                 SET status = 'paused', stripe_subscription_id = NULL,
+                     next_invoice_date = NULL, updated_at = datetime('now')
+               WHERE id = ?`)
+    .bind(id)
+    .run();
+}
+
+// Every month this collaboration has claimed, billed or failed alike. Resuming has
+// to step over them: a claimed period can never bill again, so a resume pointing at
+// one would leave the collaboration picked up by the sweep every day and invoiced
+// by it never.
+export async function listClaimedPeriods(db, collaborationId) {
+  const res = await db
+    .prepare('SELECT period FROM invoice_runs WHERE collaboration_id = ?')
+    .bind(collaborationId)
+    .all();
+  return res.results.map((r) => r.period);
+}
+
+// The invoices this collaboration actually issued. Read from what the app recorded
+// rather than from the client's invoice list in Stripe, which would also return
+// invoices belonging to that client's other collaborations.
+export async function listCollaborationInvoiceIds(db, collaborationId) {
+  const res = await db
+    .prepare(`SELECT stripe_invoice_id FROM invoice_runs
+               WHERE collaboration_id = ? AND stripe_invoice_id IS NOT NULL`)
+    .bind(collaborationId)
+    .all();
+  return res.results.map((r) => r.stripe_invoice_id);
+}
+
 export async function setCollaborationStatus(db, id, status) {
   await db
     .prepare("UPDATE collaborations SET status = ?, updated_at = datetime('now') WHERE id = ?")
