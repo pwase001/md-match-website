@@ -1,18 +1,24 @@
 import {
   Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
   WidthType, BorderStyle, HeadingLevel, AlignmentType, ShadingType,
-  convertInchesToTwip, UnderlineType
+  convertInchesToTwip, UnderlineType, TableLayoutType
 } from 'docx';
 
 const TEAL = '1B6CA8';
 const DARK = '1e2530';
 const LIGHT_GRAY = 'F2F4F6';
 
+// Fixed twip widths: Google Docs and mobile viewers ignore percentage widths and
+// collapse the columns. 9072 = 8.5in page minus 1.1in margins on each side.
+const TABLE_WIDTH = 9072;
+const LABEL_WIDTH = 3175;
+const VALUE_WIDTH = TABLE_WIDTH - LABEL_WIDTH;
+
 function labelRow(label, value) {
   return new TableRow({
     children: [
       new TableCell({
-        width: { size: 35, type: WidthType.PERCENTAGE },
+        width: { size: LABEL_WIDTH, type: WidthType.DXA },
         shading: { fill: LIGHT_GRAY, type: ShadingType.CLEAR },
         margins: { top: 80, bottom: 80, left: 120, right: 120 },
         borders: {
@@ -22,7 +28,7 @@ function labelRow(label, value) {
         children: [new Paragraph({ children: [new TextRun({ text: label, bold: true, size: 20, color: DARK, font: 'Calibri' })] })],
       }),
       new TableCell({
-        width: { size: 65, type: WidthType.PERCENTAGE },
+        width: { size: VALUE_WIDTH, type: WidthType.DXA },
         margins: { top: 80, bottom: 80, left: 120, right: 120 },
         borders: {
           top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.SINGLE, size: 4, color: 'DDDDDD' },
@@ -54,7 +60,9 @@ function sectionHeader(title) {
 
 function dataTable(rows) {
   return new Table({
-    width: { size: 100, type: WidthType.PERCENTAGE },
+    width: { size: TABLE_WIDTH, type: WidthType.DXA },
+    columnWidths: [LABEL_WIDTH, VALUE_WIDTH],
+    layout: TableLayoutType.FIXED,
     borders: {
       top: { style: BorderStyle.NONE },
       bottom: { style: BorderStyle.NONE },
