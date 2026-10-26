@@ -1291,6 +1291,10 @@ async function handleAdminApi(request, env, url) {
     return handleUpdatePhysicianEmail(request, env);
   }
 
+  if (url.pathname === '/admin/api/physicians/reset-payout-account' && request.method === 'POST') {
+    return handleResetPhysicianPayoutAccount(request, env);
+  }
+
   if (url.pathname === '/admin/api/collaborations/resend-onboarding' && request.method === 'POST') {
     return handleResendOnboarding(request, env);
   }
@@ -1489,6 +1493,7 @@ async function sendPhysicianOnboardingEmail(env, origin, physician, collaboratio
       + `<p>To receive your monthly collaboration payment, please complete a short payout setup with Stripe, the payment processor we use to pay you directly:</p>`
       + `<p><a href="${onboardStartUrl}">${onboardStartUrl}</a></p>`
       + `<p>Stripe will ask for your legal name, date of birth, the last 4 of your SSN, and the bank account you'd like to be paid into. That's their legal requirement for anyone receiving payouts through the platform, not something we're asking for ourselves. It takes about five minutes.</p>`
+      + `<p>If you'd like to be paid through your practice or corporation rather than personally, choose <strong>Company</strong> when Stripe asks for the business type, and have its legal name, EIN, address and business bank account to hand.</p>`
       + scheduleHtml
       + `<p>Any questions, just reply here.</p>`
       + `<p>Best,<br>Philip</p>`,
@@ -1833,9 +1838,96 @@ async function handleResendClientEmail(request, env) {
   }
 }
 
-// Re-sends the payout onboarding email for a collaboration that already exists.
-// Without this the only way to get a physician another link was to create a second
-// collaboration, which would bill the client twice.
+// Starts a physician over on a brand-new Connect account.
+//
+// Needed because business_type cannot be changed on an Express account once an
+// Account Link exists. A physician who began onboarding as an individual and then
+// decided to be paid through their corporation has no way back: the only remedy
+// Stripe offers is a different account.
+//
+// Every refusal below exists because the old account id is the one thing that
+// cannot be recovered by hand afterwards. Once money has moved -- a live transfer
+// destination, a subscription holding the account, an invoice already issued
+// against it -- repointing the physician would silently split their history
+// across two accounts, and the payouts already in flight would land somewhere the
+// app no longer knows about. So this only runs for a physician who has never been
+// paid, on collaborations that have never billed.
+//
+// Stripe is read live rather than trusted from transfers_active, which is a
+// webhook convenience: a stale 0 there would let this run against an account that
+// is actually active.
+async function handleResetPhysicianPayoutAccount(request, env) {
+  try {
+    const { physicianId } = await request.json();
+    if (!physicianId) return jsonResponse({ success: false, error: 'Missing physicianId' }, 400);
+
+    const physician = await db.getPhysician(env.DB, physicianId);
+    if (!physician) return jsonResponse({ success: false, error: 'Physician not found' }, 404);
+    if (!physician.stripe_account_id) {
+      return jsonResponse({
+        success: false,
+        error: `${physician.full_name} has no Stripe account yet — create their collaboration instead`,
+      }, 400);
+    }
+
+    const stripe = stripeHelpers.getStripe(env);
+    const existing = await stripe.accounts.retrieve(physician.stripe_account_id);
+    if (existing.capabilities?.transfers === 'active') {
+      return jsonResponse({
+        success: false,
+        error: `${physician.full_name}'s payout account is already active — resetting it would strand payouts already going there`,
+      }, 409);
+    }
+    if (existing.details_submitted) {
+      return jsonResponse({
+        success: false,
+        error: `${physician.full_name} has already submitted their details to Stripe — ask them to change the business type from their Stripe dashboard instead`,
+      }, 409);
+    }
+
+    const collaborations = await db.listCollaborationsForPhysician(env.DB, physician.id);
+    const blocking = collaborations.filter(
+      (c) => c.status === 'active' || c.stripe_subscription_id || c.run_count > 0
+    );
+    if (blocking.length) {
+      return jsonResponse({
+        success: false,
+        error: `Collaboration ${blocking.map((c) => c.id).join(', ')} has already started billing — reset is only safe before any invoice exists`,
+      }, 409);
+    }
+
+    // Created before the row is moved: if this throws, the physician is still on
+    // their original account and the whole action simply did not happen.
+    const account = await stripeHelpers.createPhysicianAccount(stripe, physician);
+    await db.replacePhysicianStripeAccount(env.DB, physician.id, physician.stripe_account_id, account.id);
+
+    // The onboarding email states the rate, so it needs a collaboration to read it
+    // from. Any pending one will do -- they all pay out to the same new account.
+    const pending = collaborations.find((c) => c.status === 'pending_setup') || null;
+    const collaboration = pending ? await db.getCollaboration(env.DB, pending.id) : null;
+    const origin = new URL(request.url).origin;
+    const refreshed = { ...physician, stripe_account_id: account.id };
+    const emailed = await sendPhysicianOnboardingEmail(env, origin, refreshed, collaboration);
+
+    return jsonResponse({
+      success: true,
+      physician: physician.full_name,
+      previousStripeAccountId: physician.stripe_account_id,
+      stripeAccountId: account.id,
+      collaborationId: pending?.id || null,
+      emailed: !!emailed,
+      email: physician.email,
+    });
+  } catch (err) {
+    console.error('Reset payout account error:', err);
+    return jsonResponse({
+      success: false,
+      error: 'Could not reset the payout account',
+      detail: err?.message || String(err),
+    }, 500);
+  }
+}
+
 // Corrects the email on a physician, in both places it is stored. A physician who
 // typed the wrong address at signup usually asks to start over; they should not,
 // because starting over discards the bank details they already entered, and the
@@ -1916,6 +2008,9 @@ async function handleUpdatePhysicianEmail(request, env) {
   }
 }
 
+// Re-sends the payout onboarding email for a collaboration that already exists.
+// Without this the only way to get a physician another link was to create a second
+// collaboration, which would bill the client twice.
 async function handleResendOnboarding(request, env) {
   try {
     const { collaborationId } = await request.json();
