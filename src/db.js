@@ -57,6 +57,38 @@ export async function updatePhysicianEmail(db, id, email) {
   await db.prepare('UPDATE physicians SET email = ? WHERE id = ?').bind(email, id).run();
 }
 
+// Moves a physician onto a freshly created Connect account, remembering the one
+// they came off. Written as a single statement so a physician can never be left
+// pointing at the new account with no record of the old, or vice versa.
+export async function replacePhysicianStripeAccount(db, id, previousAccountId, nextAccountId) {
+  await db
+    .prepare(`UPDATE physicians
+                 SET previous_stripe_account_id = ?,
+                     stripe_account_id = ?,
+                     onboarding_status = 'started',
+                     transfers_active = 0
+               WHERE id = ?`)
+    .bind(previousAccountId, nextAccountId, id)
+    .run();
+}
+
+// The collaborations belonging to one physician, with the count of invoice_runs
+// rows against each. Resetting a payout account is only safe while none of them
+// has billed, so the check needs the runs as well as the statuses.
+export async function listCollaborationsForPhysician(db, physicianId) {
+  const res = await db
+    .prepare(
+      `SELECT c.id, c.status, c.stripe_subscription_id, c.start_date,
+              (SELECT COUNT(*) FROM invoice_runs r WHERE r.collaboration_id = c.id) AS run_count
+         FROM collaborations c
+        WHERE c.physician_id = ?
+        ORDER BY c.id`
+    )
+    .bind(physicianId)
+    .all();
+  return res.results;
+}
+
 export async function setPhysicianStripeAccountId(db, id, stripeAccountId) {
   await db.prepare('UPDATE physicians SET stripe_account_id = ?, onboarding_status = ? WHERE id = ?')
     .bind(stripeAccountId, 'started', id)

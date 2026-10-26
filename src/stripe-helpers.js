@@ -13,12 +13,18 @@ export function stripeKeyMode(env) {
   return 'unknown';
 }
 
+// business_type is deliberately not set. Stripe's onboarding skips any field the
+// platform has already filled in, so pre-setting it to "individual" silently
+// decided for every physician that they were being paid personally -- and it
+// cannot be changed afterwards once an Account Link exists, which left a
+// physician who wanted to be paid through their practice needing a whole new
+// account. Leaving it unset makes Stripe ask them, once, at the only point where
+// the answer is still free to give.
 export async function createPhysicianAccount(stripe, physician) {
   return stripe.accounts.create({
     type: 'express',
     country: 'US',
     email: physician.email,
-    business_type: 'individual',
     capabilities: {
       transfers: { requested: true },
     },

@@ -555,6 +555,7 @@
         </td>
         <td class="actions">
           ${!c.transfers_active && c.status !== 'canceled' ? `<button class="btn btn-small" onclick="resendOnboarding(${c.id}, this)" title="Email the physician a fresh payout setup link">Resend Link Physician</button>` : ''}
+          ${!c.transfers_active && c.status === 'pending_setup' ? `<button class="btn btn-small" onclick="resetPayoutAccount(${c.physician_id}, '${esc(c.physician_name)}', this)" title="Start the physician on a new Stripe account so they can choose Company instead of Individual">Reset Payout Account</button>` : ''}
           ${c.status !== 'canceled' ? `<button class="btn btn-small" onclick="resendClientEmail(${c.id}, this)" title="Re-send the client their billing confirmation">Resend Link Client</button>` : ''}
         </td>
       </tr>
@@ -745,6 +746,47 @@
       btn.disabled = false;
       btn.textContent = 'Cancel';
     }
+  }
+
+  // Abandons the physician's current Stripe account and starts them on a new one.
+  // Confirmed by name rather than silently, because the old account keeps existing
+  // at Stripe and the physician has to redo their setup from the beginning. The
+  // server refuses the cases where this would strand money; this prompt is only
+  // about the work it costs them.
+  async function resetPayoutAccount(physicianId, physicianName, btn) {
+    if (!confirm(
+      `Start ${physicianName} on a NEW Stripe payout account?\n\n`
+      + 'Use this when they need to be paid as a company rather than personally — '
+      + 'Stripe will not let that change on their current account.\n\n'
+      + 'They will have to complete payout setup again from the beginning, and will '
+      + 'be emailed a fresh link. Their old account is left alone, not deleted.')) return;
+
+    btn.disabled = true;
+    const was = btn.textContent;
+    btn.textContent = 'Resetting…';
+    try {
+      const res = await fetch('/admin/api/physicians/reset-payout-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ physicianId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(`${data.physician} moved to a new payout account.\n\n`
+          + `New: ${data.stripeAccountId}\nOld: ${data.previousStripeAccountId} (left alone in Stripe)\n\n`
+          + (data.emailed
+            ? `Setup link emailed to ${data.email}.`
+            : 'WARNING: the setup email did NOT send — use Resend Link Physician.'));
+        loadData();
+        return;
+      }
+      alert(data.detail ? `${data.error}: ${data.detail}` : (data.error || 'Could not reset'));
+    } catch {
+      alert('Network error');
+    }
+    btn.disabled = false;
+    btn.textContent = was;
   }
 
   async function resendOnboarding(id, btn) {
