@@ -555,7 +555,7 @@
         </td>
         <td class="actions">
           ${!c.transfers_active && c.status !== 'canceled' ? `<button class="btn btn-small" onclick="resendOnboarding(${c.id}, this)" title="Email the physician a fresh payout setup link">Resend Link Physician</button>` : ''}
-          ${!c.transfers_active && c.status === 'pending_setup' ? `<button class="btn btn-small" onclick="resetPayoutAccount(${c.physician_id}, '${esc(c.physician_name)}', this)" title="Start the physician on a new Stripe account so they can choose Company instead of Individual">Reset Payout Account</button>` : ''}
+          ${c.status === 'pending_setup' ? `<button class="btn btn-small" onclick="resetPayoutAccount(${c.physician_id}, '${esc(c.physician_name)}', this)" title="Start the physician on a new Stripe account so they can choose Company instead of Individual">Reset Payout Account</button>` : ''}
           ${c.status !== 'canceled' ? `<button class="btn btn-small" onclick="resendClientEmail(${c.id}, this)" title="Re-send the client their billing confirmation">Resend Link Client</button>` : ''}
         </td>
       </tr>
