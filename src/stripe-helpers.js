@@ -258,6 +258,15 @@ export async function voidInvoice(stripe, invoiceId) {
   return stripe.invoices.voidInvoice(invoiceId);
 }
 
+// Every transfer this platform has sent to one connected account, newest first.
+// Used to decide whether a physician has actually been paid, which is the thing
+// that makes abandoning their account unsafe -- an account that merely looks
+// finished has stranded nothing.
+export async function listTransfersToAccount(stripe, accountId) {
+  const res = await stripe.transfers.list({ destination: accountId, limit: 100 });
+  return res.data;
+}
+
 export async function retrieveInvoice(stripe, invoiceId) {
   return stripe.invoices.retrieve(invoiceId);
 }

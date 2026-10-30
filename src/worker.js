@@ -1870,29 +1870,49 @@ async function handleResetPhysicianPayoutAccount(request, env) {
       }, 400);
     }
 
+    // What makes a reset unsafe is money having moved, not the account looking
+    // finished. The first version of this tested "transfers active" and "details
+    // submitted", which are proxies: a physician who completed onboarding and was
+    // never paid trips both, and they are exactly who needs a reset -- Dr. Albin
+    // finished as an Individual and her accountant then told her it had to be the
+    // company, which Stripe will not change on an existing account.
+    //
+    // So the test is now the thing itself: a transfer ever sent to this account,
+    // or any month ever billed for this physician. Either way the old account is
+    // part of a payment history that repointing them would split.
     const stripe = stripeHelpers.getStripe(env);
-    const existing = await stripe.accounts.retrieve(physician.stripe_account_id);
-    if (existing.capabilities?.transfers === 'active') {
+    const sent = await stripeHelpers.listTransfersToAccount(stripe, physician.stripe_account_id);
+    if (sent.length) {
       return jsonResponse({
         success: false,
-        error: `${physician.full_name}'s payout account is already active — resetting it would strand payouts already going there`,
-      }, 409);
-    }
-    if (existing.details_submitted) {
-      return jsonResponse({
-        success: false,
-        error: `${physician.full_name} has already submitted their details to Stripe — ask them to change the business type from their Stripe dashboard instead`,
+        error: `${physician.full_name} has already been paid through this account `
+          + `(${sent.length} transfer${sent.length > 1 ? 's' : ''}, most recently ${sent[0].id}) `
+          + `— resetting would split their payment history across two accounts`,
       }, 409);
     }
 
     const collaborations = await db.listCollaborationsForPhysician(env.DB, physician.id);
+    const billed = collaborations.filter((c) => c.run_count > 0);
+    if (billed.length) {
+      return jsonResponse({
+        success: false,
+        error: `Collaboration ${billed.map((c) => c.id).join(', ')} has already been billed `
+          + `— reset is only safe before any invoice exists`,
+      }, 409);
+    }
+
+    // Kept as-is: an active collaboration is what the billing sweep picks up, and
+    // a reset underneath a live one would point its next invoice at an account
+    // nobody has onboarded yet. Pausing it first is the deliberate step that makes
+    // the reset safe.
     const blocking = collaborations.filter(
-      (c) => c.status === 'active' || c.stripe_subscription_id || c.run_count > 0
+      (c) => c.status === 'active' || c.stripe_subscription_id
     );
     if (blocking.length) {
       return jsonResponse({
         success: false,
-        error: `Collaboration ${blocking.map((c) => c.id).join(', ')} has already started billing — reset is only safe before any invoice exists`,
+        error: `Collaboration ${blocking.map((c) => c.id).join(', ')} is still live `
+          + `— pause it first, so its next invoice cannot be pointed at an account nobody has onboarded yet`,
       }, 409);
     }
 
