@@ -1238,7 +1238,8 @@ async function handleAdminApi(request, env, url) {
       success: true,
       nudges: nudges.map((n) => ({
         invoiceId: n.invoice.id, number: n.invoice.number,
-        client: n.invoice.customer_name, email: n.invoice.customer_email,
+        client: n.invoice.customer_name, email: n.email,
+        invoiceEmail: n.invoiceEmail, staleOnInvoice: n.staleOnInvoice,
         amount: n.amount, dueOn: n.dueOn, gmailUrl: n.gmailUrl, body: n.body,
       })),
     });
@@ -2091,8 +2092,15 @@ function prettyDate(isoDate) {
 // have met, so the app does not send this: it drafts it and hands it over. The
 // Gmail compose link opens the draft already addressed and written, in the
 // account the client recognises, one review and one click from sent.
-function buildPaymentNudge(invoice) {
+//
+// Addressed from the app's own record of the client, not from the invoice. Stripe
+// freezes customer_email when an invoice is finalised and never revisits it, so a
+// corrected address never reaches an invoice already issued -- and a reminder for
+// that invoice is the one piece of mail that most needs to arrive. The invoice's
+// copy is kept only as a fallback for a customer the app has no client row for.
+function buildPaymentNudge(invoice, client) {
   const firstName = String(invoice.customer_name || '').trim().split(' ')[0] || 'there';
+  const email = client?.email || invoice.customer_email || '';
   const amount = '$' + (invoice.amount_remaining / 100).toFixed(2);
   const dueOn = prettyDate(easternDateFromUnix(invoice.due_date));
 
@@ -2112,11 +2120,19 @@ function buildPaymentNudge(invoice) {
   ].join('\n');
 
   const gmailUrl = 'https://mail.google.com/mail/?view=cm&fs=1'
-    + `&to=${encodeURIComponent(invoice.customer_email || '')}`
+    + `&to=${encodeURIComponent(email)}`
     + `&su=${encodeURIComponent(subject)}`
     + `&body=${encodeURIComponent(body)}`;
 
-  return { invoice, firstName, amount, dueOn, subject, body, gmailUrl };
+  // staleOnInvoice says Stripe will mail its own copy of this invoice somewhere
+  // else. It changes nothing about the draft; it is surfaced so the one case where
+  // Stripe's dunning is going to a dead address is visible rather than silent.
+  const invoiceEmail = invoice.customer_email || '';
+  return {
+    invoice, client: client || null, email, invoiceEmail,
+    staleOnInvoice: !!email && !!invoiceEmail && email !== invoiceEmail,
+    firstName, amount, dueOn, subject, body, gmailUrl,
+  };
 }
 
 // Finds invoices falling due tomorrow that nobody has paid, and drafts one
@@ -2127,10 +2143,15 @@ async function findPaymentNudges(env, now) {
   const tomorrow = easternDateString(new Date(now.getTime() + 86400000));
   const open = await stripeHelpers.listOpenInvoices(stripe);
 
-  return open
-    .filter((inv) => inv.due_date && inv.amount_remaining > 0
-      && easternDateFromUnix(inv.due_date) === tomorrow)
-    .map(buildPaymentNudge);
+  const due = open.filter((inv) => inv.due_date && inv.amount_remaining > 0
+    && easternDateFromUnix(inv.due_date) === tomorrow);
+
+  // Looked up after the filter, not before: this is one query over the handful of
+  // invoices actually falling due, rather than over every open invoice there is.
+  const customerIdOf = (inv) => (typeof inv.customer === 'string' ? inv.customer : inv.customer?.id);
+  const clients = await db.getClientsByStripeCustomerIds(env.DB, due.map(customerIdOf));
+
+  return due.map((inv) => buildPaymentNudge(inv, clients.get(customerIdOf(inv)) || null));
 }
 
 async function runPaymentNudges(env, now) {
@@ -2145,9 +2166,12 @@ async function runPaymentNudges(env, now) {
 
   const blocks = sent.map((n) => `
     <div style="margin:0 0 28px;padding:16px 18px;border:1px solid #d5ded9;border-radius:6px">
-      <p style="margin:0 0 4px;font-size:15px"><strong>${n.invoice.customer_name || n.invoice.customer_email}</strong>
+      <p style="margin:0 0 4px;font-size:15px"><strong>${n.invoice.customer_name || n.email}</strong>
         &mdash; ${n.amount}, due ${n.dueOn}</p>
-      <p style="margin:0 0 14px;font-size:13px;color:#6b7b76">${n.invoice.number || ''} &middot; ${n.invoice.customer_email}</p>
+      <p style="margin:0 0 14px;font-size:13px;color:#6b7b76">${n.invoice.number || ''} &middot; ${n.email}</p>
+      ${n.staleOnInvoice ? `<p style="margin:0 0 14px;font-size:13px;color:#8a5a00">This draft goes to the
+        address on file. The invoice itself was issued to ${esc(n.invoiceEmail)}, so anything Stripe sends
+        about it goes there instead &mdash; Stripe will not update a finalised invoice.</p>` : ''}
       <p style="margin:0 0 14px">
         <a href="${n.gmailUrl}" style="background:#0b3535;color:#fff;text-decoration:none;padding:10px 18px;border-radius:6px;font-weight:600;display:inline-block">Open this draft in Gmail</a>
       </p>
@@ -2159,7 +2183,7 @@ async function runPaymentNudges(env, now) {
     from: 'MD-Match <noreply@md-match.com>',
     replyTo: OWNER_EMAIL,
     subject: sent.length === 1
-      ? `Due tomorrow: ${sent[0].invoice.customer_name || sent[0].invoice.customer_email} (${sent[0].amount})`
+      ? `Due tomorrow: ${sent[0].invoice.customer_name || sent[0].email} (${sent[0].amount})`
       : `${sent.length} invoices due tomorrow`,
     html: `<p>These invoices fall due tomorrow and are still unpaid. The button opens each
       draft in Gmail, already addressed and written &mdash; review it and press send.</p>${blocks}`,

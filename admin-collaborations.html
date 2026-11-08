@@ -447,7 +447,12 @@
         + data.nudges.map(n =>
             `<div style="margin-top:8px">${n.client || n.email} — ${n.amount} `
             + `<a href="${n.gmailUrl}" target="_blank" rel="noopener" class="btn btn-small" `
-            + `style="text-decoration:none;display:inline-block;margin-left:6px">Open draft in Gmail</a></div>`
+            + `style="text-decoration:none;display:inline-block;margin-left:6px">Open draft in Gmail</a>`
+            + (n.staleOnInvoice
+                ? `<div style="font-size:11px;color:#8a5a00">draft goes to ${esc(n.email)};`
+                  + ` the invoice was issued to ${esc(n.invoiceEmail)}, so Stripe's own mail goes there</div>`
+                : '')
+            + `</div>`
           ).join('')
         + `</div>`;
     } catch {
