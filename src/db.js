@@ -25,6 +25,28 @@ export async function setClientStripeCustomerId(db, id, stripeCustomerId) {
   await db.prepare('UPDATE clients SET stripe_customer_id = ? WHERE id = ?').bind(stripeCustomerId, id).run();
 }
 
+// The clients behind a set of Stripe customer ids, as a Map keyed by that id.
+//
+// Finalising an invoice freezes a copy of the address it was issued to, and Stripe
+// never updates it afterwards. So an address corrected after an invoice went out is
+// precisely the case where the invoice's own copy is wrong -- which is the moment a
+// payment reminder matters most. Callers that are about to write to a client read
+// the live address through here instead of trusting that snapshot.
+//
+// Returns a Map rather than rows so a caller holding a list of invoices can resolve
+// each one without a query per invoice.
+export async function getClientsByStripeCustomerIds(db, stripeCustomerIds) {
+  const ids = [...new Set((stripeCustomerIds || []).filter(Boolean))];
+  if (!ids.length) return new Map();
+
+  const placeholders = ids.map(() => '?').join(',');
+  const res = await db
+    .prepare(`SELECT * FROM clients WHERE stripe_customer_id IN (${placeholders})`)
+    .bind(...ids)
+    .all();
+  return new Map(res.results.map((row) => [row.stripe_customer_id, row]));
+}
+
 export async function createPhysician(db, { fullName, email, phone }) {
   const res = await db
     .prepare('INSERT INTO physicians (full_name, email, phone) VALUES (?, ?, ?) RETURNING *')
