@@ -555,6 +555,7 @@
         <td class="actions">
           ${c.status === 'pending_setup' ? `<button class="btn btn-small" onclick="activate(${c.id}, this)">Activate</button>` : ''}
           ${c.status === 'paused' ? `<button class="btn btn-small" onclick="activate(${c.id}, this)" title="Restart billing from today">Resume</button>` : ''}
+          ${c.status === 'paused' || c.status === 'pending_setup' ? `<button class="btn btn-small" onclick="setStartDate(${c.id}, this)" title="Set the real first patient date, move billing to that day, recalculate the intro period, and send the first invoice">Set Start Date</button>` : ''}
           ${c.status === 'active' ? `<button class="btn btn-small" onclick="pauseCollaboration(${c.id}, this)" title="Stop billing until the NP/PA starts seeing patients">Pause</button>` : ''}
           ${c.status !== 'canceled' ? `<button class="btn btn-small" onclick="cancelCollaboration(${c.id}, ${!!c.stripe_subscription_id}, this)" title="End this collaboration">Cancel</button>` : ''}
         </td>
@@ -861,6 +862,61 @@
     }
     btn.disabled = false;
     btn.textContent = 'Pause';
+  }
+
+  // For an NP whose first patient date was not known when the collaboration was
+  // created. One action rather than three fields, because the three are not
+  // independent -- the billing day and the end of the intro period both follow from
+  // the start date, and getting one of them wrong is how a second invoice lands a
+  // few days after the first.
+  async function setStartDate(id, btn) {
+    const startDate = (prompt(
+      'First patient date, as YYYY-MM-DD.\n\n'
+      + 'This sets the start date, moves billing to that day of each month, '
+      + 'recalculates the introductory period to three months from it, '
+      + 'and sends the first invoice now.'
+    ) || '').trim();
+    if (!startDate) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
+      alert('Please use YYYY-MM-DD, for example 2027-01-05.');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Setting…';
+    try {
+      const res = await fetch('/admin/api/collaborations/start-date', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ collaborationId: id, startDate }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        const inv = data.firstInvoice;
+        alert(`Start date set to ${data.startDate}.`
+          + `\nBills on day ${data.billingDay} of each month.`
+          + (data.promoEndDate ? `\nIntroductory rate until ${data.promoEndDate}.` : '')
+          + (inv
+            ? (inv.invoiceId
+                ? `\n\nFirst invoice sent: ${inv.number || inv.invoiceId}.`
+                : `\n\nFirst invoice NOT sent: ${inv.error || inv.skipped}.`)
+            : '\n\nNo invoice yet — the start date is still in the future, so the first one goes out on it.')
+          + '\n\nIf the introductory end date moved, press Resend Link Client so they get the corrected schedule.');
+        loadData();
+        return;
+      }
+      // The dates are written before activation is attempted, so a refusal here
+      // still leaves them saved -- say so, or somebody retypes them needlessly.
+      alert((data.detail ? `${data.error}: ${data.detail}` : (data.error || 'Could not set the start date'))
+        + (data.datesSaved
+          ? '\n\nThe dates were saved. Press Activate once payout onboarding is finished.'
+          : ''));
+    } catch {
+      alert('Network error');
+    }
+    btn.disabled = false;
+    btn.textContent = 'Set Start Date';
   }
 
   async function activate(id, btn) {

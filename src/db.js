@@ -330,6 +330,22 @@ export async function listCollaborationInvoiceIds(db, collaborationId) {
   return res.results.map((r) => r.stripe_invoice_id);
 }
 
+// The dates that say when a collaboration starts and when its promotional rate
+// ends, moved together with the day of the month it bills on.
+//
+// next_invoice_date is cleared rather than set. Activation works it out, stepping
+// over any month already claimed, and a value left here from the previous schedule
+// would survive that and bill against the old date.
+export async function setCollaborationStartDate(db, id, { startDate, billingDay, promoEndDate }) {
+  await db
+    .prepare(`UPDATE collaborations
+                 SET start_date = ?, billing_day = ?, promo_end_date = ?,
+                     next_invoice_date = NULL, updated_at = datetime('now')
+               WHERE id = ?`)
+    .bind(startDate, billingDay, promoEndDate ?? null, id)
+    .run();
+}
+
 export async function setCollaborationStatus(db, id, status) {
   await db
     .prepare("UPDATE collaborations SET status = ?, updated_at = datetime('now') WHERE id = ?")

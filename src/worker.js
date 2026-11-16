@@ -1218,6 +1218,10 @@ async function handleAdminApi(request, env, url) {
     return handleActivateCollaboration(request, env);
   }
 
+  if (url.pathname === '/admin/api/collaborations/start-date' && request.method === 'POST') {
+    return handleSetCollaborationStartDate(request, env);
+  }
+
   // What the scheduled handler would do today, and anything it failed at before.
   // Failed months stay claimed and stop that collaboration billing, so they need a
   // place a person actually looks.
@@ -2324,62 +2328,167 @@ async function firstUnbilledInvoiceDate(env, collaboration, billingDay) {
   return date;
 }
 
+// Takes one collaboration live: the payout gate, the billing schedule, and the
+// first invoice. Returns a status and a payload rather than a Response, so callers
+// can add their own fields to it.
+//
+// Shared by the Activate button and by setting a real start date, so a
+// collaboration that starts months late goes live through exactly the same path as
+// one that starts on the day it was signed for.
+async function activateCollaborationNow(env, collaboration) {
+  const physician = await db.getPhysician(env.DB, collaboration.physician_id);
+  const client = await db.getClient(env.DB, collaboration.client_id);
+
+  const stripe = stripeHelpers.getStripe(env);
+
+  // Check the physician's Connect account status live rather than trusting the
+  // account.updated webhook to have already flipped transfers_active — the webhook
+  // is a convenience for the admin UI, not the source of truth for this gate.
+  const account = await stripe.accounts.retrieve(physician.stripe_account_id);
+  const transfersActive = account.capabilities?.transfers === 'active';
+  if (transfersActive !== !!physician.transfers_active) {
+    await db.setPhysicianTransfersActive(env.DB, physician.stripe_account_id, transfersActive);
+  }
+  if (!transfersActive) {
+    return {
+      httpStatus: 400,
+      payload: { success: false, error: 'Physician has not completed payout onboarding yet' },
+    };
+  }
+  // No client-side gate: the subscription invoices the client rather than
+  // charging a saved payment method, so there is nothing they must complete
+  // before it can be activated.
+
+  // App-billed collaborations have no subscription to create. Activation just
+  // opens the billing schedule; the scheduled handler issues the invoices, and
+  // is called straight away so a start date that has already arrived bills now
+  // rather than waiting for tomorrow's tick.
+  if (collaboration.billing_mode === 'app_invoice') {
+    const billingDay = collaboration.billing_day || Number(collaboration.start_date.slice(8, 10));
+    await db.activateCollaboration(env.DB, collaboration.id, null);
+    await db.setCollaborationBillingSchedule(env.DB, collaboration.id, {
+      billingDay,
+      nextInvoiceDate: await firstUnbilledInvoiceDate(env, collaboration, billingDay),
+    });
+    const billed = await runCollaborationBilling(env, easternDateString(new Date()));
+    const mine = billed.find((r) => r.collaborationId === collaboration.id);
+    return {
+      httpStatus: 200,
+      payload: { success: true, billingMode: 'app_invoice', firstInvoice: mine || null },
+    };
+  }
+
+  const subscription = await stripeHelpers.createCollaborationSubscription(stripe, {
+    customerId: client.stripe_customer_id,
+    physicianAccountId: physician.stripe_account_id,
+    totalAmountCents: collaboration.total_amount_cents,
+    applicationFeePercent: collaboration.application_fee_percent,
+    startDateISO: collaboration.start_date,
+    description: `Collaboration services — ${physician.full_name}`,
+    paymentTermsDays: collaboration.payment_terms_days,
+  });
+
+  await db.activateCollaboration(env.DB, collaboration.id, subscription.id);
+  return { httpStatus: 200, payload: { success: true, subscriptionId: subscription.id } };
+}
+
 async function handleActivateCollaboration(request, env) {
   try {
     const { collaborationId } = await request.json();
     const collaboration = await db.getCollaboration(env.DB, collaborationId);
     if (!collaboration) return jsonResponse({ success: false, error: 'Not found' }, 404);
 
-    const physician = await db.getPhysician(env.DB, collaboration.physician_id);
-    const client = await db.getClient(env.DB, collaboration.client_id);
-
-    const stripe = stripeHelpers.getStripe(env);
-
-    // Check the physician's Connect account status live rather than trusting the
-    // account.updated webhook to have already flipped transfers_active — the webhook
-    // is a convenience for the admin UI, not the source of truth for this gate.
-    const account = await stripe.accounts.retrieve(physician.stripe_account_id);
-    const transfersActive = account.capabilities?.transfers === 'active';
-    if (transfersActive !== !!physician.transfers_active) {
-      await db.setPhysicianTransfersActive(env.DB, physician.stripe_account_id, transfersActive);
-    }
-    if (!transfersActive) {
-      return jsonResponse({ success: false, error: 'Physician has not completed payout onboarding yet' }, 400);
-    }
-    // No client-side gate: the subscription invoices the client rather than
-    // charging a saved payment method, so there is nothing they must complete
-    // before it can be activated.
-
-    // App-billed collaborations have no subscription to create. Activation just
-    // opens the billing schedule; the scheduled handler issues the invoices, and
-    // is called straight away so a start date that has already arrived bills now
-    // rather than waiting for tomorrow's tick.
-    if (collaboration.billing_mode === 'app_invoice') {
-      const billingDay = collaboration.billing_day || Number(collaboration.start_date.slice(8, 10));
-      await db.activateCollaboration(env.DB, collaboration.id, null);
-      await db.setCollaborationBillingSchedule(env.DB, collaboration.id, {
-        billingDay,
-        nextInvoiceDate: await firstUnbilledInvoiceDate(env, collaboration, billingDay),
-      });
-      const billed = await runCollaborationBilling(env, easternDateString(new Date()));
-      const mine = billed.find((r) => r.collaborationId === collaboration.id);
-      return jsonResponse({ success: true, billingMode: 'app_invoice', firstInvoice: mine || null });
-    }
-
-    const subscription = await stripeHelpers.createCollaborationSubscription(stripe, {
-      customerId: client.stripe_customer_id,
-      physicianAccountId: physician.stripe_account_id,
-      totalAmountCents: collaboration.total_amount_cents,
-      applicationFeePercent: collaboration.application_fee_percent,
-      startDateISO: collaboration.start_date,
-      description: `Collaboration services — ${physician.full_name}`,
-      paymentTermsDays: collaboration.payment_terms_days,
-    });
-
-    await db.activateCollaboration(env.DB, collaboration.id, subscription.id);
-    return jsonResponse({ success: true, subscriptionId: subscription.id });
+    const { httpStatus, payload } = await activateCollaborationNow(env, collaboration);
+    return jsonResponse(payload, httpStatus);
   } catch (err) {
     console.error('Activate collaboration error:', err);
+    return jsonResponse({ success: false, error: 'Server error', detail: err?.message || String(err) }, 500);
+  }
+}
+
+// Advances a date by whole months, landing on the same day of the month where the
+// target month has one. Built on nextMonthlyDate so a promotional period ends the
+// way billing dates behave: one that starts on the 31st ends on its month's last
+// day rather than slipping into the next.
+function addMonthsAnchored(isoDate, months, anchorDay) {
+  let date = isoDate;
+  for (let i = 0; i < months; i++) date = stripeHelpers.nextMonthlyDate(date, anchorDay);
+  return date;
+}
+
+// Sets the date a collaboration really starts, for the ordinary case of an NP whose
+// first patient date was not known when the paperwork was signed.
+//
+// All three dates move together, which is why this is one action rather than an edit
+// form. start_date is what was agreed; billing_day has to follow it, or the second
+// invoice lands on the old day of the month, possibly days after the first; and a
+// promotional period is defined as three months from the start, so its end is
+// derived rather than typed. The collaboration then goes live through the same path
+// as the Activate button, which issues the first invoice straight away.
+//
+// Refused once anything has billed. These dates say what will be charged, and
+// moving them under an invoice already sent would leave the record disagreeing with
+// the money. A cancelled collaboration is refused too: it is finished, and a new
+// arrangement is a new row.
+async function handleSetCollaborationStartDate(request, env) {
+  try {
+    const { collaborationId, startDate } = await request.json();
+    const next = typeof startDate === 'string' ? startDate.trim() : '';
+    if (!collaborationId || !next) {
+      return jsonResponse({ success: false, error: 'Missing collaborationId or startDate' }, 400);
+    }
+    // Both halves matter: the shape check rejects '5 Jan 2027', and the parse check
+    // rejects a well-shaped date that does not exist, like 2027-02-31.
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(next)
+      || !Number.isFinite(Date.parse(`${next}T00:00:00Z`))
+      || new Date(`${next}T00:00:00Z`).toISOString().slice(0, 10) !== next) {
+      return jsonResponse({ success: false, error: `"${next}" is not a real date in YYYY-MM-DD form` }, 400);
+    }
+
+    const collaboration = await db.getCollaboration(env.DB, collaborationId);
+    if (!collaboration) return jsonResponse({ success: false, error: 'Not found' }, 404);
+    if (collaboration.status === 'canceled') {
+      return jsonResponse({
+        success: false,
+        error: 'This collaboration is cancelled — create a new one rather than restarting it',
+      }, 400);
+    }
+
+    const claimed = await db.listClaimedPeriods(env.DB, collaboration.id);
+    if (claimed.length) {
+      return jsonResponse({
+        success: false,
+        error: `This collaboration has already billed for ${claimed.sort().join(', ')}, `
+          + 'so its start date cannot be moved',
+      }, 409);
+    }
+
+    const billingDay = Number(next.slice(8, 10));
+    // Only a collaboration that actually carries a promotional rate gets an end
+    // date; deriving one for a collaboration without a promo would invent a rate
+    // change that was never agreed.
+    const promoEndDate = collaboration.promo_total_cents != null
+      ? addMonthsAnchored(next, 3, billingDay)
+      : null;
+
+    await db.setCollaborationStartDate(env.DB, collaboration.id, {
+      startDate: next, billingDay, promoEndDate,
+    });
+
+    // Re-read so activation computes the schedule from the dates just written
+    // rather than from the ones this request was holding.
+    const refreshed = await db.getCollaboration(env.DB, collaboration.id);
+    const { httpStatus, payload } = await activateCollaborationNow(env, refreshed);
+
+    // datesSaved travels with a refusal as well as a success: activation can be
+    // turned away for a physician who has not finished payout onboarding, and the
+    // dates are correct either way, so the caller should say they were kept rather
+    // than leave somebody wondering whether to type them again.
+    return jsonResponse({
+      ...payload, datesSaved: true, startDate: next, billingDay, promoEndDate,
+    }, httpStatus);
+  } catch (err) {
+    console.error('Set collaboration start date error:', err);
     return jsonResponse({ success: false, error: 'Server error', detail: err?.message || String(err) }, 500);
   }
 }
