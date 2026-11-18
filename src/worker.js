@@ -1511,7 +1511,14 @@ async function handleCreateCollaboration(request, env) {
       clientId, physicianId, physicianPayoutUsd, netFeeUsd, stripeFeeShare,
       startDate, paymentTermsDays,
       providerName, promoPayoutUsd, promoNetFeeUsd, promoEndDate, notes,
+      physicianPaidDirectly,
     } = await request.json();
+
+    // Ohio lets an NP's practice pay the collaborating physician itself (ORC
+    // 4723.481(C)(2)(n)). Then MD-Match bills its platform fee and nothing else:
+    // there is no payout, so the figure is zero by definition rather than a number
+    // somebody types, and no payout email or Connect account is needed for it.
+    const directPay = !!physicianPaidDirectly;
 
     // The form asks for the two figures that are actually negotiated -- what the
     // physician is paid, and what this is worth to the platform -- and the client's
@@ -1523,9 +1530,9 @@ async function handleCreateCollaboration(request, env) {
     // client's total so the stated fee is what the platform keeps, 0 leaves the
     // platform absorbing it as before, and 0.5 splits it. Anything in between works;
     // the figure is a proportion, not a menu.
-    const physicianPayoutCents = Math.round(Number(physicianPayoutUsd) * 100);
+    const physicianPayoutCents = directPay ? 0 : Math.round(Number(physicianPayoutUsd) * 100);
     const netFeeCents = Math.round(Number(netFeeUsd ?? 200) * 100);
-    if (!Number.isFinite(physicianPayoutCents) || physicianPayoutCents <= 0) {
+    if (!directPay && (!Number.isFinite(physicianPayoutCents) || physicianPayoutCents <= 0)) {
       return jsonResponse({ success: false, error: 'Physician payout must be greater than zero' }, 400);
     }
     if (!Number.isFinite(netFeeCents) || netFeeCents <= 0) {
@@ -1566,22 +1573,31 @@ async function handleCreateCollaboration(request, env) {
     // produce a notice quoting a promotional rate with no end date, or an end date
     // with no rate -- worse than not offering the option at all.
     const toCents = (v) => (v === '' || v == null ? null : Math.round(Number(v) * 100));
-    const promoPayoutCents = toCents(promoPayoutUsd);
     const promoNetFeeCents = toCents(promoNetFeeUsd);
     const promoEnd = promoEndDate || null;
-    const promoParts = [promoPayoutCents, promoNetFeeCents, promoEnd];
+    // A direct-pay collaboration has no payout to reduce, so its introductory
+    // period is the reduced fee and the end date; stored as 0 rather than null so
+    // collaborationRateOn still recognises the promotional rate.
+    const promoPayoutCents = directPay
+      ? (promoNetFeeCents === null ? null : 0)
+      : toCents(promoPayoutUsd);
+    const promoParts = directPay
+      ? [promoNetFeeCents, promoEnd]
+      : [promoPayoutCents, promoNetFeeCents, promoEnd];
     if (promoParts.some((p) => p === null) && promoParts.some((p) => p !== null)) {
       return jsonResponse({
         success: false,
-        error: 'An introductory rate needs the physician payout, your fee, and the date it ends',
+        error: directPay
+          ? 'An introductory rate needs your fee and the date it ends'
+          : 'An introductory rate needs the physician payout, your fee, and the date it ends',
       }, 400);
     }
 
     let promoTotalCents = null;
     let promoProcessingFeeCents = null;
     if (promoPayoutCents !== null) {
-      if (!Number.isFinite(promoPayoutCents) || promoPayoutCents <= 0
-        || !Number.isFinite(promoNetFeeCents) || promoNetFeeCents <= 0) {
+      if (!Number.isFinite(promoNetFeeCents) || promoNetFeeCents <= 0
+        || (!directPay && (!Number.isFinite(promoPayoutCents) || promoPayoutCents <= 0))) {
         return jsonResponse({ success: false, error: 'Introductory amounts must be greater than zero' }, 400);
       }
       // The promotional client total is derived the same way the standard one is,
@@ -1592,11 +1608,19 @@ async function handleCreateCollaboration(request, env) {
         promoPayoutCents, promoNetFeeCents, stripeFeeShare ?? 1, billingMode
       );
       promoProcessingFeeCents = promoTotalCents - (promoPayoutCents + promoNetFeeCents);
-      // The promotional payout is what the physician receives instead of the full
-      // amount, so a figure at or above the standard payout is a typo rather than a
-      // generous promotion -- and the notice would tell them their rate improves
-      // when the promotion ends.
-      if (promoPayoutCents >= physicianPayoutCents) {
+      // The promotional figure is what is charged instead of the full amount, so
+      // one at or above the standard figure is a typo rather than a generous
+      // promotion -- and the notice would tell them their rate improves when the
+      // promotion ends. For a direct-pay collaboration the fee is the only figure
+      // there is, so that is the one that has to come down.
+      if (directPay) {
+        if (promoNetFeeCents >= netFeeCents) {
+          return jsonResponse({
+            success: false,
+            error: 'Introductory fee must be less than the standard fee',
+          }, 400);
+        }
+      } else if (promoPayoutCents >= physicianPayoutCents) {
         return jsonResponse({
           success: false,
           error: 'Introductory payout must be less than the standard payout',
@@ -1632,6 +1656,7 @@ async function handleCreateCollaboration(request, env) {
       paymentTermsDays: termsDays, providerName, promoPayoutCents, promoTotalCents,
       processingFeeCents, promoProcessingFeeCents,
       promoEndDate: promoEnd, notes,
+      physicianPaidDirectly: directPay,
       // The billing day is taken from the start date and then held, so 9/20 bills
       // on 10/20 and 11/20 rather than drifting.
       billingMode, billingDay: Number(String(startDate).slice(8, 10)),
@@ -1646,7 +1671,14 @@ async function handleCreateCollaboration(request, env) {
     // ignore teaches them that mail from us can be ignored.
     let stripeAccountId = physician.stripe_account_id;
     let needsOnboarding = true;
-    if (!stripeAccountId) {
+    if (directPay) {
+      // Nothing is ever forwarded to this physician for this collaboration, so no
+      // Connect account is created and neither physician email is sent. Mailing a
+      // payout setup link for an arrangement that pays them nothing, or a notice
+      // quoting a rate of zero, would both be wrong: their practice is paying them,
+      // and that conversation is not MD-Match's to start.
+      needsOnboarding = false;
+    } else if (!stripeAccountId) {
       const account = await stripeHelpers.createPhysicianAccount(stripe, physician);
       stripeAccountId = account.id;
       await db.setPhysicianStripeAccountId(env.DB, physician.id, stripeAccountId);
@@ -1676,7 +1708,7 @@ async function handleCreateCollaboration(request, env) {
     // are two arrangements or one.
     if (needsOnboarding) {
       await sendPhysicianOnboardingEmail(env, origin, physician, collaboration);
-    } else {
+    } else if (!directPay) {
       await sendCollaborationNoticeEmail(env, {
         collaboration, client, physician, previous, alreadyOnboarded: true,
       });
@@ -2229,6 +2261,13 @@ function collaborationRateOn(collaboration, invoiceDate) {
     };
 }
 
+// The invoice line for a collaboration the platform does not pay the physician
+// for. It has to say why no physician appears on the bill: the client's practice is
+// paying them separately, and a line reading only "collaboration services" invites
+// the question of whether they are being charged for the physician twice.
+const PLATFORM_FEE_ONLY_DESCRIPTION =
+  'MD-Match platform fee — Ohio collaboration (collaborating physician paid directly by your practice)';
+
 // Issues every invoice that is due, one collaboration at a time.
 //
 // The month is claimed in the database before Stripe is called, and the claim is
@@ -2253,7 +2292,13 @@ async function runCollaborationBilling(env, today) {
       amount: rate.totalCents, promotional: rate.promotional,
     };
 
-    if (!c.stripe_customer_id || !c.stripe_account_id) {
+    // A direct-pay collaboration needs no connected account: nothing is forwarded
+    // to the physician, so an account they may never have opened cannot hold up an
+    // invoice that is entirely the platform's fee.
+    const directPay = !!c.physician_paid_directly;
+    entry.physicianPaidDirectly = directPay;
+
+    if (!c.stripe_customer_id || (!directPay && !c.stripe_account_id)) {
       entry.error = !c.stripe_customer_id
         ? 'client has no Stripe customer'
         : 'physician has no connected account';
@@ -2277,9 +2322,12 @@ async function runCollaborationBilling(env, today) {
         platformFeeCents: rate.feeCents,
         paymentTermsDays: c.payment_terms_days,
         processingFeeCents: rate.processingFeeCents,
-        description: rate.promotional
-          ? `Collaboration services — ${c.physician_name} (introductory rate)`
-          : `Collaboration services — ${c.physician_name}`,
+        physicianPaidDirectly: directPay,
+        description: directPay
+          ? PLATFORM_FEE_ONLY_DESCRIPTION
+          : (rate.promotional
+            ? `Collaboration services — ${c.physician_name} (introductory rate)`
+            : `Collaboration services — ${c.physician_name}`),
       });
       await db.recordInvoiceRunResult(env.DB, c.id, period, { invoiceId: invoice.id });
       await db.setCollaborationBillingSchedule(env.DB, c.id, {
@@ -2341,19 +2389,25 @@ async function activateCollaborationNow(env, collaboration) {
 
   const stripe = stripeHelpers.getStripe(env);
 
-  // Check the physician's Connect account status live rather than trusting the
-  // account.updated webhook to have already flipped transfers_active — the webhook
-  // is a convenience for the admin UI, not the source of truth for this gate.
-  const account = await stripe.accounts.retrieve(physician.stripe_account_id);
-  const transfersActive = account.capabilities?.transfers === 'active';
-  if (transfersActive !== !!physician.transfers_active) {
-    await db.setPhysicianTransfersActive(env.DB, physician.stripe_account_id, transfersActive);
-  }
-  if (!transfersActive) {
-    return {
-      httpStatus: 400,
-      payload: { success: false, error: 'Physician has not completed payout onboarding yet' },
-    };
+  // The payout gate exists to stop billing a client for money the platform then
+  // cannot forward. A direct-pay collaboration forwards nothing, so there is
+  // nothing to gate: holding it back for onboarding the physician does not need to
+  // do would block an invoice that is entirely the platform's own fee.
+  if (!collaboration.physician_paid_directly) {
+    // Check the physician's Connect account status live rather than trusting the
+    // account.updated webhook to have already flipped transfers_active — the webhook
+    // is a convenience for the admin UI, not the source of truth for this gate.
+    const account = await stripe.accounts.retrieve(physician.stripe_account_id);
+    const transfersActive = account.capabilities?.transfers === 'active';
+    if (transfersActive !== !!physician.transfers_active) {
+      await db.setPhysicianTransfersActive(env.DB, physician.stripe_account_id, transfersActive);
+    }
+    if (!transfersActive) {
+      return {
+        httpStatus: 400,
+        payload: { success: false, error: 'Physician has not completed payout onboarding yet' },
+      };
+    }
   }
   // No client-side gate: the subscription invoices the client rather than
   // charging a saved payment method, so there is nothing they must complete

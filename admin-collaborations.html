@@ -134,6 +134,16 @@
       </div>
       <div class="field-row">
         <div class="field">
+          <label style="font-weight:normal">
+            <input type="checkbox" id="physicianPaidDirectly" onchange="toggleDirectPay()">
+            Physician paid directly by the practice — bill the platform fee only
+          </label>
+          <div style="font-size:11px;opacity:.7">Ohio ORC 4723.481(C)(2)(n): the NP's practice pays the
+            collaborating physician itself. No payout, no transfer, no payout email to the physician.</div>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
           <label>Physician Payout (USD/month)</label>
           <input type="number" id="physicianPayout" placeholder="700" min="1" step="0.01" oninput="updateAmountPreview()">
         </div>
@@ -357,9 +367,17 @@
 
   function updateAmountPreview() {
     const el = document.getElementById('amountPreview');
-    const payout = Math.round(Number(document.getElementById('physicianPayout').value) * 100);
+    const directPay = document.getElementById('physicianPaidDirectly').checked;
+    // Zero by definition when the practice pays the physician, so the preview must
+    // not treat a missing payout as nothing to show.
+    const payout = directPay
+      ? 0
+      : Math.round(Number(document.getElementById('physicianPayout').value) * 100);
     const netFee = Math.round(Number(document.getElementById('netFee').value) * 100);
-    if (!payout || !netFee || payout < 0 || netFee < 0) { el.style.display = 'none'; return; }
+    if ((!payout && !directPay) || !netFee || payout < 0 || netFee < 0) {
+      el.style.display = 'none';
+      return;
+    }
 
     const share = Number(document.getElementById('stripeFeeShare').value);
     const total = grossUpTotalCents(payout, netFee, share);
@@ -368,7 +386,10 @@
     const clientShare = Math.round(stripeFee * share);
 
     let html = `Client is invoiced <b>${money(total)}</b> per month.<br>`
-      + `Physician receives ${money(payout)} &middot; Stripe takes about ${money(stripeFee)} `
+      + (directPay
+          ? 'Physician paid directly by the practice — no transfer '
+          : `Physician receives ${money(payout)} `)
+      + `&middot; Stripe takes about ${money(stripeFee)} `
       + `&middot; you keep about <b>${money(net)}</b>`
       + (share > 0 && share < 1
           ? `<br><span style="opacity:.75">Of Stripe's ${money(stripeFee)}, the client covers `
@@ -510,12 +531,27 @@
     document.getElementById('paymentTerms').value = '14';
     document.getElementById('stripeFeeShare').value = '1';
     document.getElementById('hasPromo').checked = false;
+    document.getElementById('physicianPaidDirectly').checked = false;
+    toggleDirectPay();
     togglePromo();
   }
 
   function togglePromo() {
     const on = document.getElementById('hasPromo').checked;
     document.getElementById('promoFields').style.display = on ? 'flex' : 'none';
+    updateAmountPreview();
+  }
+
+  // The payout fields are emptied and disabled rather than hidden, so it stays
+  // visible that the payout is zero on purpose rather than left blank by accident.
+  function toggleDirectPay() {
+    const on = document.getElementById('physicianPaidDirectly').checked;
+    for (const id of ['physicianPayout', 'promoPayout']) {
+      const field = document.getElementById(id);
+      if (on) field.value = '';
+      field.disabled = on;
+      field.placeholder = on ? 'paid by the practice' : (id === 'physicianPayout' ? '700' : '250');
+    }
     updateAmountPreview();
   }
 
@@ -545,7 +581,7 @@
     const rows = data.collaborations.map(c => `
       <tr>
         <td>${c.client_name}</td>
-        <td>${c.physician_name}</td>
+        <td>${c.physician_name}${c.physician_paid_directly ? `<div style="font-size:11px;opacity:.7">physician paid directly by practice</div>` : ''}</td>
         <td>${money(c.total_amount_cents)}</td>
         <td>${money(c.platform_fee_cents)}${c.processing_fee_cents > 0 ? `<div style="font-size:11px;opacity:.7">you keep ${money(c.platform_fee_cents - estimateStripeFeeCents(c.total_amount_cents))}<br>incl. ${money(c.processing_fee_cents)} processing</div>` : ''}</td>
         <td>${c.start_date}${c.promo_end_date ? `<div style="font-size:11px;opacity:.7">intro until ${c.promo_end_date}: client ${money(c.promo_total_cents)}, physician ${money(c.promo_payout_cents)}</div>` : ''}${c.billing_mode === 'app_invoice' && c.next_invoice_date ? `<div style="font-size:11px;opacity:.7">next invoice ${c.next_invoice_date}</div>` : ''}</td>
@@ -644,22 +680,31 @@
       paymentTermsDays: Number(document.getElementById('paymentTerms').value),
       providerName: document.getElementById('providerName').value,
       notes: document.getElementById('notes').value,
+      physicianPaidDirectly: document.getElementById('physicianPaidDirectly').checked,
     };
     // Sent only when the box is ticked, so clearing it discards whatever was typed
     // rather than quietly applying an introductory rate nobody meant to set.
     if (document.getElementById('hasPromo').checked) {
       body.promoNetFeeUsd = document.getElementById('promoNetFee').value;
-      body.promoPayoutUsd = document.getElementById('promoPayout').value;
       body.promoEndDate = document.getElementById('promoEndDate').value;
-      if (!body.promoNetFeeUsd || !body.promoPayoutUsd || !body.promoEndDate) {
+      // A direct-pay collaboration has no payout to reduce, so its introductory
+      // period is the reduced fee alone.
+      if (!body.physicianPaidDirectly) body.promoPayoutUsd = document.getElementById('promoPayout').value;
+      if (!body.promoNetFeeUsd || !body.promoEndDate
+        || (!body.physicianPaidDirectly && !body.promoPayoutUsd)) {
         msg.className = 'msg err';
-        msg.textContent = 'Introductory rate needs the physician payout, your fee, and the first standard invoice date.';
+        msg.textContent = body.physicianPaidDirectly
+          ? 'Introductory rate needs your fee and the first standard invoice date.'
+          : 'Introductory rate needs the physician payout, your fee, and the first standard invoice date.';
         return;
       }
     }
-    if (!body.clientId || !body.physicianId || !body.physicianPayoutUsd || !body.netFeeUsd || !body.startDate) {
+    if (!body.clientId || !body.physicianId || !body.netFeeUsd || !body.startDate
+      || (!body.physicianPaidDirectly && !body.physicianPayoutUsd)) {
       msg.className = 'msg err';
-      msg.textContent = 'Please fill in client, physician, physician payout, your fee, and start date.';
+      msg.textContent = body.physicianPaidDirectly
+        ? 'Please fill in client, physician, your fee, and start date.'
+        : 'Please fill in client, physician, physician payout, your fee, and start date.';
       return;
     }
 
