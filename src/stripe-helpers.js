@@ -179,18 +179,32 @@ export async function listOpenInvoices(stripe) {
 // only pass application_fee_percent and land a cent or two out.
 export async function createCollaborationInvoice(stripe, {
   customerId, physicianAccountId, totalAmountCents, platformFeeCents,
-  paymentTermsDays, description, processingFeeCents,
+  paymentTermsDays, description, processingFeeCents, physicianPaidDirectly = false,
 }) {
-  const invoice = await stripe.invoices.create({
+  const params = {
     customer: customerId,
     collection_method: 'send_invoice',
     days_until_due: paymentTermsDays || DEFAULT_PAYMENT_TERMS_DAYS,
-    application_fee_amount: platformFeeCents,
-    transfer_data: { destination: physicianAccountId },
     payment_settings: { payment_method_types: ['us_bank_account'] },
     pending_invoice_items_behavior: 'exclude',
     auto_advance: true,
-  });
+  };
+
+  // transfer_data is the only thing on this invoice that moves money to a
+  // physician, and application_fee_amount only means anything beside it -- Stripe
+  // rejects a fee with no destination to take it from. So for a collaboration whose
+  // physician is paid by the client's own practice, both are left off and the whole
+  // amount settles to the platform. There is no transfer to make zero, because
+  // there is no transfer.
+  if (!physicianPaidDirectly) {
+    if (!physicianAccountId) {
+      throw new Error('createCollaborationInvoice: no physician account to pay, and the collaboration is not marked as paying the physician directly');
+    }
+    params.application_fee_amount = platformFeeCents;
+    params.transfer_data = { destination: physicianAccountId };
+  }
+
+  const invoice = await stripe.invoices.create(params);
 
   // The client's share of Stripe's cut is already inside totalAmountCents. Naming
   // it as its own line changes only what the invoice reads: the two items still sum
