@@ -300,6 +300,9 @@
   }
 
   let allClients = [], allPhysicians = [];
+  // Catch-up payouts grouped by collaboration, so each row can show what has
+  // already been settled on it without a request per row.
+  let allCatchups = {};
 
   // The searchable pickers, by name. Each names the three elements it drives and
   // which list it draws from; adding a fourth is a line here rather than another
@@ -574,6 +577,10 @@
       .localeCompare(String(b.full_name || '').trim(), undefined, { sensitivity: 'base' });
     allClients = [...data.clients].sort(byName);
     allPhysicians = [...data.physicians].sort(byName);
+    allCatchups = {};
+    for (const r of data.catchupPayouts || []) {
+      (allCatchups[r.collaboration_id] = allCatchups[r.collaboration_id] || []).push(r);
+    }
     renderPicker('client');
     renderPicker('physician');
     renderPicker('fixEmail');
@@ -594,6 +601,9 @@
           ${c.status === 'paused' || c.status === 'pending_setup' ? `<button class="btn btn-small" onclick="setStartDate(${c.id}, this)" title="Set the real first patient date, move billing to that day, recalculate the intro period, and send the first invoice">Set Start Date</button>` : ''}
           ${c.status === 'active' ? `<button class="btn btn-small" onclick="pauseCollaboration(${c.id}, this)" title="Stop billing until the NP/PA starts seeing patients">Pause</button>` : ''}
           ${c.status !== 'canceled' ? `<button class="btn btn-small" onclick="cancelCollaboration(${c.id}, ${!!c.stripe_subscription_id}, this)" title="End this collaboration">Cancel</button>` : ''}
+          ${c.status !== 'canceled' ? `<button class="btn btn-small" onclick="oneOffInvoice(${c.id}, this)" title="Invoice a one-off or prorated amount on this collaboration">Bill One-Off</button>` : ''}
+          ${c.status !== 'canceled' && !c.physician_paid_directly ? `<button class="btn btn-small" onclick="catchupPayout(${c.id}, this)" title="Pay the physician their share of a paid invoice that sent them nothing">Send Catch-Up Payout</button>` : ''}
+          ${(allCatchups[c.id] || []).map((r) => `<div style="font-size:11px;opacity:.7">caught up ${money(r.amount_cents)} on ${esc(String(r.created_at).slice(0, 10))}<br>${esc(r.stripe_transfer_id)}</div>`).join('')}
         </td>
         <td class="actions">
           ${!c.transfers_active && c.status !== 'canceled' ? `<button class="btn btn-small" onclick="resendOnboarding(${c.id}, this)" title="Email the physician a fresh payout setup link">Resend Link Physician</button>` : ''}
@@ -962,6 +972,186 @@
     }
     btn.disabled = false;
     btn.textContent = 'Set Start Date';
+  }
+
+  // Settles a physician's share of a paid invoice whose charge sent them nothing.
+  //
+  // Two steps on purpose. The first lists what is owed and is read-only; the second
+  // moves money and cannot be undone, so it happens only after a review screen that
+  // names the physician, the account and the charge the funds come from.
+  async function catchupPayout(id, btn) {
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Checking…';
+
+    let data;
+    try {
+      const res = await fetch(`/admin/api/collaborations/catchup-preview?collaborationId=${id}`,
+        { credentials: 'include' });
+      data = await res.json();
+    } catch {
+      alert('Network error');
+      btn.disabled = false; btn.textContent = original; return;
+    }
+    btn.textContent = original;
+
+    if (!data.success) {
+      alert(data.detail ? `${data.error}: ${data.detail}` : (data.error || 'Could not check'));
+      btn.disabled = false; return;
+    }
+    if (!data.canReceive) {
+      alert(`${data.physician}'s payout account cannot receive transfers yet`
+        + `${data.physicianAccountId ? ` (${data.physicianAccountId})` : ' — no Stripe account'}.`
+        + '\n\nNothing can be sent until their payout setup is complete.');
+      btn.disabled = false; return;
+    }
+    if (!data.candidates.length) {
+      alert('Nothing is owed on this collaboration.\n\n'
+        + `Every paid invoice either already paid ${data.physician} or has been caught up.`
+        + (data.excluded.length
+            ? `\n\nChecked and skipped:\n${data.excluded.map((e) => `  • ${e.number || e.invoiceId}: ${e.reason}`).join('\n')}`
+            : ''));
+      btn.disabled = false; return;
+    }
+
+    // One candidate is answered straight away; several need picking first.
+    let pick = data.candidates[0];
+    if (data.candidates.length > 1) {
+      const menu = data.candidates
+        .map((c, i) => `${i + 1}. ${c.number} — ${money(c.amountPaidCents)} paid ${c.paidOn || '?'}\n`
+          + `     share ${money(c.shareCents)} · ${c.lineDescription}${c.nameMatch ? '' : '  [NAME MISMATCH]'}`)
+        .join('\n');
+      const answer = prompt(`${data.candidates.length} paid invoices sent ${data.physician} nothing.\n\n`
+        + `${menu}\n\nType the number to settle:`);
+      const index = Number((answer || '').trim()) - 1;
+      if (!(index >= 0 && index < data.candidates.length)) { btn.disabled = false; return; }
+      pick = data.candidates[index];
+    }
+
+    const amountStr = prompt(`Amount to send ${data.physician}, in dollars.\n\n`
+      + `Invoice ${pick.number} — client paid ${money(pick.amountPaidCents)}.\n`
+      + `Their share at this collaboration's ratio is ${money(pick.shareCents)}, which is also the maximum.`,
+      (pick.shareCents / 100).toFixed(2));
+    if (amountStr === null) { btn.disabled = false; return; }
+    const amountCents = Math.round(Number(amountStr) * 100);
+    if (!Number.isFinite(amountCents) || amountCents <= 0) {
+      alert('Please enter an amount in dollars, for example 112.90.');
+      btn.disabled = false; return;
+    }
+
+    const description = prompt('Description for the transfer:', pick.description);
+    if (description === null) { btn.disabled = false; return; }
+
+    const confirmed = confirm('Send this payout?\n\n'
+      + `Physician      ${data.physician}\n`
+      + `Stripe account ${data.physicianAccountId}\n`
+      + `Amount         ${money(amountCents)}\n`
+      + `Invoice        ${pick.number} (${pick.invoiceId})\n`
+      + `Source charge  ${pick.chargeId}\n`
+      + `Description    ${description}\n`
+      + (pick.nameMatch ? '' : `\nWARNING: this invoice reads "${pick.lineDescription}", which does not name ${data.physician}. Check it belongs to this collaboration before sending.\n`)
+      + '\nThis moves money and cannot be undone. No email is sent to anyone.');
+    if (!confirmed) { btn.disabled = false; return; }
+
+    btn.textContent = 'Sending…';
+    try {
+      const res = await fetch('/admin/api/collaborations/catchup-payout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ collaborationId: id, invoiceId: pick.invoiceId, amountCents, description }),
+      });
+      const sent = await res.json();
+      if (sent.success) {
+        alert(`Sent ${money(sent.amountCents)} to ${sent.physician}.\n\n`
+          + `Transfer ${sent.transferId}\nfrom charge ${sent.chargeId}\nfor invoice ${sent.invoice}`
+          + (sent.warning ? `\n\n${sent.warning}` : ''));
+        loadData();
+        return;
+      }
+      alert(sent.detail ? `${sent.error}: ${sent.detail}` : (sent.error || 'Could not send the payout'));
+    } catch {
+      alert('Network error — check Stripe before retrying, in case the transfer was created.');
+    }
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+
+  // Invoices a one-off or prorated amount through the same path as the monthly
+  // sweep, so the physician's transfer and the platform's fee are attached to it
+  // automatically rather than having to be remembered.
+  async function oneOffInvoice(id, btn) {
+    const original = btn.textContent;
+    const answer = prompt('Bill a one-off amount.\n\n'
+      + 'Enter a number of days to prorate this month (e.g. 5),\n'
+      + 'or a dollar amount prefixed with $ (e.g. $145.16).');
+    if (!answer) return;
+
+    const trimmed = answer.trim();
+    const query = trimmed.startsWith('$')
+      ? `amountCents=${Math.round(Number(trimmed.slice(1)) * 100)}`
+      : `days=${Math.round(Number(trimmed))}`;
+    if (/NaN/.test(query)) { alert('Could not read that. Use 5 for five days, or $145.16 for an amount.'); return; }
+
+    btn.disabled = true;
+    btn.textContent = 'Previewing…';
+    let p;
+    try {
+      const res = await fetch(`/admin/api/collaborations/oneoff-preview?collaborationId=${id}&${query}`,
+        { credentials: 'include' });
+      p = await res.json();
+    } catch {
+      alert('Network error');
+      btn.disabled = false; btn.textContent = original; return;
+    }
+    btn.textContent = original;
+    if (!p.success) {
+      alert(p.detail ? `${p.error}: ${p.detail}` : (p.error || 'Could not preview'));
+      btn.disabled = false; return;
+    }
+    if (p.alreadyClaimed) {
+      alert(`A one-off invoice has already been issued for ${p.onDate} on this collaboration.`);
+      btn.disabled = false; return;
+    }
+
+    const confirmed = confirm('Create this invoice?\n\n'
+      + `Client            ${p.client}\n`
+      + `Invoice total     ${money(p.totalCents)}`
+      + (p.days != null ? `   (${p.days}/${p.daysInMonth} of ${money(p.monthlyTotalCents)}${p.promotional ? ', introductory rate' : ''})` : '')
+      + `\n  of which processing ${money(p.processingFeeCents)}\n`
+      + (p.physicianPaidDirectly
+          ? `Physician         paid directly by the practice — no transfer\n`
+          : `${p.physician}   ${money(p.physicianShareCents)}\n`)
+      + `You keep (gross)  ${money(p.platformFeeCents)}\n`
+      + `Terms             Net ${p.paymentTermsDays}\n`
+      + `Line              ${p.description}\n\n`
+      + 'Stripe emails the client this invoice as soon as it is created.');
+    if (!confirmed) { btn.disabled = false; return; }
+
+    btn.textContent = 'Creating…';
+    try {
+      const res = await fetch('/admin/api/collaborations/oneoff-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          collaborationId: id, onDate: p.onDate, description: p.description,
+          ...(p.days != null ? { days: p.days } : { amountCents: p.totalCents }),
+        }),
+      });
+      const made = await res.json();
+      if (made.success) {
+        alert(`Invoice ${made.number} created for ${money(made.totalCents)}.`
+          + (made.physicianShareCents ? `\n\n${money(made.physicianShareCents)} transfers to the physician when it is paid.` : ''));
+        loadData();
+        return;
+      }
+      alert(made.detail ? `${made.error}: ${made.detail}` : (made.error || 'Could not create the invoice'));
+    } catch {
+      alert('Network error — check Stripe before retrying, in case the invoice was created.');
+    }
+    btn.disabled = false;
+    btn.textContent = original;
   }
 
   async function activate(id, btn) {

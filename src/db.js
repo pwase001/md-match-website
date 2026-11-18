@@ -248,6 +248,62 @@ export async function clearInvoiceRun(db, collaborationId, period) {
     .run();
 }
 
+// ---- Catch-up payouts ----
+// Transfers sent by hand to settle a physician's share of an invoice whose charge
+// paid them nothing.
+
+// Records a catch-up payout. The UNIQUE constraints on the invoice and the charge
+// make this the last line of defence against paying twice, so a conflict here is
+// reported rather than swallowed: the caller has already sent the transfer by this
+// point, and a lost row would let somebody send another.
+export async function recordCatchupPayout(db, {
+  collaborationId, physicianId, stripeAccountId, stripeInvoiceId, stripeChargeId,
+  stripeTransferId, amountCents, description,
+}) {
+  return db
+    .prepare(
+      `INSERT INTO catchup_payouts
+        (collaboration_id, physician_id, stripe_account_id, stripe_invoice_id,
+         stripe_charge_id, stripe_transfer_id, amount_cents, description)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+    )
+    .bind(collaborationId, physicianId, stripeAccountId, stripeInvoiceId,
+      stripeChargeId, stripeTransferId, amountCents, description || null)
+    .first();
+}
+
+// Any catch-up payout already recorded for this invoice or this charge. Either one
+// matching means the physician has been settled for it.
+export async function findCatchupPayout(db, { stripeInvoiceId, stripeChargeId }) {
+  return db
+    .prepare(`SELECT * FROM catchup_payouts
+               WHERE stripe_invoice_id = ? OR stripe_charge_id = ?`)
+    .bind(stripeInvoiceId || '', stripeChargeId || '')
+    .first();
+}
+
+export async function listCatchupPayouts(db) {
+  const res = await db
+    .prepare('SELECT * FROM catchup_payouts ORDER BY created_at DESC')
+    .all();
+  return res.results;
+}
+
+// Claims today's blocked-billing alert for one collaboration, returning false when
+// it is already claimed. The sweep fires three times on a Monday and every firing
+// would otherwise report the same stuck collaboration again.
+export async function claimBillingBlockAlert(db, alertDate, collaborationId, reason) {
+  const res = await db
+    .prepare(
+      `INSERT INTO billing_block_alerts (alert_date, collaboration_id, reason)
+       VALUES (?, ?, ?)
+       ON CONFLICT(alert_date, collaboration_id) DO NOTHING`
+    )
+    .bind(alertDate, collaborationId, reason || null)
+    .run();
+  return (res.meta?.changes ?? 0) > 0;
+}
+
 // Claims one nudge for one invoice, returning false if it is already claimed.
 // The scheduled handler fires several times on a Monday and every firing would
 // otherwise draft the same reminder again.

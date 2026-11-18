@@ -272,6 +272,93 @@ export async function voidInvoice(stripe, invoiceId) {
   return stripe.invoices.voidInvoice(invoiceId);
 }
 
+// Every invoice belonging to one client, newest first.
+//
+// Asked of the customer rather than of the app's own invoice_runs rows, because the
+// invoices this is for are precisely the ones the app did not create -- a prorated
+// or one-off invoice issued by hand leaves no row behind. The caller has to filter:
+// a customer's list spans all of that client's collaborations, so it can contain
+// invoices belonging to a different physician entirely.
+export async function listInvoicesForCustomer(stripe, customerId, limit = 100) {
+  const res = await stripe.invoices.list({ customer: customerId, limit });
+  return res.data;
+}
+
+// The charge that settled an invoice, and the intent it came from.
+//
+// Reached through the invoice's own payment record rather than by searching the
+// customer's charges by amount or date, which would be guesswork on a client who
+// has several collaborations billing similar figures in the same week.
+export async function retrieveInvoicePaymentCharge(stripe, invoiceId) {
+  const invoice = await stripe.invoices.retrieve(invoiceId, { expand: ['payments'] });
+  const payments = invoice.payments?.data || [];
+  // The paid record is the one that settled it. Falling back to the first covers
+  // older invoices whose payment records predate the status field being set.
+  const settled = payments.find((p) => p.status === 'paid') || payments[0] || null;
+  const intentId = settled?.payment?.payment_intent || null;
+  if (!intentId) return { invoice, charge: null, paymentIntent: null };
+
+  const paymentIntent = await stripe.paymentIntents.retrieve(intentId, { expand: ['latest_charge'] });
+  const charge = paymentIntent.latest_charge && typeof paymentIntent.latest_charge === 'object'
+    ? paymentIntent.latest_charge
+    : null;
+  return { invoice, charge, paymentIntent };
+}
+
+// Whether a charge already sent money to a connected account. Four fields are
+// checked rather than one because a destination charge and a direct charge record
+// it differently, and an invoice built by hand may carry the fee without the
+// destination or the other way round. Any of them means the physician was paid.
+export function chargePaidAConnectedAccount(charge) {
+  if (!charge) return false;
+  return !!(charge.transfer_data || charge.destination
+    || charge.application_fee || charge.application_fee_amount);
+}
+
+// Whether this platform has already sent a transfer drawn from one specific charge.
+// This is what makes a catch-up payout safe to offer twice and send once: the
+// transfer records the charge it came from, so the evidence lives in Stripe rather
+// than only in the app's own log.
+export async function transferExistsForCharge(stripe, accountId, chargeId) {
+  const sent = await listTransfersToAccount(stripe, accountId);
+  return sent.some((t) => t.source_transaction === chargeId);
+}
+
+// Settles a physician's share of an invoice whose charge paid them nothing.
+//
+// source_transaction is the point of it: the transfer is drawn from that specific
+// charge rather than from the platform's general balance, so Stripe's own records
+// tie the money to the invoice the client paid, and the funds come from where they
+// should have come from in the first place.
+//
+// The idempotency key stops a double-click. It is not a substitute for the caller's
+// duplicate checks: Stripe forgets these keys after about 24 hours, while the
+// catchup_payouts table does not.
+export async function createCatchupTransfer(stripe, {
+  amountCents, destinationAccountId, sourceChargeId, description, metadata, idempotencyKey,
+}) {
+  return stripe.transfers.create({
+    amount: amountCents,
+    currency: 'usd',
+    destination: destinationAccountId,
+    source_transaction: sourceChargeId,
+    description,
+    metadata: metadata || {},
+  }, idempotencyKey ? { idempotencyKey } : undefined);
+}
+
+// Whether a connected account can receive a transfer right now.
+//
+// Read live rather than from the physicians.transfers_active column, which the
+// account.updated webhook maintains as a convenience for the admin UI. A stale 1
+// there would let an invoice go out carrying a destination the money cannot reach,
+// which is the failure this is here to prevent.
+export async function accountCanReceiveTransfers(stripe, accountId) {
+  if (!accountId) return false;
+  const account = await stripe.accounts.retrieve(accountId);
+  return account.capabilities?.transfers === 'active';
+}
+
 // Every transfer this platform has sent to one connected account, newest first.
 // Used to decide whether a physician has actually been paid, which is the thing
 // that makes abandoning their account unsafe -- an account that merely looks

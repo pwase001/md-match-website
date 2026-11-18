@@ -1202,12 +1202,13 @@ async function handleAdminApi(request, env, url) {
   }
 
   if (url.pathname === '/admin/api/data' && request.method === 'GET') {
-    const [clients, physicians, collaborations] = await Promise.all([
+    const [clients, physicians, collaborations, catchupPayouts] = await Promise.all([
       db.listClients(env.DB),
       db.listPhysicians(env.DB),
       db.listCollaborations(env.DB),
+      db.listCatchupPayouts(env.DB),
     ]);
-    return jsonResponse({ success: true, clients, physicians, collaborations });
+    return jsonResponse({ success: true, clients, physicians, collaborations, catchupPayouts });
   }
 
   if (url.pathname === '/admin/api/collaborations' && request.method === 'POST') {
@@ -1220,6 +1221,24 @@ async function handleAdminApi(request, env, url) {
 
   if (url.pathname === '/admin/api/collaborations/start-date' && request.method === 'POST') {
     return handleSetCollaborationStartDate(request, env);
+  }
+
+  // Paid invoices whose charge paid the physician nothing, and the action that
+  // settles one. Split in two so the figures are reviewed before money moves.
+  if (url.pathname === '/admin/api/collaborations/catchup-preview' && request.method === 'GET') {
+    return handleCatchupPreview(request, env, url);
+  }
+
+  if (url.pathname === '/admin/api/collaborations/catchup-payout' && request.method === 'POST') {
+    return handleCatchupPayout(request, env);
+  }
+
+  if (url.pathname === '/admin/api/collaborations/oneoff-preview' && request.method === 'GET') {
+    return handleOneOffPreview(request, env, url);
+  }
+
+  if (url.pathname === '/admin/api/collaborations/oneoff-invoice' && request.method === 'POST') {
+    return handleOneOffInvoice(request, env);
   }
 
   // What the scheduled handler would do today, and anything it failed at before.
@@ -2261,6 +2280,25 @@ function collaborationRateOn(collaboration, invoiceDate) {
     };
 }
 
+// A physician's share of an arbitrary invoice amount, at the collaboration's own
+// ratio. Used where an invoice is not one of the standard monthly ones -- a
+// prorated or one-off amount -- so the split has to be derived rather than read
+// from the stored figures.
+//
+// The ratio comes from the rate in force on the invoice's own date, so an invoice
+// issued during an introductory period splits at the introductory rate rather than
+// at the standard one.
+//
+// Returns 0 for a direct-pay collaboration: there is no physician share, by
+// definition, and computing one from the amounts would invent a payout.
+function physicianShareCents(collaboration, invoiceAmountCents, invoiceDate) {
+  if (collaboration.physician_paid_directly) return 0;
+  const rate = collaborationRateOn(collaboration, invoiceDate);
+  if (!rate.totalCents) return 0;
+  const physicianPortion = rate.totalCents - rate.feeCents;
+  return Math.round(invoiceAmountCents * (physicianPortion / rate.totalCents));
+}
+
 // The invoice line for a collaboration the platform does not pay the physician
 // for. It has to say why no physician appears on the bill: the client's practice is
 // paying them separately, and a line reading only "collaboration services" invites
@@ -2283,6 +2321,10 @@ const PLATFORM_FEE_ONLY_DESCRIPTION =
 async function runCollaborationBilling(env, today) {
   const due = await db.listCollaborationsDueForInvoice(env.DB, today);
   const results = [];
+  // Collaborations that could not be billed for a reason that will fix itself once
+  // somebody acts. Collected here and reported once at the end, rather than mailed
+  // per collaboration.
+  const blocked = [];
 
   for (const c of due) {
     const period = c.next_invoice_date.slice(0, 7);
@@ -2299,12 +2341,45 @@ async function runCollaborationBilling(env, today) {
     entry.physicianPaidDirectly = directPay;
 
     if (!c.stripe_customer_id || (!directPay && !c.stripe_account_id)) {
-      entry.error = !c.stripe_customer_id
+      entry.blocked = !c.stripe_customer_id
         ? 'client has no Stripe customer'
         : 'physician has no connected account';
-      console.error(`Billing skipped for collaboration ${c.id} (${period}): ${entry.error}`);
+      entry.error = entry.blocked;
+      console.error(`Billing skipped for collaboration ${c.id} (${period}): ${entry.blocked}`);
+      blocked.push({ collaboration: c, reason: entry.blocked });
       results.push(entry);
       continue;
+    }
+
+    // The payout account has to be able to receive before the client is charged.
+    // Otherwise the invoice goes out as a destination charge Stripe will refuse, or
+    // -- worse, and this is what happened to Dr Albin in October -- it goes out
+    // bare, the client pays in full, and the physician's share sits with the
+    // platform with nothing recording the debt. Settling that afterwards needs a
+    // hand-made transfer against the original charge.
+    //
+    // Checked before the month is claimed, so the collaboration is simply picked up
+    // again tomorrow and bills itself the moment onboarding completes. The daily
+    // digest is what stops that silent retrying from going unnoticed.
+    if (!directPay) {
+      let canReceive = false;
+      try {
+        canReceive = await stripeHelpers.accountCanReceiveTransfers(
+          stripeHelpers.getStripe(env), c.stripe_account_id
+        );
+      } catch (err) {
+        // Treated as blocked, not as permission to bill. An invoice issued on a
+        // failed status check is the exact failure this guard exists to prevent.
+        console.error(`Could not read payout status for ${c.stripe_account_id}:`, err?.message || err);
+      }
+      if (!canReceive) {
+        entry.blocked = 'physician payout account cannot receive transfers';
+        entry.error = entry.blocked;
+        console.error(`Billing skipped for collaboration ${c.id} (${period}): ${entry.blocked}`);
+        blocked.push({ collaboration: c, reason: entry.blocked });
+        results.push(entry);
+        continue;
+      }
     }
 
     if (!(await db.claimInvoiceRun(env.DB, c.id, period))) {
@@ -2347,7 +2422,58 @@ async function runCollaborationBilling(env, today) {
     results.push(entry);
   }
 
+  await alertOnBlockedBilling(env, today, blocked);
   return results;
+}
+
+// Tells the owner about collaborations the sweep could not bill, once a day.
+//
+// Without this the skip is invisible. Nothing is claimed, so no invoice_runs row
+// exists for the billing panel's failed list to show, and the only trace is a
+// console line nobody is watching. The collaboration then retries silently every
+// day, which is the right billing behaviour and the wrong reporting behaviour.
+//
+// Only newly claimed collaborations are mailed, so three firings on a Monday send
+// one email. Failures here are logged and swallowed: a digest that cannot be sent
+// must not fail a billing run that already did its work.
+async function alertOnBlockedBilling(env, today, blocked) {
+  if (!blocked.length) return;
+
+  const fresh = [];
+  for (const b of blocked) {
+    try {
+      if (await db.claimBillingBlockAlert(env.DB, today, b.collaboration.id, b.reason)) fresh.push(b);
+    } catch (err) {
+      console.error(`Could not claim blocked-billing alert for ${b.collaboration.id}:`, err?.message || err);
+    }
+  }
+  if (!fresh.length) return;
+
+  try {
+    const rows = fresh.map(({ collaboration: c, reason }) => `
+      <div style="margin:0 0 18px;padding:14px 16px;border:1px solid #e4d5c4;border-radius:6px">
+        <p style="margin:0 0 4px;font-size:15px"><strong>${esc(c.client_name)}</strong>
+          &mdash; ${esc(c.physician_name)}</p>
+        <p style="margin:0;font-size:13px;color:#6b7b76">Collaboration ${c.id} &middot;
+          ${usd(collaborationRateOn(c, c.next_invoice_date).totalCents)} due ${esc(c.next_invoice_date)}</p>
+        <p style="margin:8px 0 0;font-size:13px"><strong>${esc(reason)}</strong></p>
+      </div>`).join('');
+
+    await sendEmail(env, {
+      to: [OWNER_EMAIL],
+      from: 'MD-Match <noreply@md-match.com>',
+      replyTo: OWNER_EMAIL,
+      subject: fresh.length === 1
+        ? `Billing blocked: ${fresh[0].collaboration.client_name}`
+        : `Billing blocked for ${fresh.length} collaborations`,
+      html: `<p>These collaborations were due today and could not be invoiced. Nothing was
+        charged and no month was used up, so each one will bill itself as soon as the
+        reason below is cleared &mdash; usually the physician finishing payout setup.
+        This runs again tomorrow.</p>${rows}`,
+    });
+  } catch (err) {
+    console.error('Could not send blocked-billing digest:', err?.message || err);
+  }
 }
 
 // Where an app-billed collaboration should pick billing up when it is activated.
@@ -2543,6 +2669,440 @@ async function handleSetCollaborationStartDate(request, env) {
     }, httpStatus);
   } catch (err) {
     console.error('Set collaboration start date error:', err);
+    return jsonResponse({ success: false, error: 'Server error', detail: err?.message || String(err) }, 500);
+  }
+}
+
+// ---- Catch-up payouts ----
+
+// Everything a catch-up payout has to be true of, gathered in one place so the
+// preview and the send cannot disagree about it. The send calls this again rather
+// than trusting what the preview returned: the preview is a page that may have been
+// open for an hour, and in that time a refund, a dispute or another catch-up could
+// have happened.
+//
+// Returns { ok } or { ok: false, error }, plus the facts the caller needs.
+async function inspectCatchupCandidate(env, stripe, collaboration, physician, invoiceId) {
+  const { invoice, charge } = await stripeHelpers.retrieveInvoicePaymentCharge(stripe, invoiceId);
+
+  if (invoice.status !== 'paid' || invoice.amount_paid <= 0) {
+    return { ok: false, error: `Invoice ${invoice.number || invoiceId} is ${invoice.status}, not paid` };
+  }
+  if (!charge) {
+    return { ok: false, error: `No settled charge found on invoice ${invoice.number || invoiceId}` };
+  }
+  if (charge.status !== 'succeeded') {
+    return { ok: false, error: `Charge ${charge.id} is ${charge.status}, not succeeded` };
+  }
+  if (charge.refunded || charge.amount_refunded > 0) {
+    return { ok: false, error: `Charge ${charge.id} has been refunded` };
+  }
+  if (charge.disputed || charge.dispute) {
+    return { ok: false, error: `Charge ${charge.id} is disputed` };
+  }
+  if (stripeHelpers.chargePaidAConnectedAccount(charge)) {
+    return {
+      ok: false,
+      error: `Charge ${charge.id} already paid the physician — it is a destination charge, so nothing is owed`,
+    };
+  }
+
+  const logged = await db.findCatchupPayout(env.DB, {
+    stripeInvoiceId: invoice.id, stripeChargeId: charge.id,
+  });
+  if (logged) {
+    return {
+      ok: false,
+      error: `A catch-up payout was already sent for this ${
+        logged.stripe_invoice_id === invoice.id ? 'invoice' : 'charge'
+      } on ${logged.created_at} (${logged.stripe_transfer_id})`,
+    };
+  }
+  if (await stripeHelpers.transferExistsForCharge(stripe, physician.stripe_account_id, charge.id)) {
+    return { ok: false, error: `A transfer drawn from charge ${charge.id} already exists in Stripe` };
+  }
+
+  const invoiceDate = easternDateFromUnix(invoice.status_transitions?.finalized_at || invoice.created);
+  const shareCents = physicianShareCents(collaboration, invoice.amount_paid, invoiceDate);
+  if (shareCents <= 0) {
+    return {
+      ok: false,
+      error: collaboration.physician_paid_directly
+        ? 'This collaboration pays the physician directly, so there is no share to send'
+        : 'The physician share for this invoice works out at zero',
+    };
+  }
+
+  // The physician's name against the invoice's own wording. A hand-made invoice is
+  // not linked to a collaboration by anything in the data, and a client with two
+  // collaborations has both physicians' invoices on one Stripe customer -- so the
+  // only thing tying this invoice to this physician is the person choosing it. A
+  // mismatch does not block: the wording is free text and may legitimately differ.
+  // It is reported so it cannot pass unnoticed.
+  const line = invoice.lines?.data?.[0]?.description || '';
+  const surname = physicianSurname(physician.full_name);
+  const nameMatch = !surname || line.toLowerCase().includes(surname.toLowerCase());
+
+  return {
+    ok: true,
+    invoice, charge, shareCents, invoiceDate, nameMatch,
+    lineDescription: line,
+  };
+}
+
+// The paid invoices on this client's Stripe customer whose charge paid the
+// physician nothing, so the platform is holding their share.
+async function handleCatchupPreview(request, env, url) {
+  try {
+    const collaborationId = Number(url.searchParams.get('collaborationId'));
+    const collaboration = collaborationId ? await db.getCollaboration(env.DB, collaborationId) : null;
+    if (!collaboration) return jsonResponse({ success: false, error: 'Not found' }, 404);
+
+    const physician = await db.getPhysician(env.DB, collaboration.physician_id);
+    const client = await db.getClient(env.DB, collaboration.client_id);
+    if (!client?.stripe_customer_id) {
+      return jsonResponse({ success: false, error: 'This client has no Stripe customer yet' }, 400);
+    }
+    if (collaboration.physician_paid_directly) {
+      return jsonResponse({
+        success: false,
+        error: 'This collaboration pays the physician directly — no payout is ever owed on it',
+      }, 400);
+    }
+
+    const stripe = stripeHelpers.getStripe(env);
+    const canReceive = physician.stripe_account_id
+      ? await stripeHelpers.accountCanReceiveTransfers(stripe, physician.stripe_account_id)
+      : false;
+
+    const candidates = [];
+    const excluded = [];
+    for (const summary of await stripeHelpers.listInvoicesForCustomer(stripe, client.stripe_customer_id)) {
+      if (summary.status !== 'paid' || summary.amount_paid <= 0) continue;
+      const checked = await inspectCatchupCandidate(env, stripe, collaboration, physician, summary.id);
+      if (!checked.ok) {
+        excluded.push({ invoiceId: summary.id, number: summary.number, reason: checked.error });
+        continue;
+      }
+      candidates.push({
+        invoiceId: checked.invoice.id,
+        number: checked.invoice.number,
+        amountPaidCents: checked.invoice.amount_paid,
+        paidOn: checked.invoice.status_transitions?.paid_at
+          ? easternDateFromUnix(checked.invoice.status_transitions.paid_at) : null,
+        lineDescription: checked.lineDescription,
+        chargeId: checked.charge.id,
+        shareCents: checked.shareCents,
+        nameMatch: checked.nameMatch,
+        description: `${client.full_name} — ${checked.lineDescription || checked.invoice.number}`,
+      });
+    }
+
+    return jsonResponse({
+      success: true,
+      collaborationId: collaboration.id,
+      physician: physician.full_name,
+      physicianAccountId: physician.stripe_account_id || null,
+      canReceive,
+      candidates,
+      excluded,
+      alreadySent: (await db.listCatchupPayouts(env.DB))
+        .filter((r) => r.collaboration_id === collaboration.id),
+    });
+  } catch (err) {
+    console.error('Catch-up preview error:', err);
+    return jsonResponse({ success: false, error: 'Server error', detail: err?.message || String(err) }, 500);
+  }
+}
+
+// Sends one catch-up payout. Every check runs again here, against Stripe, before
+// any money moves.
+async function handleCatchupPayout(request, env) {
+  try {
+    const { collaborationId, invoiceId, amountCents, description } = await request.json();
+    if (!collaborationId || !invoiceId) {
+      return jsonResponse({ success: false, error: 'Missing collaborationId or invoiceId' }, 400);
+    }
+
+    const collaboration = await db.getCollaboration(env.DB, collaborationId);
+    if (!collaboration) return jsonResponse({ success: false, error: 'Not found' }, 404);
+    if (collaboration.status === 'canceled') {
+      return jsonResponse({ success: false, error: 'This collaboration is cancelled' }, 400);
+    }
+
+    const physician = await db.getPhysician(env.DB, collaboration.physician_id);
+    if (!physician?.stripe_account_id) {
+      return jsonResponse({ success: false, error: 'This physician has no Stripe account' }, 400);
+    }
+
+    const stripe = stripeHelpers.getStripe(env);
+    if (!(await stripeHelpers.accountCanReceiveTransfers(stripe, physician.stripe_account_id))) {
+      return jsonResponse({
+        success: false,
+        error: `${physician.full_name}'s payout account cannot receive transfers yet`,
+      }, 400);
+    }
+
+    const checked = await inspectCatchupCandidate(env, stripe, collaboration, physician, invoiceId);
+    if (!checked.ok) return jsonResponse({ success: false, error: checked.error }, 409);
+
+    const amount = Number.isFinite(Number(amountCents)) ? Math.round(Number(amountCents)) : checked.shareCents;
+    if (amount <= 0) {
+      return jsonResponse({ success: false, error: 'Amount must be greater than zero' }, 400);
+    }
+    // The share is a ceiling, not a default to be overridden upward: more than it
+    // would be paying the physician money the client never sent.
+    if (amount > checked.shareCents) {
+      return jsonResponse({
+        success: false,
+        error: `${usd(amount)} is more than the physician's share of this invoice (${usd(checked.shareCents)})`,
+      }, 400);
+    }
+
+    const text = (typeof description === 'string' && description.trim())
+      || `Catch-up payout — invoice ${checked.invoice.number || checked.invoice.id}`;
+
+    const transfer = await stripeHelpers.createCatchupTransfer(stripe, {
+      amountCents: amount,
+      destinationAccountId: physician.stripe_account_id,
+      sourceChargeId: checked.charge.id,
+      description: text,
+      metadata: {
+        collaboration_id: String(collaboration.id),
+        invoice: checked.invoice.id,
+        period: checked.invoiceDate,
+      },
+      idempotencyKey: `catchup:${checked.invoice.id}`,
+    });
+
+    // Logged after the transfer, because the transfer is the thing that cannot be
+    // undone. A failure to log is shouted about rather than hidden: the money has
+    // moved, and an unrecorded payout is one somebody could send again.
+    let logged = null;
+    try {
+      logged = await db.recordCatchupPayout(env.DB, {
+        collaborationId: collaboration.id,
+        physicianId: physician.id,
+        stripeAccountId: physician.stripe_account_id,
+        stripeInvoiceId: checked.invoice.id,
+        stripeChargeId: checked.charge.id,
+        stripeTransferId: transfer.id,
+        amountCents: amount,
+        description: text,
+      });
+    } catch (err) {
+      console.error(`CATCH-UP PAYOUT ${transfer.id} SENT BUT NOT LOGGED:`, err?.message || err);
+      return jsonResponse({
+        success: true,
+        transferId: transfer.id,
+        amountCents: amount,
+        warning: `The transfer was sent (${transfer.id}) but could not be recorded in the app. `
+          + 'Do not send it again — note the id before leaving this page.',
+      });
+    }
+
+    return jsonResponse({
+      success: true,
+      transferId: transfer.id,
+      amountCents: amount,
+      invoice: checked.invoice.number || checked.invoice.id,
+      chargeId: checked.charge.id,
+      physician: physician.full_name,
+      physicianAccountId: physician.stripe_account_id,
+      description: text,
+      loggedAt: logged?.created_at || null,
+    });
+  } catch (err) {
+    console.error('Catch-up payout error:', err);
+    return jsonResponse({ success: false, error: 'Server error', detail: err?.message || String(err) }, 500);
+  }
+}
+
+// ---- One-off and prorated invoices ----
+
+// What a one-off invoice would charge, before anything is created.
+//
+// Takes either an explicit amount or a number of days, which prorates the
+// collaboration's monthly figure over the month the invoice falls in. Everything is
+// derived from the rate in force on the invoice date, so a one-off issued during an
+// introductory period prorates the introductory amount.
+function describeOneOffInvoice(collaboration, { amountCents, days }, onDate) {
+  const rate = collaborationRateOn(collaboration, onDate);
+  const daysInMonth = new Date(Date.UTC(
+    Number(onDate.slice(0, 4)), Number(onDate.slice(5, 7)), 0
+  )).getUTCDate();
+
+  let totalCents;
+  if (days != null) {
+    const d = Math.round(Number(days));
+    if (!Number.isFinite(d) || d <= 0 || d > daysInMonth) return { error: `Days must be between 1 and ${daysInMonth}` };
+    totalCents = Math.round(rate.totalCents * (d / daysInMonth));
+  } else {
+    totalCents = Math.round(Number(amountCents));
+    if (!Number.isFinite(totalCents) || totalCents <= 0) return { error: 'Amount must be greater than zero' };
+  }
+
+  // The processing line is prorated with everything else rather than charged in
+  // full: it is the client's share of Stripe's cut on this invoice, and this
+  // invoice is smaller than a month's.
+  const processingFeeCents = rate.totalCents
+    ? Math.round(rate.processingFeeCents * (totalCents / rate.totalCents))
+    : 0;
+  const platformFeeCents = totalCents - (collaboration.physician_paid_directly
+    ? 0
+    : Math.round(totalCents * ((rate.totalCents - rate.feeCents) / rate.totalCents)));
+
+  return {
+    rate, daysInMonth, totalCents, processingFeeCents, platformFeeCents,
+    physicianShareCents: totalCents - platformFeeCents,
+    days: days != null ? Math.round(Number(days)) : null,
+  };
+}
+
+async function handleOneOffPreview(request, env, url) {
+  try {
+    const collaborationId = Number(url.searchParams.get('collaborationId'));
+    const collaboration = collaborationId ? await db.getCollaboration(env.DB, collaborationId) : null;
+    if (!collaboration) return jsonResponse({ success: false, error: 'Not found' }, 404);
+
+    const daysParam = url.searchParams.get('days');
+    const amountParam = url.searchParams.get('amountCents');
+    const onDate = url.searchParams.get('onDate') || easternDateString(new Date());
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(onDate)) {
+      return jsonResponse({ success: false, error: 'onDate must be YYYY-MM-DD' }, 400);
+    }
+
+    const described = describeOneOffInvoice(collaboration, {
+      amountCents: amountParam != null ? Number(amountParam) : undefined,
+      days: daysParam != null ? Number(daysParam) : null,
+    }, onDate);
+    if (described.error) return jsonResponse({ success: false, error: described.error }, 400);
+
+    const client = await db.getClient(env.DB, collaboration.client_id);
+    const physician = await db.getPhysician(env.DB, collaboration.physician_id);
+    const directPay = !!collaboration.physician_paid_directly;
+
+    return jsonResponse({
+      success: true,
+      onDate,
+      period: oneOffPeriodKey(onDate),
+      client: client?.full_name,
+      physician: physician?.full_name,
+      physicianPaidDirectly: directPay,
+      promotional: described.rate.promotional,
+      monthlyTotalCents: described.rate.totalCents,
+      daysInMonth: described.daysInMonth,
+      days: described.days,
+      totalCents: described.totalCents,
+      processingFeeCents: described.processingFeeCents,
+      platformFeeCents: described.platformFeeCents,
+      physicianShareCents: described.physicianShareCents,
+      paymentTermsDays: collaboration.payment_terms_days ?? stripeHelpers.DEFAULT_PAYMENT_TERMS_DAYS,
+      description: oneOffDescription(collaboration, physician, described, onDate),
+      alreadyClaimed: (await db.listClaimedPeriods(env.DB, collaboration.id))
+        .includes(oneOffPeriodKey(onDate)),
+    });
+  } catch (err) {
+    console.error('One-off preview error:', err);
+    return jsonResponse({ success: false, error: 'Server error', detail: err?.message || String(err) }, 500);
+  }
+}
+
+// A one-off's key in invoice_runs. Prefixed rather than numbered, so it cannot be
+// confused with a month: firstUnbilledInvoiceDate compares the first seven
+// characters of a date against claimed periods, and 'oneoff-' never equals a
+// YYYY-MM, so a one-off can neither consume nor block a monthly period.
+function oneOffPeriodKey(onDate) {
+  return `oneoff-${onDate}`;
+}
+
+function oneOffDescription(collaboration, physician, described, onDate) {
+  if (collaboration.physician_paid_directly) return PLATFORM_FEE_ONLY_DESCRIPTION;
+  const base = `Collaboration services — ${physician?.full_name || 'physician'}`;
+  const suffix = described.days != null
+    ? ` (${onDate}, prorated ${described.days}/${described.daysInMonth})`
+    : ` (${onDate})`;
+  return described.rate.promotional ? `${base}${suffix}, introductory rate` : `${base}${suffix}`;
+}
+
+async function handleOneOffInvoice(request, env) {
+  try {
+    const { collaborationId, amountCents, days, onDate: onDateRaw, description } = await request.json();
+    const collaboration = collaborationId ? await db.getCollaboration(env.DB, collaborationId) : null;
+    if (!collaboration) return jsonResponse({ success: false, error: 'Not found' }, 404);
+    if (collaboration.status === 'canceled') {
+      return jsonResponse({ success: false, error: 'This collaboration is cancelled' }, 400);
+    }
+
+    const onDate = onDateRaw || easternDateString(new Date());
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(onDate)) {
+      return jsonResponse({ success: false, error: 'onDate must be YYYY-MM-DD' }, 400);
+    }
+
+    const described = describeOneOffInvoice(collaboration, { amountCents, days }, onDate);
+    if (described.error) return jsonResponse({ success: false, error: described.error }, 400);
+
+    const client = await db.getClient(env.DB, collaboration.client_id);
+    const physician = await db.getPhysician(env.DB, collaboration.physician_id);
+    if (!client?.stripe_customer_id) {
+      return jsonResponse({ success: false, error: 'This client has no Stripe customer yet' }, 400);
+    }
+
+    const directPay = !!collaboration.physician_paid_directly;
+    const stripe = stripeHelpers.getStripe(env);
+    // The same gate the sweep now applies: never invoice a client for money that
+    // cannot reach the physician it is owed to.
+    if (!directPay && !(await stripeHelpers.accountCanReceiveTransfers(stripe, physician?.stripe_account_id))) {
+      return jsonResponse({
+        success: false,
+        error: `${physician?.full_name || 'The physician'}'s payout account cannot receive transfers yet, `
+          + 'so this invoice would collect money that could not be forwarded',
+      }, 400);
+    }
+
+    // Claimed before Stripe is called, exactly as the monthly sweep does, so a
+    // double submission cannot issue two invoices for the same one-off.
+    const period = oneOffPeriodKey(onDate);
+    if (!(await db.claimInvoiceRun(env.DB, collaboration.id, period))) {
+      return jsonResponse({
+        success: false,
+        error: `A one-off invoice has already been issued for ${onDate} on this collaboration`,
+      }, 409);
+    }
+
+    const text = (typeof description === 'string' && description.trim())
+      || oneOffDescription(collaboration, physician, described, onDate);
+
+    try {
+      const invoice = await stripeHelpers.createCollaborationInvoice(stripe, {
+        customerId: client.stripe_customer_id,
+        physicianAccountId: physician?.stripe_account_id,
+        totalAmountCents: described.totalCents,
+        platformFeeCents: described.platformFeeCents,
+        paymentTermsDays: collaboration.payment_terms_days,
+        processingFeeCents: described.processingFeeCents,
+        physicianPaidDirectly: directPay,
+        description: text,
+      });
+      await db.recordInvoiceRunResult(env.DB, collaboration.id, period, { invoiceId: invoice.id });
+      return jsonResponse({
+        success: true,
+        invoiceId: invoice.id,
+        number: invoice.number,
+        period,
+        totalCents: described.totalCents,
+        platformFeeCents: described.platformFeeCents,
+        physicianShareCents: described.physicianShareCents,
+        description: text,
+      });
+    } catch (err) {
+      const message = err?.message || String(err);
+      console.error(`One-off invoice FAILED for collaboration ${collaboration.id} (${period}):`, message);
+      await db.recordInvoiceRunResult(env.DB, collaboration.id, period, { error: message });
+      return jsonResponse({ success: false, error: 'Stripe refused the invoice', detail: message }, 502);
+    }
+  } catch (err) {
+    console.error('One-off invoice error:', err);
     return jsonResponse({ success: false, error: 'Server error', detail: err?.message || String(err) }, 500);
   }
 }
