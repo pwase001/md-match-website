@@ -603,6 +603,7 @@
           ${c.status !== 'canceled' ? `<button class="btn btn-small" onclick="cancelCollaboration(${c.id}, ${!!c.stripe_subscription_id}, this)" title="End this collaboration">Cancel</button>` : ''}
           ${c.status !== 'canceled' ? `<button class="btn btn-small" onclick="oneOffInvoice(${c.id}, this)" title="Invoice a one-off or prorated amount on this collaboration">Bill One-Off</button>` : ''}
           ${c.status !== 'canceled' && !c.physician_paid_directly ? `<button class="btn btn-small" onclick="catchupPayout(${c.id}, this)" title="Pay the physician their share of a paid invoice that sent them nothing">Send Catch-Up Payout</button>` : ''}
+          ${c.status !== 'canceled' && !c.physician_paid_directly ? `<button class="btn btn-small" onclick="hideTotals(${c.id}, this)" title="Rewrite an unpaid invoice issued before 18 Nov so the physician sees only their own share">Hide Totals</button>` : ''}
           ${(allCatchups[c.id] || []).map((r) => `<div style="font-size:11px;opacity:.7">caught up ${money(r.amount_cents)} on ${esc(String(r.created_at).slice(0, 10))}<br>${esc(r.stripe_transfer_id)}</div>`).join('')}
         </td>
         <td class="actions">
@@ -1072,6 +1073,105 @@
       alert(sent.detail ? `${sent.error}: ${sent.detail}` : (sent.error || 'Could not send the payout'));
     } catch {
       alert('Network error — check Stripe before retrying, in case the transfer was created.');
+    }
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+
+  // Rewrites an invoice issued before 18 Nov so the physician sees only their share.
+  //
+  // These went out while the platform's cut was an application fee, which Stripe
+  // shows the connected account alongside the charge total. Switching them to
+  // transfer_data.amount before the NP pays means the physician never sees either.
+  // The money is identical; only what they can see changes.
+  async function hideTotals(id, btn) {
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Checking…';
+
+    let data;
+    try {
+      const res = await fetch(`/admin/api/collaborations/hide-totals-preview?collaborationId=${id}`,
+        { credentials: 'include' });
+      data = await res.json();
+    } catch {
+      alert('Network error');
+      btn.disabled = false; btn.textContent = original; return;
+    }
+    btn.textContent = original;
+
+    if (!data.success) {
+      alert(data.detail ? `${data.error}: ${data.detail}` : (data.error || 'Could not check'));
+      btn.disabled = false; return;
+    }
+    if (!data.candidates.length) {
+      alert('No invoice on this collaboration needs it.\n\n'
+        + 'An invoice qualifies only if it is still open, unpaid, has no payment started, '
+        + 'and was issued before 18 Nov while the platform fee was an application fee.'
+        + (data.excluded.length
+            ? `\n\nChecked and skipped:\n${data.excluded.map((e) => `  • ${e.reason}`).join('\n')}`
+            : ''));
+      btn.disabled = false; return;
+    }
+
+    let pick = data.candidates[0];
+    if (data.candidates.length > 1) {
+      const menu = data.candidates.map((c, i) =>
+        `${i + 1}. ${c.number} — ${money(c.totalCents)} issued ${c.issuedOn}, due ${c.dueOn || '?'}\n`
+        + `     physician share ${money(c.shareCents)}${c.promotional ? ' (introductory rate)' : ''}`).join('\n');
+      const answer = prompt(`${data.candidates.length} unpaid invoices still show ${data.physician} the total.\n\n`
+        + `${menu}\n\nType the number to change:`);
+      const index = Number((answer || '').trim()) - 1;
+      if (!(index >= 0 && index < data.candidates.length)) { btn.disabled = false; return; }
+      pick = data.candidates[index];
+    }
+
+    const confirmed = confirm('Hide the total on this invoice?\n\n'
+      + `NP                ${data.client}\n`
+      + `Physician         ${data.physician}\n`
+      + `Stripe account    ${pick.destination}\n`
+      + `Invoice           ${pick.number} — issued ${pick.issuedOn}, due ${pick.dueOn || '?'}\n`
+      + `Invoice total     ${money(pick.totalCents)}${pick.promotional ? '  (introductory rate)' : ''}\n`
+      + `Physician share   ${money(pick.shareCents)}\n\n`
+      + `BEFORE  application fee ${money(pick.applicationFeeCents)}, no transfer amount\n`
+      + `        ${data.physician} sees ${money(pick.totalCents)} with a ${money(pick.applicationFeeCents)} fee\n`
+      + `AFTER   transfer_data.amount ${money(pick.shareCents)}, no application fee\n`
+      + `        ${data.physician} sees ${money(pick.shareCents)} and nothing else\n\n`
+      + 'The NP still pays the same amount on the same due date. Nothing is voided, '
+      + 'reissued or emailed.');
+    if (!confirmed) { btn.disabled = false; return; }
+
+    btn.textContent = 'Changing…';
+    try {
+      const res = await fetch('/admin/api/collaborations/hide-totals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ collaborationId: id, invoiceId: pick.invoiceId }),
+      });
+      const done = await res.json();
+      const a = done.after;
+      if (done.success) {
+        alert(`${done.invoice} updated — confirmed by reading it back from Stripe:\n\n`
+          + `  amount              ${money(a.amountCents)}  (unchanged)\n`
+          + `  transfer_data.amount ${money(a.transferAmountCents)}  to ${a.destination}\n`
+          + `  application fee     none\n`
+          + `  invoice             ${a.status}, total ${money(a.totalCents)}, due ${a.dueOn}\n\n`
+          + `${done.physician} now sees ${money(done.shareCents)} and nothing else.`);
+        loadData();
+        return;
+      }
+      // Either Stripe refused, in which case nothing changed, or it accepted and the
+      // read-back disagreed -- which needs showing in full rather than summarising.
+      alert((done.error || 'Could not change the invoice')
+        + (done.detail ? `\n\n${done.detail}` : '')
+        + (a ? `\n\nStripe now reports:\n  amount ${money(a.amountCents)}\n`
+            + `  transfer_data.amount ${a.transferAmountCents === null ? 'none' : money(a.transferAmountCents)}\n`
+            + `  application fee ${a.applicationFeeCents === null ? 'none' : money(a.applicationFeeCents)}\n`
+            + `  invoice ${a.status}, due ${a.dueOn}` : '')
+        + '\n\nNothing else was touched.');
+    } catch {
+      alert('Network error — check the invoice in Stripe before retrying.');
     }
     btn.disabled = false;
     btn.textContent = original;

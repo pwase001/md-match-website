@@ -1233,6 +1233,16 @@ async function handleAdminApi(request, env, url) {
     return handleCatchupPayout(request, env);
   }
 
+  // Rewrites an already-issued open invoice so the physician sees only their share.
+  // Split in two so the figures are reviewed before a live invoice is touched.
+  if (url.pathname === '/admin/api/collaborations/hide-totals-preview' && request.method === 'GET') {
+    return handleHideTotalsPreview(request, env, url);
+  }
+
+  if (url.pathname === '/admin/api/collaborations/hide-totals' && request.method === 'POST') {
+    return handleHideTotals(request, env);
+  }
+
   if (url.pathname === '/admin/api/collaborations/oneoff-preview' && request.method === 'GET') {
     return handleOneOffPreview(request, env, url);
   }
@@ -2914,6 +2924,234 @@ async function handleCatchupPayout(request, env) {
     });
   } catch (err) {
     console.error('Catch-up payout error:', err);
+    return jsonResponse({ success: false, error: 'Server error', detail: err?.message || String(err) }, 500);
+  }
+}
+
+// ---- Hiding totals on invoices issued before the transfer_data switch ----
+
+// Invoices issued while the platform's cut was still an application fee show the
+// physician the NP's total and that fee. Invoices created from 2026-11-18 onward do
+// not, so anything later than this cannot need fixing.
+//
+// The substantive test is whether the invoice still carries an application fee; the
+// date is a second guard, and an invoice that somehow carries a fee but falls the
+// wrong side of it is reported rather than silently dropped.
+const APPLICATION_FEE_CUTOFF_DATE = '2026-11-18';
+
+// Everything the action has to be true of, in one place, so the review screen and
+// the update cannot disagree. Called again on submit: a preview may have sat open
+// while the NP started paying.
+async function inspectHideTotalsCandidate(env, stripe, collaboration, physician, invoiceId) {
+  const { invoice, charge, paymentIntent } =
+    await stripeHelpers.retrieveInvoicePaymentCharge(stripe, invoiceId);
+
+  if (invoice.status !== 'open') {
+    return { ok: false, error: `Invoice ${invoice.number || invoiceId} is ${invoice.status}, not open` };
+  }
+  if (invoice.amount_paid > 0 || invoice.amount_remaining !== invoice.total) {
+    return { ok: false, error: `Invoice ${invoice.number || invoiceId} has already been part paid` };
+  }
+  if (!paymentIntent) {
+    return { ok: false, error: `No PaymentIntent on invoice ${invoice.number || invoiceId}` };
+  }
+  // The one that matters. Anything past requires_payment_method means the NP has
+  // begun paying, and an ACH debit in flight must not have its split rewritten.
+  if (paymentIntent.status !== 'requires_payment_method') {
+    return {
+      ok: false,
+      error: `Payment has started on ${invoice.number || invoiceId} — the PaymentIntent is `
+        + `${paymentIntent.status}, not requires_payment_method`,
+    };
+  }
+  if (charge || paymentIntent.latest_charge) {
+    return { ok: false, error: `A charge already exists on ${invoice.number || invoiceId}` };
+  }
+
+  const feeCents = stripeHelpers.applicationFeeOnIntent(paymentIntent);
+  if (!feeCents) {
+    return {
+      ok: false,
+      error: `${invoice.number || invoiceId} carries no application fee — the physician `
+        + 'already sees only their share',
+    };
+  }
+
+  const invoiceDate = easternDateFromUnix(invoice.status_transitions?.finalized_at || invoice.created);
+  if (invoiceDate >= APPLICATION_FEE_CUTOFF_DATE) {
+    return {
+      ok: false,
+      error: `${invoice.number || invoiceId} was issued ${invoiceDate}, on or after `
+        + `${APPLICATION_FEE_CUTOFF_DATE}, yet still carries an application fee — worth looking at by hand`,
+    };
+  }
+
+  if (collaboration.physician_paid_directly) {
+    return { ok: false, error: 'This collaboration pays the physician directly, so there is no share to send' };
+  }
+  if (!physician?.stripe_account_id) {
+    return { ok: false, error: 'This physician has no Stripe account' };
+  }
+
+  // The rate in force on the invoice's own date, so an introductory month uses the
+  // introductory payout rather than the standard one. Beverly Aiello's $427.59 is a
+  // promotional invoice: Dr Glenn's share of it is $325.00, not the $650.00 her
+  // standard figures give -- which is more than the invoice collects.
+  const rate = collaborationRateOn(collaboration, invoiceDate);
+  const shareCents = rate.totalCents - rate.feeCents;
+  if (!(shareCents > 0) || shareCents > invoice.total) {
+    return {
+      ok: false,
+      error: `The physician share works out at ${usd(shareCents)}, which is not a payable part of `
+        + `${usd(invoice.total)} — check the collaboration's amounts`,
+    };
+  }
+  // The invoice should be the one this rate describes. A mismatch means the invoice
+  // belongs to a different month or a different collaboration, and rewriting its
+  // split off the wrong rate would pay the wrong amount.
+  if (invoice.total !== rate.totalCents) {
+    return {
+      ok: false,
+      error: `${invoice.number || invoiceId} totals ${usd(invoice.total)} but this collaboration's `
+        + `${rate.promotional ? 'introductory' : 'standard'} rate is ${usd(rate.totalCents)} — `
+        + 'they should match, so check which month this invoice is for',
+    };
+  }
+
+  return {
+    ok: true, invoice, paymentIntent, rate, shareCents, feeCents, invoiceDate,
+    destination: physician.stripe_account_id,
+  };
+}
+
+async function handleHideTotalsPreview(request, env, url) {
+  try {
+    const collaborationId = Number(url.searchParams.get('collaborationId'));
+    const collaboration = collaborationId ? await db.getCollaboration(env.DB, collaborationId) : null;
+    if (!collaboration) return jsonResponse({ success: false, error: 'Not found' }, 404);
+
+    const physician = await db.getPhysician(env.DB, collaboration.physician_id);
+    const client = await db.getClient(env.DB, collaboration.client_id);
+    const stripe = stripeHelpers.getStripe(env);
+
+    // Only this collaboration's own invoices, from the app's own records. Unlike a
+    // catch-up payout -- which exists for invoices the app never recorded -- every
+    // invoice that can carry an application fee was created by the sweep, so
+    // invoice_runs knows all of them and there is no need to go near the client's
+    // other collaborations.
+    const candidates = [];
+    const excluded = [];
+    for (const invoiceId of await db.listCollaborationInvoiceIds(env.DB, collaboration.id)) {
+      const checked = await inspectHideTotalsCandidate(env, stripe, collaboration, physician, invoiceId);
+      if (!checked.ok) {
+        excluded.push({ invoiceId, reason: checked.error });
+        continue;
+      }
+      candidates.push({
+        invoiceId: checked.invoice.id,
+        number: checked.invoice.number,
+        issuedOn: checked.invoiceDate,
+        dueOn: checked.invoice.due_date ? easternDateFromUnix(checked.invoice.due_date) : null,
+        totalCents: checked.invoice.total,
+        shareCents: checked.shareCents,
+        applicationFeeCents: checked.feeCents,
+        promotional: checked.rate.promotional,
+        destination: checked.destination,
+      });
+    }
+
+    return jsonResponse({
+      success: true,
+      collaborationId: collaboration.id,
+      client: client?.full_name,
+      physician: physician?.full_name,
+      physicianAccountId: physician?.stripe_account_id || null,
+      candidates,
+      excluded,
+    });
+  } catch (err) {
+    console.error('Hide totals preview error:', err);
+    return jsonResponse({ success: false, error: 'Server error', detail: err?.message || String(err) }, 500);
+  }
+}
+
+async function handleHideTotals(request, env) {
+  try {
+    const { collaborationId, invoiceId } = await request.json();
+    if (!collaborationId || !invoiceId) {
+      return jsonResponse({ success: false, error: 'Missing collaborationId or invoiceId' }, 400);
+    }
+
+    const collaboration = await db.getCollaboration(env.DB, collaborationId);
+    if (!collaboration) return jsonResponse({ success: false, error: 'Not found' }, 404);
+    const physician = await db.getPhysician(env.DB, collaboration.physician_id);
+
+    const stripe = stripeHelpers.getStripe(env);
+    const checked = await inspectHideTotalsCandidate(env, stripe, collaboration, physician, invoiceId);
+    if (!checked.ok) return jsonResponse({ success: false, error: checked.error }, 409);
+
+    const before = {
+      amountCents: checked.paymentIntent.amount,
+      applicationFeeCents: checked.feeCents,
+      transferAmountCents: checked.paymentIntent.transfer_data?.amount ?? null,
+      destination: checked.paymentIntent.transfer_data?.destination || null,
+      dueOn: checked.invoice.due_date ? easternDateFromUnix(checked.invoice.due_date) : null,
+      status: checked.invoice.status,
+    };
+
+    try {
+      await stripeHelpers.hideInvoiceTotalFromPhysician(stripe, {
+        invoiceId: checked.invoice.id,
+        physicianAccountId: checked.destination,
+        physicianShareCents: checked.shareCents,
+      });
+    } catch (err) {
+      // Nothing is changed by a rejected update, so there is nothing to put back.
+      const message = err?.message || String(err);
+      console.error(`Hide totals refused for ${checked.invoice.id}:`, message);
+      return jsonResponse({
+        success: false,
+        error: 'Stripe refused the change — the invoice is exactly as it was',
+        detail: message,
+        before,
+      }, 502);
+    }
+
+    // Read back from Stripe rather than reporting what was sent. The whole point of
+    // the action is what the physician will now see, and only Stripe can say that.
+    const after = await stripeHelpers.retrieveInvoicePaymentCharge(stripe, checked.invoice.id);
+    const intent = after.paymentIntent;
+    const confirmed = {
+      amountCents: intent?.amount ?? null,
+      transferAmountCents: intent?.transfer_data?.amount ?? null,
+      destination: intent?.transfer_data?.destination || null,
+      applicationFeeCents: stripeHelpers.applicationFeeOnIntent(intent),
+      status: after.invoice.status,
+      dueOn: after.invoice.due_date ? easternDateFromUnix(after.invoice.due_date) : null,
+      totalCents: after.invoice.total,
+    };
+
+    const problems = [];
+    if (confirmed.amountCents !== before.amountCents) problems.push('the amount changed');
+    if (confirmed.transferAmountCents !== checked.shareCents) problems.push('transfer_data.amount is not the share');
+    if (confirmed.destination !== checked.destination) problems.push('the destination changed');
+    if (confirmed.applicationFeeCents !== null) problems.push('an application fee is still set');
+    if (confirmed.status !== 'open') problems.push(`the invoice is now ${confirmed.status}`);
+    if (confirmed.dueOn !== before.dueOn) problems.push('the due date changed');
+    if (confirmed.totalCents !== checked.invoice.total) problems.push('the invoice total changed');
+
+    return jsonResponse({
+      success: problems.length === 0,
+      ...(problems.length ? { error: `Stripe accepted the change but ${problems.join(', ')}` } : {}),
+      invoice: checked.invoice.number || checked.invoice.id,
+      physician: physician?.full_name,
+      shareCents: checked.shareCents,
+      promotional: checked.rate.promotional,
+      before,
+      after: confirmed,
+    }, problems.length ? 500 : 200);
+  } catch (err) {
+    console.error('Hide totals error:', err);
     return jsonResponse({ success: false, error: 'Server error', detail: err?.message || String(err) }, 500);
   }
 }

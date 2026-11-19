@@ -375,6 +375,45 @@ export async function createCatchupTransfer(stripe, {
   }, idempotencyKey ? { idempotencyKey } : undefined);
 }
 
+// The application fee recorded against an invoice, read from its PaymentIntent.
+//
+// Not from the invoice: in this API version an invoice carries neither
+// application_fee_amount nor transfer_data, both of which live on the PaymentIntent
+// the invoice generated. Their absence from the invoice JSON is normal and is not
+// evidence that a physician's share was left off.
+export function applicationFeeOnIntent(paymentIntent) {
+  const fee = paymentIntent?.application_fee_amount;
+  return Number.isFinite(fee) && fee > 0 ? fee : null;
+}
+
+// Rewrites an open invoice so the physician sees only their own share.
+//
+// Both fields must move in one request. Stripe answers "Only one of
+// `application_fee` and `transfer_data[amount]` can be specified" to any attempt to
+// add the transfer amount while the fee is still there -- which is also how we know
+// a finalised invoice will accept this at all: that is a complaint about the
+// combination, not a refusal to edit.
+//
+// The fee is cleared by sending it empty, which is Stripe's way of unsetting an
+// integer. Setting it to 0 would NOT do: an application fee of zero is still an
+// application fee, and Stripe shows a connected account the charge total whenever
+// one is present. Zero would satisfy the API and defeat the point.
+export async function hideInvoiceTotalFromPhysician(stripe, {
+  invoiceId, physicianAccountId, physicianShareCents,
+}) {
+  if (!invoiceId || !physicianAccountId) {
+    throw new Error('hideInvoiceTotalFromPhysician: needs an invoice and a physician account');
+  }
+  if (!Number.isInteger(physicianShareCents) || physicianShareCents <= 0) {
+    throw new Error(`hideInvoiceTotalFromPhysician: ${physicianShareCents} is not a payable share`);
+  }
+  return stripe.invoices.update(invoiceId, {
+    transfer_data: { destination: physicianAccountId, amount: physicianShareCents },
+    // Empty, not zero. See above.
+    application_fee_amount: '',
+  });
+}
+
 // Whether a connected account can receive a transfer right now.
 //
 // Read live rather than from the physicians.transfers_active column, which the
