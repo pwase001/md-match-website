@@ -196,7 +196,12 @@ function stripComments(source) {
     .join('\n');
 }
 
-test('application_fee_amount appears only as an empty unset, and _percent never', () => {
+// No exception any more. There was one, for clearing the fee on an invoice issued
+// before the switch by sending it empty, and it was wrong: Stripe freezes monetary
+// fields when an invoice is finalised, so POST /v1/invoices/:id answers "Invalid
+// integer: " and nothing is cleared. An invoice like that is replaced, not mended,
+// so no path has any business naming an application fee as a parameter at all.
+test('application_fee_amount and _percent are never sent to Stripe', () => {
   const offenders = [];
   for (const [file, source] of sourceFiles()) {
     const code = stripComments(source);
@@ -204,75 +209,14 @@ test('application_fee_amount appears only as an empty unset, and _percent never'
       // An object key, which is how a Stripe parameter is written. A property read
       // such as charge.application_fee_amount has no colon after it and is the
       // legitimate way to inspect an older charge.
-      const key = line.match(/(?:^|[^.\w])application_fee_(amount|percent)\s*:\s*(.*)$/);
-      if (!key) return;
-      const [, which, value] = key;
-
-      // Clearing the fee on an invoice issued before the switch is the one allowed
-      // use, and it has to be the empty string: Stripe unsets an integer by being
-      // sent nothing. Zero would be accepted by the API and would defeat the point,
-      // because an application fee of zero is still an application fee and Stripe
-      // shows the connected account the charge total whenever one is present.
-      if (which === 'amount' && /^(''|"")\s*,?\s*$/.test(value)) return;
-
-      offenders.push(`${file}:${i + 1}: ${line.trim()}`);
+      if (/(?:^|[^.\w])application_fee_(amount|percent)\s*:/.test(line)) {
+        offenders.push(`${file}:${i + 1}: ${line.trim()}`);
+      }
     });
   }
   assert.deepEqual(offenders, [],
     "application fees show physicians the NP total and MD-Match's fee; pay with transfer_data.amount, "
-    + "and clear an old fee with '' rather than 0");
-});
-
-// ---- Hiding the total on an invoice issued before the switch ----
-
-test('hiding a total sends the share as a transfer amount and the fee as an empty unset', async () => {
-  const updates = [];
-  const stripe = { invoices: { update: async (id, p) => { updates.push({ id, p }); return { id }; } } };
-
-  await stripeHelpers.hideInvoiceTotalFromPhysician(stripe, {
-    invoiceId: 'in_TEST',
-    physicianAccountId: 'acct_PHYSICIAN',
-    physicianShareCents: 32500,
-  });
-
-  const [{ id, p }] = updates;
-  assert.equal(id, 'in_TEST');
-  assert.deepEqual(p.transfer_data, { destination: 'acct_PHYSICIAN', amount: 32500 });
-  assert.ok('application_fee_amount' in p, 'the fee must be cleared in the same request');
-  assert.equal(p.application_fee_amount, '',
-    "the fee must be unset with '' — 0 is still an application fee and still shows the total");
-  assert.notEqual(p.application_fee_amount, 0);
-  // Nothing that would reissue, re-date or re-price the invoice.
-  for (const forbidden of ['amount', 'due_date', 'days_until_due', 'collection_method',
-    'auto_advance', 'description', 'customer']) {
-    assert.ok(!(forbidden in p), `hiding a total must not touch ${forbidden}`);
-  }
-  assert.deepEqual(Object.keys(p).sort(), ['application_fee_amount', 'transfer_data']);
-});
-
-test('hiding a total refuses a share that is not payable, before calling Stripe', async () => {
-  for (const share of [0, -1, 32500.5, null, undefined]) {
-    const updates = [];
-    const stripe = { invoices: { update: async (id, p) => { updates.push({ id, p }); return { id }; } } };
-    await assert.rejects(
-      () => stripeHelpers.hideInvoiceTotalFromPhysician(stripe, {
-        invoiceId: 'in_TEST', physicianAccountId: 'acct_X', physicianShareCents: share,
-      }),
-      /not a payable share/,
-      `share ${share} should be refused`
-    );
-    assert.equal(updates.length, 0, 'nothing should reach Stripe');
-  }
-});
-
-test('hiding a total refuses a missing invoice or physician account', async () => {
-  const stripe = { invoices: { update: async () => { throw new Error('should not be called'); } } };
-  await assert.rejects(() => stripeHelpers.hideInvoiceTotalFromPhysician(stripe, {
-    invoiceId: null, physicianAccountId: 'acct_X', physicianShareCents: 100,
-  }), /needs an invoice and a physician account/);
-  await assert.rejects(() => stripeHelpers.hideInvoiceTotalFromPhysician(stripe, {
-    invoiceId: 'in_TEST', physicianAccountId: null, physicianShareCents: 100,
-  }), /needs an invoice and a physician account/);
+    + 'and replace an invoice that already carries a fee rather than trying to edit it');
 });
 
 test('an application fee is read from the PaymentIntent, not the invoice', () => {

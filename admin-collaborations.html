@@ -603,7 +603,7 @@
           ${c.status !== 'canceled' ? `<button class="btn btn-small" onclick="cancelCollaboration(${c.id}, ${!!c.stripe_subscription_id}, this)" title="End this collaboration">Cancel</button>` : ''}
           ${c.status !== 'canceled' ? `<button class="btn btn-small" onclick="oneOffInvoice(${c.id}, this)" title="Invoice a one-off or prorated amount on this collaboration">Bill One-Off</button>` : ''}
           ${c.status !== 'canceled' && !c.physician_paid_directly ? `<button class="btn btn-small" onclick="catchupPayout(${c.id}, this)" title="Pay the physician their share of a paid invoice that sent them nothing">Send Catch-Up Payout</button>` : ''}
-          ${c.status !== 'canceled' && !c.physician_paid_directly ? `<button class="btn btn-small" onclick="hideTotals(${c.id}, this)" title="Rewrite an unpaid invoice issued before 18 Nov so the physician sees only their own share">Hide Totals</button>` : ''}
+          ${c.status !== 'canceled' && !c.physician_paid_directly ? `<button class="btn btn-small" onclick="hideTotals(${c.id}, this)" title="Replace an unpaid invoice issued before 18 Nov with an identical one that shows the physician only their own share, and void the original">Hide Totals</button>` : ''}
           ${(allCatchups[c.id] || []).map((r) => `<div style="font-size:11px;opacity:.7">caught up ${money(r.amount_cents)} on ${esc(String(r.created_at).slice(0, 10))}<br>${esc(r.stripe_transfer_id)}</div>`).join('')}
         </td>
         <td class="actions">
@@ -1120,28 +1120,37 @@
         `${i + 1}. ${c.number} — ${money(c.totalCents)} issued ${c.issuedOn}, due ${c.dueOn || '?'}\n`
         + `     physician share ${money(c.shareCents)}${c.promotional ? ' (introductory rate)' : ''}`).join('\n');
       const answer = prompt(`${data.candidates.length} unpaid invoices still show ${data.physician} the total.\n\n`
-        + `${menu}\n\nType the number to change:`);
+        + `${menu}\n\nType the number to replace:`);
       const index = Number((answer || '').trim()) - 1;
       if (!(index >= 0 && index < data.candidates.length)) { btn.disabled = false; return; }
       pick = data.candidates[index];
     }
 
-    const confirmed = confirm('Hide the total on this invoice?\n\n'
+    // Spells out that this reissues rather than edits. A finalised invoice cannot be
+    // edited -- Stripe freezes its amounts -- so the only route is a new invoice and
+    // the old one voided, and the NP ends up with a different invoice number.
+    const confirmed = confirm('Replace this invoice to hide the total?\n\n'
       + `NP                ${data.client}\n`
       + `Physician         ${data.physician}\n`
       + `Stripe account    ${pick.destination}\n`
       + `Invoice           ${pick.number} — issued ${pick.issuedOn}, due ${pick.dueOn || '?'}\n`
       + `Invoice total     ${money(pick.totalCents)}${pick.promotional ? '  (introductory rate)' : ''}\n`
       + `Physician share   ${money(pick.shareCents)}\n\n`
-      + `BEFORE  application fee ${money(pick.applicationFeeCents)}, no transfer amount\n`
+      + `NOW     application fee ${money(pick.applicationFeeCents)}, no transfer amount\n`
       + `        ${data.physician} sees ${money(pick.totalCents)} with a ${money(pick.applicationFeeCents)} fee\n`
       + `AFTER   transfer_data.amount ${money(pick.shareCents)}, no application fee\n`
       + `        ${data.physician} sees ${money(pick.shareCents)} and nothing else\n\n`
-      + 'The NP still pays the same amount on the same due date. Nothing is voided, '
-      + 'reissued or emailed.');
+      + 'WHAT HAPPENS\n'
+      + `  1. a new invoice is drafted for ${money(pick.totalCents)}, same lines, same\n`
+      + `     due date (${pick.dueOn || '?'}), paying ${money(pick.shareCents)} to the physician\n`
+      + '  2. it is checked against the original, then finalised\n'
+      + `  3. only once it reads back correctly is ${pick.number} voided\n\n`
+      + `The NP pays the same ${money(pick.totalCents)} on the same due date, under a new\n`
+      + 'invoice number. No email is sent to anyone — you will get the new number and\n'
+      + 'its payment link to pass on yourself.');
     if (!confirmed) { btn.disabled = false; return; }
 
-    btn.textContent = 'Changing…';
+    btn.textContent = 'Replacing…';
     try {
       const res = await fetch('/admin/api/collaborations/hide-totals', {
         method: 'POST',
@@ -1151,27 +1160,39 @@
       });
       const done = await res.json();
       const a = done.after;
+      const b = done.before;
       if (done.success) {
-        alert(`${done.invoice} updated — confirmed by reading it back from Stripe:\n\n`
-          + `  amount              ${money(a.amountCents)}  (unchanged)\n`
+        // The new number and its link are the deliverable: the NP has to be told
+        // about this by hand, because the app deliberately sends her nothing.
+        alert(`${b.invoice} replaced by ${a.invoice}.\n\n`
+          + 'READ BACK FROM STRIPE\n'
+          + `  amount               ${money(a.amountCents)}\n`
           + `  transfer_data.amount ${money(a.transferAmountCents)}  to ${a.destination}\n`
-          + `  application fee     none\n`
-          + `  invoice             ${a.status}, total ${money(a.totalCents)}, due ${a.dueOn}\n\n`
-          + `${done.physician} now sees ${money(done.shareCents)} and nothing else.`);
+          + '  application fee      none\n'
+          + `  invoice              ${a.status}, total ${money(a.totalCents)}, due ${a.dueOn}\n`
+          + `  ${b.invoice}  voided\n\n`
+          + `${done.physician} now sees ${money(done.shareCents)} and nothing else.\n\n`
+          + 'SEND THIS TO THE NP — no email was sent by the app or by Stripe:\n'
+          + `  ${a.invoice}  ${money(a.totalCents)}  due ${a.dueOn}\n`
+          + `  ${a.hostedInvoiceUrl || '(no payment link returned — open it in Stripe)'}`);
         loadData();
         return;
       }
-      // Either Stripe refused, in which case nothing changed, or it accepted and the
-      // read-back disagreed -- which needs showing in full rather than summarising.
-      alert((done.error || 'Could not change the invoice')
+      // Three different failures land here and they are not interchangeable: nothing
+      // happened, the replacement was rolled back, or both invoices are open. Each
+      // says what state things are in, so the alert passes it through whole rather
+      // than summarising it away.
+      alert((done.error || 'Could not replace the invoice')
         + (done.detail ? `\n\n${done.detail}` : '')
-        + (a ? `\n\nStripe now reports:\n  amount ${money(a.amountCents)}\n`
+        + (done.problems?.length ? `\n\nWhat did not match:\n  • ${done.problems.join('\n  • ')}` : '')
+        + (a ? `\n\nThe replacement ${a.invoice} reads:\n  amount ${money(a.amountCents)}\n`
             + `  transfer_data.amount ${a.transferAmountCents === null ? 'none' : money(a.transferAmountCents)}\n`
             + `  application fee ${a.applicationFeeCents === null ? 'none' : money(a.applicationFeeCents)}\n`
             + `  invoice ${a.status}, due ${a.dueOn}` : '')
-        + '\n\nNothing else was touched.');
+        + (done.draftLeftBehind ? `\n\nA draft was left behind in Stripe: ${done.draftLeftBehind}` : ''));
     } catch {
-      alert('Network error — check the invoice in Stripe before retrying.');
+      alert('Network error — check both invoices in Stripe before retrying. The replacement '
+        + 'may have been created even though the reply never arrived.');
     }
     btn.disabled = false;
     btn.textContent = original;

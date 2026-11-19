@@ -2934,14 +2934,17 @@ async function handleCatchupPayout(request, env) {
 // physician the NP's total and that fee. Invoices created from 2026-11-18 onward do
 // not, so anything later than this cannot need fixing.
 //
+// Such an invoice cannot be mended in place; it is replaced. See handleHideTotals.
+//
 // The substantive test is whether the invoice still carries an application fee; the
 // date is a second guard, and an invoice that somehow carries a fee but falls the
 // wrong side of it is reported rather than silently dropped.
 const APPLICATION_FEE_CUTOFF_DATE = '2026-11-18';
 
 // Everything the action has to be true of, in one place, so the review screen and
-// the update cannot disagree. Called again on submit: a preview may have sat open
-// while the NP started paying.
+// the replacement cannot disagree. Called again on submit, and again after the
+// replacement draft is built: a preview may have sat open while the NP started
+// paying, and an ACH debit in flight must not have its invoice voided.
 async function inspectHideTotalsCandidate(env, stripe, collaboration, physician, invoiceId) {
   const { invoice, charge, paymentIntent } =
     await stripeHelpers.retrieveInvoicePaymentCharge(stripe, invoiceId);
@@ -3075,7 +3078,66 @@ async function handleHideTotalsPreview(request, env, url) {
   }
 }
 
-async function handleHideTotals(request, env) {
+// What the replacement draft has to match before it is allowed to become real.
+//
+// transfer_data and the application fee are deliberately absent from this list. They
+// cannot be read here: in this API version they live on the PaymentIntent, a draft
+// has no PaymentIntent, and the Invoice object carries neither field. They are the
+// whole point of the exercise, so they are checked the moment a PaymentIntent exists
+// -- immediately after finalising, and before the original is voided.
+// Exported, with handleHideTotals below it, so the replacement can be tested end to
+// end against a stubbed Stripe and a real in-memory database. The two failures worth
+// proving -- a void that fails once the replacement exists, and an NP who starts
+// paying while the draft is being built -- are properties of the sequence, not of any
+// one call, and nothing but the whole handler exercises the sequence.
+export function compareReplacementDraft(draft, old, oldInvoiceId) {
+  const problems = [];
+  if (draft.status !== 'draft') problems.push(`the replacement is ${draft.status}, not a draft`);
+  if (draft.total !== old.total) {
+    problems.push(`the replacement totals ${usd(draft.total)} but the original is ${usd(old.total)}`);
+  }
+  if ((draft.due_date ?? null) !== (old.due_date ?? null)) problems.push('the due date does not match the original');
+  if (draft.customer !== old.customer) problems.push('the replacement is for a different customer');
+  if (draft.collection_method !== 'send_invoice') problems.push(`the collection method is ${draft.collection_method}`);
+
+  const methods = draft.payment_settings?.payment_method_types || [];
+  if (methods.length !== 1 || methods[0] !== 'us_bank_account') {
+    problems.push(`the payment methods are ${methods.join(', ') || 'unset'}, not us_bank_account alone`);
+  }
+  if (draft.metadata?.replaces_invoice !== oldInvoiceId) problems.push('the replaces_invoice metadata is missing');
+  if (draft.auto_advance !== false) problems.push('auto_advance is on, which would mail the NP the invoice');
+
+  // Line by line, so a replacement that happens to total the same out of different
+  // parts is caught: what the NP reads has to be the invoice they already have.
+  const was = (old.lines?.data || []).map((l) => `${l.description} @ ${l.amount}`).sort();
+  const now = (draft.lines?.data || []).map((l) => `${l.description} @ ${l.amount}`).sort();
+  if (was.length !== now.length || was.some((l, i) => l !== now[i])) {
+    problems.push(`the lines differ from the original (${now.join('; ') || 'none'})`);
+  }
+  return problems;
+}
+
+// Replaces an invoice that shows the physician too much with one that does not.
+//
+// The old invoice is not edited, because it cannot be: Stripe freezes monetary
+// fields at finalisation. A new invoice is built carrying transfer_data[amount] and
+// no application fee, and the old one is voided.
+//
+// The order is finalise-then-void, which is the opposite of the obvious one and the
+// reason is that voiding cannot be undone. The physician's share only becomes
+// readable once a PaymentIntent exists, which is to say only after finalising, so
+// voiding first would mean destroying the NP's payable invoice before knowing
+// whether its replacement pays the physician correctly. Done this way every failure
+// leaves something payable: a bad draft is deleted, a bad replacement is voided and
+// the original is still open, and only once the replacement has been read back and
+// found right is anything irreversible.
+//
+// The cost is a moment with two open invoices. It is bounded by one API call, and
+// the original is re-read immediately before to confirm nothing is being paid.
+// stripeOverride is the seam the tests use; the router calls this with two arguments
+// and gets the real client.
+export async function handleHideTotals(request, env, stripeOverride = null) {
+  let claimedInvoiceId = null;
   try {
     const { collaborationId, invoiceId } = await request.json();
     if (!collaborationId || !invoiceId) {
@@ -3086,73 +3148,268 @@ async function handleHideTotals(request, env) {
     if (!collaboration) return jsonResponse({ success: false, error: 'Not found' }, 404);
     const physician = await db.getPhysician(env.DB, collaboration.physician_id);
 
-    const stripe = stripeHelpers.getStripe(env);
+    const stripe = stripeOverride || stripeHelpers.getStripe(env);
     const checked = await inspectHideTotalsCandidate(env, stripe, collaboration, physician, invoiceId);
     if (!checked.ok) return jsonResponse({ success: false, error: checked.error }, 409);
 
+    const old = checked.invoice;
     const before = {
+      invoice: old.number || old.id,
+      invoiceId: old.id,
+      status: old.status,
+      totalCents: old.total,
       amountCents: checked.paymentIntent.amount,
       applicationFeeCents: checked.feeCents,
       transferAmountCents: checked.paymentIntent.transfer_data?.amount ?? null,
       destination: checked.paymentIntent.transfer_data?.destination || null,
-      dueOn: checked.invoice.due_date ? easternDateFromUnix(checked.invoice.due_date) : null,
-      status: checked.invoice.status,
+      dueOn: old.due_date ? easternDateFromUnix(old.due_date) : null,
     };
 
-    try {
-      await stripeHelpers.hideInvoiceTotalFromPhysician(stripe, {
-        invoiceId: checked.invoice.id,
-        physicianAccountId: checked.destination,
-        physicianShareCents: checked.shareCents,
-      });
-    } catch (err) {
-      // Nothing is changed by a rejected update, so there is nothing to put back.
-      const message = err?.message || String(err);
-      console.error(`Hide totals refused for ${checked.invoice.id}:`, message);
+    // Which month the sweep thinks this invoice settled, so the claim on it can be
+    // moved to the replacement rather than released -- the month must stay claimed
+    // or the sweep bills the NP for it again.
+    const run = await db.findInvoiceRunByInvoiceId(env.DB, collaboration.id, old.id);
+
+    // Claimed before the first Stripe call, so two clicks cannot start two
+    // replacements. Checking the invoice's status instead would not do it: both
+    // clicks read it as open.
+    const claim = await db.claimInvoiceReplacement(env.DB, {
+      collaborationId: collaboration.id,
+      period: run?.period || null,
+      oldInvoiceId: old.id,
+      oldInvoiceNumber: old.number,
+      shareCents: checked.shareCents,
+      totalCents: old.total,
+    });
+    if (!claim.claimed) {
+      const e = claim.existing;
       return jsonResponse({
         success: false,
-        error: 'Stripe refused the change — the invoice is exactly as it was',
+        error: e?.stage === 'done'
+          ? `${before.invoice} was already replaced by ${e.new_invoice_number || e.new_invoice_id}`
+          : `A replacement for ${before.invoice} was already started and stopped at `
+            + `"${e?.stage}"${e?.error ? ` (${e.error})` : ''} — look at both invoices in Stripe `
+            + 'before trying again',
+        existing: e,
+      }, 409);
+    }
+    claimedInvoiceId = old.id;
+
+    // ---- 1. The draft ----
+    let draft;
+    try {
+      draft = await stripeHelpers.createReplacementInvoiceDraft(stripe, {
+        customerId: old.customer,
+        physicianAccountId: checked.destination,
+        physicianShareCents: checked.shareCents,
+        replacesInvoiceId: old.id,
+        dueDate: old.due_date,
+        description: old.description,
+        lines: (old.lines?.data || []).map((l) => ({
+          amount: l.amount, currency: l.currency, description: l.description,
+        })),
+      });
+    } catch (err) {
+      const message = err?.message || String(err);
+      console.error(`Hide totals: draft refused for ${old.id}:`, message);
+      await db.discardInvoiceReplacement(env.DB, old.id);
+      return jsonResponse({
+        success: false,
+        error: `Stripe would not create the replacement — ${before.invoice} is exactly as it was`,
         detail: message,
         before,
       }, 502);
     }
+    await db.setInvoiceReplacementStage(env.DB, old.id, 'draft_created', { newInvoiceId: draft.id });
 
-    // Read back from Stripe rather than reporting what was sent. The whole point of
-    // the action is what the physician will now see, and only Stripe can say that.
-    const after = await stripeHelpers.retrieveInvoicePaymentCharge(stripe, checked.invoice.id);
-    const intent = after.paymentIntent;
-    const confirmed = {
+    const draftProblems = compareReplacementDraft(draft, old, old.id);
+    if (draftProblems.length) {
+      const cleanup = await discardReplacementDraft(env, stripe, old.id, draft.id, draftProblems.join('; '));
+      return jsonResponse({
+        success: false,
+        error: `The replacement draft did not match the original, so it was ${cleanup.wording}`,
+        problems: draftProblems,
+        before,
+        ...cleanup.payload,
+      }, cleanup.deleted ? 409 : 500);
+    }
+
+    // ---- 2. The original, again ----
+    // The draft took several round trips to build. An ACH debit started in that
+    // window must not have an invoice voided out from under it.
+    const recheck = await inspectHideTotalsCandidate(env, stripe, collaboration, physician, old.id);
+    if (!recheck.ok) {
+      const cleanup = await discardReplacementDraft(env, stripe, old.id, draft.id, recheck.error);
+      return jsonResponse({
+        success: false,
+        error: `${recheck.error} — the replacement was ${cleanup.wording} and ${before.invoice} is untouched`,
+        before,
+        ...cleanup.payload,
+      }, cleanup.deleted ? 409 : 500);
+    }
+
+    // ---- 3. Finalise the replacement, quietly ----
+    let finalized;
+    try {
+      finalized = await stripeHelpers.finalizeInvoiceWithoutSending(stripe, draft.id);
+    } catch (err) {
+      const message = err?.message || String(err);
+      console.error(`Hide totals: finalise refused for ${draft.id}:`, message);
+      const cleanup = await discardReplacementDraft(env, stripe, old.id, draft.id, message);
+      return jsonResponse({
+        success: false,
+        error: `Stripe would not finalise the replacement — the draft was ${cleanup.wording} and `
+          + `${before.invoice} is exactly as it was`,
+        detail: message,
+        before,
+        ...cleanup.payload,
+      }, 502);
+    }
+    await db.setInvoiceReplacementStage(env.DB, old.id, 'finalized', {
+      newInvoiceId: finalized.id, newInvoiceNumber: finalized.number,
+    });
+
+    // ---- 4. Read back what the physician will see ----
+    // From Stripe, not from what was sent. The point of the action is what the
+    // physician's dashboard will show, and only Stripe can say that.
+    const settled = await stripeHelpers.retrieveInvoicePaymentCharge(stripe, finalized.id);
+    const intent = settled.paymentIntent;
+    const after = {
+      invoice: finalized.number || finalized.id,
+      invoiceId: finalized.id,
+      status: settled.invoice.status,
+      totalCents: settled.invoice.total,
       amountCents: intent?.amount ?? null,
       transferAmountCents: intent?.transfer_data?.amount ?? null,
       destination: intent?.transfer_data?.destination || null,
       applicationFeeCents: stripeHelpers.applicationFeeOnIntent(intent),
-      status: after.invoice.status,
-      dueOn: after.invoice.due_date ? easternDateFromUnix(after.invoice.due_date) : null,
-      totalCents: after.invoice.total,
+      dueOn: settled.invoice.due_date ? easternDateFromUnix(settled.invoice.due_date) : null,
+      hostedInvoiceUrl: settled.invoice.hosted_invoice_url || null,
     };
 
     const problems = [];
-    if (confirmed.amountCents !== before.amountCents) problems.push('the amount changed');
-    if (confirmed.transferAmountCents !== checked.shareCents) problems.push('transfer_data.amount is not the share');
-    if (confirmed.destination !== checked.destination) problems.push('the destination changed');
-    if (confirmed.applicationFeeCents !== null) problems.push('an application fee is still set');
-    if (confirmed.status !== 'open') problems.push(`the invoice is now ${confirmed.status}`);
-    if (confirmed.dueOn !== before.dueOn) problems.push('the due date changed');
-    if (confirmed.totalCents !== checked.invoice.total) problems.push('the invoice total changed');
+    if (!intent) problems.push('the replacement has no PaymentIntent');
+    if (after.amountCents !== old.total) problems.push(`it would collect ${usd(after.amountCents)} rather than ${usd(old.total)}`);
+    if (after.transferAmountCents !== checked.shareCents) {
+      problems.push(`transfer_data.amount is ${after.transferAmountCents === null ? 'unset' : usd(after.transferAmountCents)}, not the ${usd(checked.shareCents)} share`);
+    }
+    if (after.destination !== checked.destination) problems.push('the transfer is not pointed at this physician');
+    if (after.applicationFeeCents !== null) problems.push('it still carries an application fee');
+    if (after.status !== 'open') problems.push(`it is ${after.status}, not open`);
+    if (after.totalCents !== old.total) problems.push('its total does not match the original');
+    if (after.dueOn !== before.dueOn) problems.push('its due date does not match the original');
+
+    if (problems.length) {
+      // Roll back the replacement, not the original. The original is still open and
+      // payable and has not been touched, which is the whole reason for finalising
+      // before voiding.
+      let voided = false;
+      let voidError = null;
+      try {
+        await stripeHelpers.voidInvoice(stripe, finalized.id);
+        voided = true;
+      } catch (err) {
+        voidError = err?.message || String(err);
+      }
+      await db.setInvoiceReplacementStage(env.DB, old.id, 'rolled_back', {
+        error: `${problems.join('; ')}${voided ? '' : ` — and voiding it failed: ${voidError}`}`,
+      });
+      return jsonResponse({
+        success: false,
+        error: voided
+          ? `The replacement was wrong (${problems.join('; ')}), so it was voided. ${before.invoice} `
+            + 'is still open and unchanged — nothing was lost, but nothing was fixed either.'
+          : `The replacement was wrong (${problems.join('; ')}) AND could not be voided. Both `
+            + `${before.invoice} and ${after.invoice} are now open in Stripe — void ${after.invoice} `
+            + 'by hand before doing anything else.',
+        problems,
+        replacementVoided: voided,
+        ...(voidError ? { voidError } : {}),
+        before,
+        after,
+      }, 500);
+    }
+
+    // ---- 5. Void the original ----
+    try {
+      await stripeHelpers.voidInvoice(stripe, old.id);
+    } catch (err) {
+      const message = err?.message || String(err);
+      console.error(`Hide totals: could not void ${old.id}:`, message);
+      await db.setInvoiceReplacementStage(env.DB, old.id, 'finalized', {
+        error: `the original could not be voided: ${message}`,
+      });
+      return jsonResponse({
+        success: false,
+        error: `${after.invoice} was created correctly, but ${before.invoice} could not be voided, so `
+          + `the NP now has two open invoices for the month. Void ${before.invoice} in Stripe by hand; `
+          + 'nothing else needs redoing.',
+        detail: message,
+        before,
+        after,
+      }, 500);
+    }
+    await db.setInvoiceReplacementStage(env.DB, old.id, 'old_voided');
+
+    // ---- 6. Point the app at the replacement ----
+    // The month stays claimed, so the sweep will not bill it again; only the invoice
+    // it names changes. Everything that reads invoices for this collaboration --
+    // overdue checks, the daily digest, payout checks -- goes through invoice_runs or
+    // through Stripe's own open invoices, and a voided invoice is in neither.
+    const repointed = run
+      ? await db.repointInvoiceRun(env.DB, collaboration.id, old.id, finalized.id)
+      : null;
+    await db.setInvoiceReplacementStage(env.DB, old.id, 'done');
 
     return jsonResponse({
-      success: problems.length === 0,
-      ...(problems.length ? { error: `Stripe accepted the change but ${problems.join(', ')}` } : {}),
-      invoice: checked.invoice.number || checked.invoice.id,
+      success: true,
       physician: physician?.full_name,
       shareCents: checked.shareCents,
       promotional: checked.rate.promotional,
+      period: run?.period || null,
+      invoiceRunRepointed: repointed,
       before,
-      after: confirmed,
-    }, problems.length ? 500 : 200);
+      after,
+    });
   } catch (err) {
     console.error('Hide totals error:', err);
+    // A claim with no replacement behind it would lock the invoice out of the button
+    // for good. Only safe to drop because this path means the handler threw before
+    // any Stripe call it makes was recorded as having succeeded.
+    if (claimedInvoiceId) {
+      try {
+        const row = await db.findInvoiceReplacement(env.DB, claimedInvoiceId);
+        if (row?.stage === 'claimed') await db.discardInvoiceReplacement(env.DB, claimedInvoiceId);
+        else if (row) {
+          await db.setInvoiceReplacementStage(env.DB, claimedInvoiceId, row.stage, {
+            error: `handler threw: ${err?.message || String(err)}`,
+          });
+        }
+      } catch (e) { console.error('Hide totals: could not record the failure:', e); }
+    }
     return jsonResponse({ success: false, error: 'Server error', detail: err?.message || String(err) }, 500);
+  }
+}
+
+// Throws away a replacement draft and the claim with it, leaving Stripe as it was.
+// A draft that cannot be deleted is the one case where something is left behind, so
+// it is reported rather than swallowed.
+async function discardReplacementDraft(env, stripe, oldInvoiceId, draftId, reason) {
+  try {
+    await stripeHelpers.deleteDraftInvoice(stripe, draftId);
+    await db.discardInvoiceReplacement(env.DB, oldInvoiceId);
+    return { deleted: true, wording: 'deleted', payload: {} };
+  } catch (err) {
+    const message = err?.message || String(err);
+    console.error(`Hide totals: could not delete draft ${draftId}:`, message);
+    await db.setInvoiceReplacementStage(env.DB, oldInvoiceId, 'draft_created', {
+      error: `${reason} — and the draft could not be deleted: ${message}`,
+    });
+    return {
+      deleted: false,
+      wording: `left behind as draft ${draftId}, which could not be deleted`,
+      payload: { draftLeftBehind: draftId, draftDeleteError: message },
+    };
   }
 }
 

@@ -289,6 +289,103 @@ export async function listCatchupPayouts(db) {
   return res.results;
 }
 
+// ---- Invoices reissued to hide an NP's total from their physician ----
+
+// Claims the old invoice before anything is sent to Stripe.
+//
+// Replacing an invoice is three Stripe writes -- create, finalise, void -- and the
+// void cannot be undone. The UNIQUE on old_invoice_id is what stops a second click
+// starting a second replacement while the first is still in flight; checking the
+// old invoice's status first would not, because two clicks a moment apart both read
+// it as open. Same reasoning as claimInvoiceRun taking the month before billing it.
+//
+// Returns the existing row instead of claiming when there is one, so the caller can
+// say what became of the earlier attempt rather than silently refusing.
+export async function claimInvoiceReplacement(db, {
+  collaborationId, period, oldInvoiceId, oldInvoiceNumber, shareCents, totalCents,
+}) {
+  const res = await db
+    .prepare(
+      `INSERT INTO invoice_replacements
+        (collaboration_id, period, old_invoice_id, old_invoice_number,
+         share_cents, total_cents)
+       VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT(old_invoice_id) DO NOTHING`
+    )
+    .bind(collaborationId, period || null, oldInvoiceId, oldInvoiceNumber || null,
+      shareCents, totalCents)
+    .run();
+  if ((res.meta?.changes ?? 0) > 0) return { claimed: true, existing: null };
+  return { claimed: false, existing: await findInvoiceReplacement(db, oldInvoiceId) };
+}
+
+export async function findInvoiceReplacement(db, oldInvoiceId) {
+  return db
+    .prepare('SELECT * FROM invoice_replacements WHERE old_invoice_id = ?')
+    .bind(oldInvoiceId)
+    .first();
+}
+
+// Moves a claim along. Every stage is written before the Stripe call that would
+// advance it is reported as done, so a row that stops short names the last step
+// known to have succeeded.
+export async function setInvoiceReplacementStage(db, oldInvoiceId, stage, fields = {}) {
+  const { newInvoiceId, newInvoiceNumber, error } = fields;
+  await db
+    .prepare(
+      `UPDATE invoice_replacements
+          SET stage = ?,
+              new_invoice_id = COALESCE(?, new_invoice_id),
+              new_invoice_number = COALESCE(?, new_invoice_number),
+              error = ?,
+              completed_at = CASE WHEN ? = 'done' THEN datetime('now') ELSE completed_at END
+        WHERE old_invoice_id = ?`
+    )
+    .bind(stage, newInvoiceId || null, newInvoiceNumber || null, error || null,
+      stage, oldInvoiceId)
+    .run();
+}
+
+// Drops the claim, so the button can be used again.
+//
+// Only ever called where Stripe has been put back to exactly its starting state --
+// no draft left behind, the original still open and untouched. A replacement that
+// got as far as finalising keeps its row, because something then exists in Stripe
+// that a retry would duplicate.
+export async function discardInvoiceReplacement(db, oldInvoiceId) {
+  await db
+    .prepare('DELETE FROM invoice_replacements WHERE old_invoice_id = ?')
+    .bind(oldInvoiceId)
+    .run();
+}
+
+export async function listInvoiceReplacements(db) {
+  const res = await db
+    .prepare('SELECT * FROM invoice_replacements ORDER BY created_at DESC')
+    .all();
+  return res.results;
+}
+
+// The sweep's claim on the month an invoice was billed for. Read so the claim can be
+// repointed at a replacement: the month must stay claimed -- otherwise the sweep
+// bills it again -- while no longer naming an invoice that has been voided.
+export async function findInvoiceRunByInvoiceId(db, collaborationId, invoiceId) {
+  return db
+    .prepare(`SELECT * FROM invoice_runs
+               WHERE collaboration_id = ? AND stripe_invoice_id = ?`)
+    .bind(collaborationId, invoiceId)
+    .first();
+}
+
+export async function repointInvoiceRun(db, collaborationId, oldInvoiceId, newInvoiceId) {
+  const res = await db
+    .prepare(`UPDATE invoice_runs SET stripe_invoice_id = ?
+               WHERE collaboration_id = ? AND stripe_invoice_id = ?`)
+    .bind(newInvoiceId, collaborationId, oldInvoiceId)
+    .run();
+  return (res.meta?.changes ?? 0) > 0;
+}
+
 // Claims today's blocked-billing alert for one collaboration, returning false when
 // it is already claimed. The sweep fires three times on a Monday and every firing
 // would otherwise report the same stuck collaboration again.

@@ -386,32 +386,96 @@ export function applicationFeeOnIntent(paymentIntent) {
   return Number.isFinite(fee) && fee > 0 ? fee : null;
 }
 
-// Rewrites an open invoice so the physician sees only their own share.
+// A draft standing in for an invoice whose split has to change.
 //
-// Both fields must move in one request. Stripe answers "Only one of
-// `application_fee` and `transfer_data[amount]` can be specified" to any attempt to
-// add the transfer amount while the fee is still there -- which is also how we know
-// a finalised invoice will accept this at all: that is a complaint about the
-// combination, not a refusal to edit.
+// An already-finalised invoice cannot be edited into shape, and this was tried the
+// other way first. Stripe freezes monetary fields once an invoice is finalised:
+// "You can't use the Update endpoint to edit most fields on an invoice after it has
+// been finalized, including monetary amounts." The fee cannot even be blanked --
+// application_fee_amount on POST /v1/invoices/:id is a plain integer, and sending it
+// empty answers "Invalid integer: " -- while leaving it in place answers "Only one
+// of `application_fee` and `transfer_data[amount]` can be specified". That second
+// message is a complaint about the combination and says nothing about whether the
+// edit is allowed; reading it as permission is the mistake that shipped a button
+// which could not work. Stripe's own guidance for a finalised invoice that needs
+// different numbers is to issue a new one and void the old.
 //
-// The fee is cleared by sending it empty, which is Stripe's way of unsetting an
-// integer. Setting it to 0 would NOT do: an application fee of zero is still an
-// application fee, and Stripe shows a connected account the charge total whenever
-// one is present. Zero would satisfy the API and defeat the point.
-export async function hideInvoiceTotalFromPhysician(stripe, {
-  invoiceId, physicianAccountId, physicianShareCents,
+// Built the way createCollaborationInvoice builds every invoice since the switch:
+// transfer_data[amount] names the physician's share and there is no application fee,
+// so the physician sees the amount transferred to them and nothing else.
+//
+// auto_advance is false and nothing is finalised here. For collection_method
+// 'send_invoice' Stripe emails the invoice as part of automatic collection, so a
+// draft left to advance on its own would mail the NP a second invoice for the month
+// before anyone had checked it. Finalising deliberately, with auto_advance still
+// false, makes it payable and its hosted_invoice_url live without sending anything.
+//
+// due_date is passed as the old invoice's own timestamp rather than days_until_due,
+// which would restart the clock and move the date the NP was already given. The two
+// are mutually exclusive in the API.
+export async function createReplacementInvoiceDraft(stripe, {
+  customerId, physicianAccountId, physicianShareCents, replacesInvoiceId,
+  dueDate, description, lines,
 }) {
-  if (!invoiceId || !physicianAccountId) {
-    throw new Error('hideInvoiceTotalFromPhysician: needs an invoice and a physician account');
+  if (!customerId || !physicianAccountId || !replacesInvoiceId) {
+    throw new Error('createReplacementInvoiceDraft: needs a customer, a physician account and the invoice being replaced');
   }
   if (!Number.isInteger(physicianShareCents) || physicianShareCents <= 0) {
-    throw new Error(`hideInvoiceTotalFromPhysician: ${physicianShareCents} is not a payable share`);
+    throw new Error(`createReplacementInvoiceDraft: ${physicianShareCents} is not a payable share`);
   }
-  return stripe.invoices.update(invoiceId, {
+  if (!Array.isArray(lines) || lines.length === 0) {
+    throw new Error('createReplacementInvoiceDraft: the replacement needs the old invoice lines');
+  }
+
+  const params = {
+    customer: customerId,
+    collection_method: 'send_invoice',
+    due_date: dueDate,
+    payment_settings: { payment_method_types: ['us_bank_account'] },
+    // The NP may have unrelated pending invoice items sitting against them; this
+    // invoice is a copy of one particular invoice and must carry only its lines.
+    pending_invoice_items_behavior: 'exclude',
+    auto_advance: false,
     transfer_data: { destination: physicianAccountId, amount: physicianShareCents },
-    // Empty, not zero. See above.
-    application_fee_amount: '',
-  });
+    metadata: { replaces_invoice: replacesInvoiceId },
+  };
+  // Stripe reads an explicit null as a value to set; the memo is only sent when the
+  // old invoice had one.
+  if (description) params.description = description;
+
+  const draft = await stripe.invoices.create(params);
+
+  for (const line of lines) {
+    await stripe.invoiceItems.create({
+      customer: customerId,
+      invoice: draft.id,
+      amount: line.amount,
+      currency: line.currency || 'usd',
+      description: line.description,
+    });
+  }
+
+  // Read back rather than returned from create: the lines were added afterwards, so
+  // the object from create has none of them and a total of zero.
+  return stripe.invoices.retrieve(draft.id);
+}
+
+// Throws away a draft that failed its checks. Only a draft can go this way; once an
+// invoice is finalised the most that can be done is voiding it.
+export async function deleteDraftInvoice(stripe, invoiceId) {
+  return stripe.invoices.del(invoiceId);
+}
+
+// Makes a draft payable without mailing it.
+//
+// auto_advance false is what keeps it quiet: Stripe sends a 'send_invoice' invoice
+// as part of automatic collection, and an invoice finalised with collection turned
+// off becomes open with a live hosted_invoice_url and no email. The replacement is
+// deliberately not announced by the app -- the NP is told about it by hand, with the
+// link, because an unexplained second invoice for a month already invoiced reads as
+// a double charge.
+export async function finalizeInvoiceWithoutSending(stripe, invoiceId) {
+  return stripe.invoices.finalizeInvoice(invoiceId, { auto_advance: false });
 }
 
 // Whether a connected account can receive a transfer right now.

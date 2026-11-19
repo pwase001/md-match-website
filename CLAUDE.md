@@ -54,6 +54,25 @@ Collaborations marked `physician_paid_directly` carry no transfer at all: Ohio l
 an NP's practice pay the collaborating physician itself (ORC 4723.481(C)(2)(n)), so
 MD-Match bills only its own fee and the whole amount settles to the platform.
 
+A finalised invoice cannot be corrected, only replaced. Stripe freezes monetary
+fields once an invoice is finalised, and `application_fee_amount` on
+`POST /v1/invoices/:id` is a plain integer that cannot be blanked — sending it empty
+answers `Invalid integer: `. Leaving it in place while adding a transfer answers
+"Only one of `application_fee` and `transfer_data[amount]` can be specified", which
+is a complaint about the combination and says nothing about whether the edit is
+allowed; reading that as permission is how a Hide Totals button shipped that could
+not work. The fix for an invoice with the wrong split is `handleHideTotals`: a new
+invoice built the normal way, checked, finalised, and only then the old one voided.
+Finalise before voiding, never the reverse — voiding cannot be undone, and the
+physician's share is only readable once a PaymentIntent exists, which is to say only
+after finalising.
+
+Replacements are finalised with `auto_advance: false`, which makes the invoice
+payable without Stripe mailing it. Everywhere else `auto_advance` is true and
+finalising is what sends the invoice; a replacement is announced by hand instead,
+because an unexplained second invoice for a month already invoiced reads as a double
+charge.
+
 Billing never invoices an NP for money it could not forward: the sweep reads the
 physician's Connect account live and requires `capabilities.transfers === 'active'`
 before creating anything, skipping before the month is claimed so the collaboration
@@ -70,6 +89,15 @@ it to app invoices is the fix, not editing the subscription.
 `invoice_runs` claims a month before Stripe is called, which is the whole defence
 against billing an NP twice. A claimed period can never bill again. One-off
 invoices claim `oneoff-YYYY-MM-DD` so they can never consume a monthly period.
+
+`invoice_replacements` claims an invoice before the three Stripe writes that replace
+it, one of which — the void — cannot be undone. Its UNIQUE on `old_invoice_id` is
+what stops a second click starting a second replacement; the invoice's own status
+would not, because two clicks a moment apart both read it as open. A row that stops
+short of `stage = 'done'` is the record of a half-finished replacement and says which
+of the two invoices needs a person. Replacing an invoice repoints the `invoice_runs`
+claim at the new invoice and leaves the month claimed, so the sweep cannot bill it
+again.
 
 `catchup_payouts` records a transfer sent by hand to settle a physician's share of
 an invoice whose charge paid them nothing. Its UNIQUE constraints on the invoice and
