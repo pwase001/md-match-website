@@ -1558,7 +1558,9 @@ async function sendPhysicianOnboardingEmail(env, origin, physician, collaboratio
   });
 }
 
-async function handleCreateCollaboration(request, env) {
+// stripeOverride is the seam the tests use; the router calls this with two
+// arguments and gets the real client.
+export async function handleCreateCollaboration(request, env, stripeOverride = null) {
   try {
     const {
       clientId, physicianId, physicianPayoutUsd, netFeeUsd, stripeFeeShare,
@@ -1607,8 +1609,33 @@ async function handleCreateCollaboration(request, env) {
     // can be named rather than buried in the collaboration fee. Zero when the
     // platform absorbs the whole fee, which leaves a single-line invoice.
     const processingFeeCents = totalAmountCents - (physicianPayoutCents + netFeeCents);
-    if (!totalAmountCents || totalAmountCents <= platformFeeCents) {
-      return jsonResponse({ success: false, error: 'Invalid amount' }, 400);
+
+    // The old form of this check was `total <= platformFee`, which rejected every
+    // direct-pay collaboration there could ever be. With no payout, the platform fee
+    // IS the whole invoice -- platformFeeCents is total minus zero -- so the
+    // condition was unconditionally true and the form answered "Invalid amount" for
+    // a row whose figures were perfectly good. Collaborations 47 and 48 exist only
+    // because they were inserted into D1 by hand; neither could have come from here.
+    //
+    // What the check is actually for is that the physician's share is a payable part
+    // of the total. Where there is no share, the thing to assert is the opposite:
+    // that nothing has been carved out of the invoice for a transfer that will never
+    // be made.
+    const amountsAreSane = Number.isFinite(totalAmountCents) && totalAmountCents > 0
+      && (directPay
+        ? platformFeeCents === totalAmountCents
+        : totalAmountCents > platformFeeCents);
+    if (!amountsAreSane) {
+      // Named figures rather than "Invalid amount", which said nothing about which
+      // number was wrong and sent this bug looking like a typo in the form.
+      return jsonResponse({
+        success: false,
+        error: directPay
+          ? `A platform-fee-only collaboration should bill its fee and nothing else, but `
+            + `${usd(totalAmountCents)} total against a ${usd(platformFeeCents)} fee does not`
+          : `A total of ${usd(totalAmountCents)} cannot carry a ${usd(platformFeeCents)} fee `
+            + 'and still pay the physician',
+      }, 400);
     }
 
     // Stripe requires days_until_due to be a non-negative integer. Validate here
@@ -1715,7 +1742,7 @@ async function handleCreateCollaboration(request, env) {
       billingMode, billingDay: Number(String(startDate).slice(8, 10)),
     });
 
-    const stripe = stripeHelpers.getStripe(env);
+    const stripe = stripeOverride || stripeHelpers.getStripe(env);
     const origin = new URL(request.url).origin;
 
     // Ensure the physician has a Connect account, and send the onboarding link only
