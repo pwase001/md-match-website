@@ -175,8 +175,9 @@ export async function listOpenInvoices(stripe) {
 // item can be bound to this invoice by id. Letting Stripe sweep in whatever items
 // are pending would put two collaborations on one invoice for a client who has two.
 //
-// Takes application_fee_amount, an exact figure, where the subscription path could
-// only pass application_fee_percent and land a cent or two out.
+// The physician's share is named as an exact figure in transfer_data.amount, where
+// the old subscription path could only express it as a percentage and land a cent or
+// two out.
 export async function createCollaborationInvoice(stripe, {
   customerId, physicianAccountId, totalAmountCents, platformFeeCents,
   paymentTermsDays, description, processingFeeCents, physicianPaidDirectly = false,
@@ -229,7 +230,7 @@ export async function createCollaborationInvoice(stripe, {
 
   // The client's share of Stripe's cut is already inside totalAmountCents. Naming
   // it as its own line changes only what the invoice reads: the two items still sum
-  // to the same total, and application_fee_amount is untouched, so the physician is
+  // to the same total, and transfer_data.amount is untouched, so the physician is
   // paid the same figure either way.
   const processing = processingFeeCents > 0 ? processingFeeCents : 0;
 
@@ -410,63 +411,28 @@ export async function cancelCollaborationSubscription(stripe, subscriptionId) {
   return stripe.subscriptions.cancel(subscriptionId);
 }
 
-// Creates the recurring collaboration subscription. The platform's cut is a flat
-// dollar amount (platformFeeCents), implemented as the percentage of totalAmountCents
-// that equals it — Stripe subscriptions only support application_fee_percent natively.
-export async function createCollaborationSubscription(stripe, {
-  customerId, physicianAccountId, totalAmountCents, applicationFeePercent, startDateISO, description,
-  paymentTermsDays,
-}) {
-  // trial_end exists only to hold the first invoice until a start date that has
-  // not arrived yet. Once that date is here, the collaboration should bill now --
-  // and Stripe rejects a trial_end in the past outright, which would otherwise
-  // make a collaboration unactivatable from its own start date onward.
-  //
-  // Omitting trial_end starts the subscription immediately: the first invoice
-  // issues right away and the monthly cycle anchors to activation. A start date
-  // further in the past is deliberately not back-billed -- months nobody invoiced
-  // for at the time are not owed retroactively.
-  //
-  // The 60s margin absorbs clock skew between here and Stripe; without it a start
-  // date landing within the same minute could still be rejected as past.
-  const startTs = Math.floor(new Date(startDateISO + 'T12:00:00Z').getTime() / 1000);
-  const deferToStartDate = startTs > Math.floor(Date.now() / 1000) + 60;
-
-  // Subscription price_data requires an existing product — unlike Checkout Session
-  // line_items.price_data, it does not accept inline product_data.
-  const product = await stripe.products.create({ name: description });
-
-  const subscription = await stripe.subscriptions.create({
-    customer: customerId,
-    items: [
-      {
-        price_data: {
-          currency: 'usd',
-          product: product.id,
-          unit_amount: totalAmountCents,
-          recurring: { interval: 'month' },
-        },
-      },
-    ],
-    ...(deferToStartDate ? { trial_end: startTs } : {}),
-    application_fee_percent: applicationFeePercent,
-    transfer_data: { destination: physicianAccountId },
-    // Invoice the client rather than debiting a saved payment method. Asking a
-    // solo practice to pre-authorise a monthly debit to a new vendor is a large
-    // trust ask; an emailed invoice they choose to pay is not. The cost is that
-    // unpaid invoices have to be chased.
-    //
-    // collection_method and transfer_data are orthogonal -- the destination
-    // transfer is a property of the charge, and the charge happens when the
-    // client pays the hosted invoice -- so the split should still apply. That is
-    // reasoned from the docs, not observed; see the note in the commit message.
-    collection_method: 'send_invoice',
-    days_until_due: paymentTermsDays || DEFAULT_PAYMENT_TERMS_DAYS,
-    payment_settings: {
-      // Governs what the hosted invoice page offers.
-      payment_method_types: ['us_bank_account'],
-    },
-  });
-
-  return subscription;
+// Subscription billing, closed rather than converted.
+//
+// This path paid physicians with application_fee_percent, which is exactly what let
+// a physician see the NP's total and MD-Match's fee. A percentage also cannot
+// express a flat dollar split exactly: collaboration 6 pays $500 of $700, and the
+// nearest amount_percent lands a cent out every month, so converting it would trade
+// one wrong thing for another.
+//
+// Nothing needs it. New collaborations are always app_invoice, and the one live
+// subscription -- collaboration 6's -- already exists and is never created again.
+// What this refusal actually prevents is a paused subscription-mode collaboration
+// being resumed and quietly minting a fresh fee-bearing subscription. Collaboration
+// 5 is exactly that: paused, subscription mode, no subscription id, one Resume click
+// away.
+//
+// It throws before touching Stripe rather than creating something that breaks the
+// rule in CLAUDE.md. Moving collaboration 6 to app invoices is the fix; the previous
+// implementation is in git history if it is ever needed as a reference.
+export async function createCollaborationSubscription() {
+  throw new Error(
+    'createCollaborationSubscription: subscription billing is closed. It paid physicians with '
+    + "application_fee_percent, which shows them the NP's total and MD-Match's fee. "
+    + "Move this collaboration to billing_mode = 'app_invoice' instead."
+  );
 }
