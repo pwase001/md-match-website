@@ -1381,6 +1381,30 @@ function usd(cents) {
 
 const RATE_RAIL = 'margin:0 0 16px;padding:2px 0 2px 14px;border-left:2px solid #d0d7d4';
 
+// A date as a person reads it: 2027-02-24 becomes "Feb 24, 2027".
+//
+// Every date in an outgoing email goes through this. The stored value is unchanged
+// -- D1, Stripe fields and metadata all keep YYYY-MM-DD, which is what sorts and
+// compares correctly -- and so do the admin screens, where the ISO form is the one
+// an operator is matching against the database.
+//
+// Built from the three numbers rather than by parsing, and rendered with
+// timeZone 'UTC', so the day can never move. new Date('2027-02-24') is midnight UTC,
+// and formatting that without a timeZone renders it in whatever zone the runtime
+// happens to be in -- which west of Greenwich is still the 23rd. A billing date that
+// reads a day early in some readers' mail and not others' is the kind of thing nobody
+// reports and everybody half-remembers wrongly.
+//
+// Anything that is not a date comes back untouched rather than as "Invalid Date": a
+// missing promo_end_date should leave a sentence looking odd, not actively wrong.
+function emailDate(isoDate) {
+  const parts = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(isoDate ?? ''));
+  if (!parts) return String(isoDate ?? '');
+  const [, year, month, day] = parts;
+  return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)))
+    .toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 async function sendClientBillingEmail(env, collaboration, client, physician) {
   const termsDays = collaboration.payment_terms_days || stripeHelpers.DEFAULT_PAYMENT_TERMS_DAYS;
   const standard = usd(collaboration.total_amount_cents);
@@ -1390,11 +1414,11 @@ async function sendClientBillingEmail(env, collaboration, client, physician) {
 
   const scheduleHtml = isPromo
     ? `<div style="${RATE_RAIL}">`
-      + `<p style="margin:0 0 4px">Until ${collaboration.promo_end_date}: <strong>${usd(collaboration.promo_total_cents)}</strong> / month</p>`
-      + `<p style="margin:0">From ${collaboration.promo_end_date}: <strong>${standard}</strong> / month</p>`
+      + `<p style="margin:0 0 4px">Until ${emailDate(collaboration.promo_end_date)}: <strong>${usd(collaboration.promo_total_cents)}</strong> / month</p>`
+      + `<p style="margin:0">From ${emailDate(collaboration.promo_end_date)}: <strong>${standard}</strong> / month</p>`
       + `</div>`
       + `<p>There is nothing to set up. You'll receive an invoice by email each month with a secure link to pay by bank transfer, ${termsDays}-day terms. Nothing is ever charged automatically — you pay each invoice when you're ready.</p>`
-    : `<p>There is nothing to set up. Starting ${collaboration.start_date}, you'll receive an invoice by email each month for <strong>${standard}</strong>, with a secure link to pay by bank transfer. Payment terms are ${termsDays} days.</p>`
+    : `<p>There is nothing to set up. Starting ${emailDate(collaboration.start_date)}, you'll receive an invoice by email each month for <strong>${standard}</strong>, with a secure link to pay by bank transfer. Payment terms are ${termsDays} days.</p>`
       + `<p>Nothing is ever charged automatically — no card or bank details held on file, no surprise debits. You review each invoice and pay it when you're ready.</p>`;
 
   return sendEmail(env, {
@@ -1439,8 +1463,8 @@ async function sendCollaborationNoticeEmail(env, { collaboration, client, physic
   let rateHtml;
   if (newIsPromo) {
     const rates =
-      `<p style="margin:0 0 4px">Until ${collaboration.promo_end_date}: <strong>${usd(collaboration.promo_payout_cents)}</strong> per month</p>`
-      + `<p style="margin:0">From ${collaboration.promo_end_date}: <strong>${standardPayout}</strong> per month</p>`;
+      `<p style="margin:0 0 4px">Until ${emailDate(collaboration.promo_end_date)}: <strong>${usd(collaboration.promo_payout_cents)}</strong> per month</p>`
+      + `<p style="margin:0">From ${emailDate(collaboration.promo_end_date)}: <strong>${standardPayout}</strong> per month</p>`;
     if (prevIsPromo) {
       rateHtml = `<p>This one also starts on an introductory rate, on its own timeline:</p>`
         + `<div style="${rail}">${rates}</div>`
@@ -1453,7 +1477,7 @@ async function sendCollaborationNoticeEmail(env, { collaboration, client, physic
       rateHtml = `<p>This collaboration starts on an introductory rate:</p><div style="${rail}">${rates}</div>`;
     }
   } else if (prevIsPromo) {
-    rateHtml = `<p>Unlike your existing collaboration, this one has no introductory period. It pays <strong>${standardPayout}</strong> per month from ${collaboration.start_date}.</p>`;
+    rateHtml = `<p>Unlike your existing collaboration, this one has no introductory period. It pays <strong>${standardPayout}</strong> per month from ${emailDate(collaboration.start_date)}.</p>`;
   } else if (previous) {
     rateHtml = `<p>Nothing changes in how you're paid. This one runs at <strong>${standardPayout}</strong> per month, on the same terms as your existing collaboration.</p>`;
   } else {
@@ -1468,7 +1492,7 @@ async function sendCollaborationNoticeEmail(env, { collaboration, client, physic
       ? `Your new collaboration with ${withWhom} — introductory rate`
       : `Your new collaboration with ${withWhom}`,
     html: `<p>Hi ${firstName},</p>`
-      + `<p>You're set up for a new collaboration with ${withWhom}, starting ${collaboration.start_date}.</p>`
+      + `<p>You're set up for a new collaboration with ${withWhom}, starting ${emailDate(collaboration.start_date)}.</p>`
       + rateHtml
       + `<p>The transfer goes out once ${practice} pays their monthly invoice.</p>`
       // Only true for someone already connected. A physician who still has to
@@ -1506,11 +1530,11 @@ async function sendPhysicianOnboardingEmail(env, origin, physician, collaboratio
     scheduleHtml =
       `<p>Your payment schedule:</p>`
       + `<div style="${RATE_RAIL}">`
-      + `<p style="margin:0 0 4px">Until ${collaboration.promo_end_date}: <strong>${usd(collaboration.promo_payout_cents)}</strong> / month</p>`
-      + `<p style="margin:0">From ${collaboration.promo_end_date}: <strong>${standardPayout}</strong> / month</p>`
+      + `<p style="margin:0 0 4px">Until ${emailDate(collaboration.promo_end_date)}: <strong>${usd(collaboration.promo_payout_cents)}</strong> / month</p>`
+      + `<p style="margin:0">From ${emailDate(collaboration.promo_end_date)}: <strong>${standardPayout}</strong> / month</p>`
       + `</div>`
-      + `<p>The provider is on an introductory rate until ${collaboration.promo_end_date}.</p>`
-      + `<p>Please complete the setup now even though the first standard payment is not until ${collaboration.start_date}, so there is no delay when payments begin. You will receive the introductory rate in the interim.</p>`;
+      + `<p>The provider is on an introductory rate until ${emailDate(collaboration.promo_end_date)}.</p>`
+      + `<p>Please complete the setup now even though the first standard payment is not until ${emailDate(collaboration.start_date)}, so there is no delay when payments begin. You will receive the introductory rate in the interim.</p>`;
   } else if (standardPayout) {
     scheduleHtml =
       `<p>You'll receive <strong>${standardPayout}</strong> per month, sent automatically once the provider's monthly invoice is settled — nothing to invoice or chase on your end.</p>`;
@@ -2144,13 +2168,6 @@ function easternDateFromUnix(seconds) {
   return easternDateString(new Date(seconds * 1000));
 }
 
-function prettyDate(isoDate) {
-  const [y, m, d] = isoDate.split('-').map(Number);
-  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-US', {
-    timeZone: 'UTC', weekday: 'long', month: 'long', day: 'numeric',
-  });
-}
-
 // A reminder written to come from a person rather than from Stripe.
 //
 // Clients ignore Stripe's own dunning mail and answer a note from someone they
@@ -2167,7 +2184,10 @@ function buildPaymentNudge(invoice, client) {
   const firstName = String(invoice.customer_name || '').trim().split(' ')[0] || 'there';
   const email = client?.email || invoice.customer_email || '';
   const amount = '$' + (invoice.amount_remaining / 100).toFixed(2);
-  const dueOn = prettyDate(easternDateFromUnix(invoice.due_date));
+  // Was a formatter of its own, reading "Saturday, February 24" -- the same date in
+  // a different shape, and with no year on it. One format for every date a client or
+  // physician reads, so two pieces of mail about the same invoice cannot disagree.
+  const dueOn = emailDate(easternDateFromUnix(invoice.due_date));
 
   const subject = `Invoice ${invoice.number || ''} — due ${dueOn}`.replace('  ', ' ');
   const body = [
@@ -3090,6 +3110,9 @@ async function handleHideTotalsPreview(request, env, url) {
 // proving -- a void that fails once the replacement exists, and an NP who starts
 // paying while the draft is being built -- are properties of the sequence, not of any
 // one call, and nothing but the whole handler exercises the sequence.
+export { emailDate, sendClientBillingEmail, sendCollaborationNoticeEmail,
+  sendPhysicianOnboardingEmail, buildPaymentNudge };
+
 export function compareReplacementDraft(draft, old, oldInvoiceId) {
   const problems = [];
   if (draft.status !== 'draft') problems.push(`the replacement is ${draft.status}, not a draft`);
