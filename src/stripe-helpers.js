@@ -191,17 +191,38 @@ export async function createCollaborationInvoice(stripe, {
   };
 
   // transfer_data is the only thing on this invoice that moves money to a
-  // physician, and application_fee_amount only means anything beside it -- Stripe
-  // rejects a fee with no destination to take it from. So for a collaboration whose
-  // physician is paid by the client's own practice, both are left off and the whole
-  // amount settles to the platform. There is no transfer to make zero, because
-  // there is no transfer.
+  // physician. For a collaboration whose physician is paid by the client's own
+  // practice it is left off entirely and the whole amount settles to the platform.
+  // There is no transfer to make zero, because there is no transfer.
+  //
+  // Where there is a transfer, the physician's share is named in
+  // transfer_data.amount rather than taken back afterwards as an
+  // application_fee_amount. The two move identical money -- Stripe adds the charge
+  // to the platform, sends the share on, and leaves the rest less its own fees --
+  // but they show the physician different things. With an application fee, Stripe's
+  // own words are that "your connected account can view both the total amount and
+  // the application fee amount": Dr Albin's Express Dashboard read $900 with a $200
+  // fee, which is the NP's price and the platform's margin, neither of which is
+  // hers to see. With transfer_data[amount] it "can't view the total amount of the
+  // charge. They only see the amount transferred" -- her $700, which is the only
+  // figure the arrangement is between her and us about.
+  //
+  // The cost is reporting: no Application Fee objects are created any more, so the
+  // Dashboard's application-fee report stops filling up and platform earnings come
+  // from the Destination Platform Fee column of the balance export instead.
   if (!physicianPaidDirectly) {
     if (!physicianAccountId) {
       throw new Error('createCollaborationInvoice: no physician account to pay, and the collaboration is not marked as paying the physician directly');
     }
-    params.application_fee_amount = platformFeeCents;
-    params.transfer_data = { destination: physicianAccountId };
+    // Derived here rather than passed in, so it cannot drift from the two figures
+    // the invoice is actually built out of. In a promotional month the caller's
+    // totalAmountCents and platformFeeCents are the promotional pair, and this
+    // subtraction is exactly the promotional payout.
+    const physicianShareCents = totalAmountCents - platformFeeCents;
+    if (!(physicianShareCents > 0) || physicianShareCents > totalAmountCents) {
+      throw new Error(`createCollaborationInvoice: physician share of ${physicianShareCents} is not a payable part of ${totalAmountCents}`);
+    }
+    params.transfer_data = { destination: physicianAccountId, amount: physicianShareCents };
   }
 
   const invoice = await stripe.invoices.create(params);
@@ -309,6 +330,12 @@ export async function retrieveInvoicePaymentCharge(stripe, invoiceId) {
 // checked rather than one because a destination charge and a direct charge record
 // it differently, and an invoice built by hand may carry the fee without the
 // destination or the other way round. Any of them means the physician was paid.
+//
+// Both schemes are covered and both must stay covered: an invoice from before the
+// move to transfer_data[amount] carries application_fee_amount, and one from after
+// carries transfer_data with an amount inside it. A catch-up payout reads this to
+// decide whether anything is owed, so dropping either field would offer to pay a
+// physician who has already been paid.
 export function chargePaidAConnectedAccount(charge) {
   if (!charge) return false;
   return !!(charge.transfer_data || charge.destination
