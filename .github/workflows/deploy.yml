@@ -3,6 +3,11 @@ name: Deploy to Cloudflare Workers
 on:
   push:
     branches: [main]
+  # Also on pull requests, so the billing rules are checked before a merge rather
+  # than only on the way out. The deploy step below is gated to pushes, so a pull
+  # request runs the tests and nothing else.
+  pull_request:
+    branches: [main]
 
 jobs:
   deploy:
@@ -17,7 +22,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Before the deploy, deliberately. These assert the billing rule in CLAUDE.md:
+      # a physician must only ever see their own share. A failure here fails the job
+      # and the deploy step never runs, which is the point -- the rule is about money
+      # other people can see, so it should not be possible to ship past it.
+      - name: Billing and payout privacy tests
+        run: npm test
+
       - name: Deploy Worker
+        if: github.event_name == 'push'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
