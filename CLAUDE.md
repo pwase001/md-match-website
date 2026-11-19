@@ -114,3 +114,8 @@ that could be read twice.
   approach was tried and failed. Keep that.
 - Never email an NP or a physician as a side effect of a fix. Email is a deliberate
   act with its own approval.
+- Dates in outgoing email go through `emailDate` in `src/worker.js`, which reads
+  2027-02-24 as "Feb 24, 2027" from the date's own three numbers with
+  `timeZone: 'UTC'`, so the day cannot shift. Stored values, Stripe fields, metadata
+  and the admin screens keep the ISO form. `test/email-dates.test.mjs` fails if an
+  email interpolates a date column without it.
